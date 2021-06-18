@@ -34,7 +34,7 @@ export class Connector {
   /**
    * Connect to the database by using Knex's config
    * @static
-   * @param {HexDbConfig} HexDbConfig Database configuration
+   * @param {DbConfig} DbConfig Database configuration
    * @param {string} [instanceName='__default__'] An alias of database instance
    * @returns {Knex<any, any[]>}
    * @memberof [[Connector]]
@@ -47,6 +47,27 @@ export class Connector {
   }
 
   /**
+   * Parse URL
+   * @static
+   * @param {string} inputURL
+   * @return {*}  {Knex.Config}
+   * @memberof Connector
+   */
+  public static parseURL(inputURL: string): Knex.Config {
+    const myURL = new URL(inputURL);
+    return {
+      client: myURL.protocol.replace(/[:]/gi, ''),
+      connection: {
+        host: myURL.hostname,
+        port: parseInt(myURL.port, 10),
+        user: myURL.username,
+        password: myURL.password,
+        database: myURL.pathname.replace(/[/\s]/gi, ''),
+      },
+    };
+  }
+
+  /**
    * Connect to database by using friendly URL
    * @static
    * @param {string} url
@@ -55,19 +76,7 @@ export class Connector {
    * @memberof [[Connector]]
    */
   public static connectByUrl(inputURL: string, instanceName: string = '__default__'): Knex<any, any[]> {
-    const myURL = new URL(inputURL);
-    return Connector.connect(
-      {
-        client: 'mysql',
-        connection: {
-          host: myURL.hostname,
-          port: parseInt(myURL.port, 10),
-          user: myURL.username,
-          password: myURL.password,
-        },
-      },
-      instanceName,
-    );
+    return Connector.connect(Connector.parseURL(inputURL), instanceName);
   }
 
   /**

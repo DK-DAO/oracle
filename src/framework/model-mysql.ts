@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Knex } from 'knex';
-import { IResponseList, IPagination, EHexModelLock, IModelCondition } from './interfaces';
+import { IResponseList, IPagination, EModelLock, IModelCondition } from './interfaces';
 import { Connector } from './connector';
 import { Pagination } from './pagination';
 
@@ -79,11 +79,11 @@ export class ModelMySQL extends EventEmitter {
   /**
    * Lock current table of this model
    * @todo Support timeout to make sure table won't be lock for so long
-   * @param {EHexModelLock} [mode=EHexModelLock.write] Lock type
+   * @param {EModelLock} [mode=EModelLock.write] Lock type
    * @returns
    * @memberof [[ModelMySQL]]
    */
-  public async lock(mode: EHexModelLock = EHexModelLock.write) {
+  public async lock(mode: EModelLock = EModelLock.write) {
     const result = await this.getKnex().raw(`LOCK TABLES ${this.tableName} ${mode}`);
     this.emit('table-lock', this.tableName, mode);
     return result;

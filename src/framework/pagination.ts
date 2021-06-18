@@ -41,7 +41,7 @@ export class Pagination {
   }
 
   /**
-   * Hex pagination schema
+   * Pagination schema
    * @public
    * @memberof Pagination
    */

@@ -7,12 +7,15 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
+    "resolveJsonModule": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "declaration": true,
+    "skipLibCheck": true,
+    "declaration": false,
     "outDir": "./built/",
+    "baseUrl": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**/*", "**/*.json", "**/*.js"]
+  "include": ["**/*.ts"],
+  "exclude": ["built", "node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }

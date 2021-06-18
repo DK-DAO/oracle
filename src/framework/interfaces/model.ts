@@ -32,7 +32,7 @@ export interface IModelCondition {
  * @export
  * @enum {string}
  */
-export enum EHexModelLock {
+export enum EModelLock {
   write = 'WRITE',
   read = 'READ',
 }

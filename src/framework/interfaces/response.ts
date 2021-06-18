@@ -1,5 +1,5 @@
 /**
- * Hex record ordering by
+ * Record ordering by
  * @export
  * @interface IOrderingBy
  */
@@ -58,7 +58,7 @@ export interface IPagination {
 }
 
 /**
- * Hex return list of records
+ * Return list of records
  * @export
  * @interface IRecordList
  */
@@ -72,7 +72,7 @@ export interface IRecordList<T> extends IPagination {
 }
 
 /**
- * Hex single record, could be any of keys-values object
+ * Single record, could be any of keys-values object
  * @export
  * @interface IRecord
  */
@@ -165,7 +165,7 @@ export interface IResponseError {
 }
 
 /**
- * Hex standardized response
+ * Standardized response
  * @export
  * @interface IResponse
  */

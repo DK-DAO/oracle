@@ -15,7 +15,7 @@ export type TDataType = 'string' | 'number' | 'boolean' | 'object' | 'array';
 export type TVarLocation = 'params' | 'query' | 'body' | 'any';
 
 /**
- * Field in HexSchema
+ * Field in Schema
  * @export
  * @interface IField
  */

@@ -1,5 +1,5 @@
 /**
- * HexRouter record
+ * Router record
  * @export
  * @interface IRouterRecord
  */
