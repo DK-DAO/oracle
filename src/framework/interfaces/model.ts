@@ -17,14 +17,14 @@ export interface IModelCondition {
    * @type {string}
    * @memberof IModelCondition
    */
-  operator?: string;
+  operator?: '>' | '<' | '<=' | '>=';
 
   /**
    * Value need to be compared
    * @type {*}
    * @memberof IModelCondition
    */
-  value: any;
+  value: string | number;
 }
 
 /**

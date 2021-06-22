@@ -5,6 +5,8 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id').unsigned().notNullable().primary();
 
     table.integer('blockchainId').unsigned().references('blockchain.id').comment('Foreign key to blockchain.id');
+    
+    table.integer('tokenId').unsigned().references('token.id').comment('Foreign key to token.id');
 
     table.string('eventName', 255).notNullable().comment('Event name, that depend on what will EVM emit');
 
