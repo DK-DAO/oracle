@@ -24,23 +24,3 @@ if (config.nodeEnv === 'development') {
   // Cors for development with origin: *
   Mux.use(cors());
 }
-
-if (config.nodeEnv !== 'development') {
-  const corsConfig = config.serviceCors.split(',').map((item: string): string | RegExp => {
-    const tmp = item.trim();
-    if (tmp.substr(0, 4) === 'http') {
-      // If request start with http:// or https:// we will return the URL
-      return tmp;
-    }
-    // Otherwise we return regex
-    return new RegExp(tmp, 'i');
-  });
-  logger.debug('Service cors config:', corsConfig);
-  Mux.use(
-    cors({
-      origin: corsConfig,
-      methods: 'GET,PUT,POST,DELETE',
-      optionsSuccessStatus: 204,
-    }),
-  );
-}

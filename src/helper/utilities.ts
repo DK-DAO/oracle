@@ -1,4 +1,5 @@
 import { noCase } from 'no-case';
+import cluster from 'cluster';
 
 export function toCamelCase(text: string): string {
   return noCase(text, {
@@ -37,8 +38,20 @@ export function objToCamelCase(obj: any): any {
   return remap;
 }
 
+export function loadWorker(env: Partial<IWoker>) {
+  const worker = cluster.fork(env);
+  return { id: env.id || -1, name: env.name || 'undefined', pid: worker.process.pid };
+}
+
+export interface IWoker {
+  id: number;
+  pid: number;
+  name: string;
+}
+
 export default {
   toCamelCase,
   toSnakeCase,
   toPascalCase,
+  loadWorker,
 };

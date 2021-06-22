@@ -5,3 +5,5 @@ export * from './validator';
 export * from './express';
 export * from './logger/index';
 export * from './logger/transport';
+export * from './model-mysql';
+export * from './connector';
