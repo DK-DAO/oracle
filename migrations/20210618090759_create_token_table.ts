@@ -12,12 +12,15 @@ export async function up(knex: Knex): Promise<void> {
 
     table.integer('decimal').notNullable().comment('End of syncing');
 
-    table.timestamp('createdDate').comment('Created date');
+    table.string('address', 256).notNullable().comment('Synced blocks');
 
-    table.index(['name', 'symbol', 'decimal', 'createdDate'], 'indexed_fields');
+    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+
+    table.index(['name', 'symbol', 'decimal', 'address'], 'indexed_fields');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
   return knex.schema.dropTable('token');
 }
+   

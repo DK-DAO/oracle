@@ -34,7 +34,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('transactionHash', 66).notNullable().comment('Transaction hash');
 
-    table.timestamp('createdDate').comment('Created date');
+    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
     table.index(
       [
@@ -47,7 +47,6 @@ export async function up(knex: Knex): Promise<void> {
         'blockHash',
         'transactionHash',
         'contractAddress',
-        'createdDate',
       ],
       'indexed_fields',
     );

@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable('sync', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable();
+    table.increments('id').unsigned().notNullable().primary();
 
     table.integer('blockchainId').unsigned().references('blockchain.id').comment('Foreign key to blockchain.id');
 
@@ -14,9 +14,9 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamp('lastUpdate').comment('Last update');
 
-    table.timestamp('createdDate').comment('Created date');
+    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
-    table.index(['id', 'startBlock', 'syncedBlock', 'targetBlock', 'lastUpdate'], 'indexed_fields');
+    table.index(['startBlock', 'syncedBlock', 'targetBlock'], 'indexed_fields');
   });
 }
 
