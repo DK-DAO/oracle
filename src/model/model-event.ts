@@ -22,7 +22,7 @@ export interface IEvent {
 
 export class ModelEvent extends ModelBase<IEvent> {
   constructor() {
-    super('sync');
+    super('event');
   }
 
   public basicQuery(): Knex.QueryBuilder {

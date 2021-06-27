@@ -49,6 +49,14 @@ export interface IWoker {
   name: string;
 }
 
+export function jsToSql(dateTime: Date): string {
+  return dateTime.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+export function sqlNow() {
+  return jsToSql(new Date());
+}
+
 export default {
   toCamelCase,
   toSnakeCase,

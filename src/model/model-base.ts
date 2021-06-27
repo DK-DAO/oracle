@@ -5,6 +5,28 @@ import logger from '../helper/logger';
 export class ModelBase<T> extends ModelMySQL {
   protected basicQuery?(): Knex.QueryBuilder;
 
+  // eslint-disable-next-line class-methods-use-this
+  private attachConditions<T>(
+    ik: Knex.QueryBuilder,
+    conditions?: {
+      field: keyof T;
+      operator?: '=' | '>' | '<' | '>=' | '<=';
+      value: string | number;
+    }[],
+  ): Knex.QueryBuilder {
+    if (typeof conditions !== 'undefined' && Array.isArray(conditions) && conditions.length > 0) {
+      for (let i = 0; i < conditions.length; i += 1) {
+        const { field, operator, value } = conditions[i];
+        if (operator) {
+          ik.where(<string>field, operator, value);
+        } else {
+          ik.where(<string>field, value);
+        }
+      }
+    }
+    return ik;
+  }
+
   public async create(data: Partial<T>): Promise<T | undefined> {
     let result;
     try {
@@ -33,11 +55,7 @@ export class ModelBase<T> extends ModelMySQL {
     let success: boolean = true;
     try {
       await this.lock();
-      if (typeof conditions !== 'undefined' && Array.isArray(conditions) && conditions.length > 0) {
-        await this.getDefaultKnex().update(data).where(conditions);
-      } else {
-        await this.getDefaultKnex().update(data);
-      }
+      await this.attachConditions(this.getDefaultKnex().update(data), conditions);
     } catch (err) {
       success = true;
       logger.error(err);
@@ -58,9 +76,10 @@ export class ModelBase<T> extends ModelMySQL {
     if (typeof this.basicQuery === 'undefined') {
       throw Error('Basic query was undefined');
     }
-    return typeof conditions !== 'undefined' && Array.isArray(conditions) && conditions.length > 0
-      ? this.basicQuery().where(conditions)
-      : this.basicQuery();
+    if (typeof conditions !== 'undefined') {
+      logger.debug(await this.attachConditions(this.basicQuery(), conditions).toQuery());
+    }
+    return this.attachConditions(this.basicQuery(), conditions);
   }
 }
 
