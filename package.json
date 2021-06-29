@@ -46,6 +46,7 @@
     "dotenv": "^8.2.0",
     "ethers": "^5.3.1",
     "express": "^4.17.1",
+    "js-sha3": "^0.8.0",
     "knex": "^0.95.6",
     "logform": "^2.2.0",
     "modern-syslog": "^1.2.0",
