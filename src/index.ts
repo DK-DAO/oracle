@@ -4,6 +4,7 @@ import config from './helper/config';
 import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
+import BlockchainService from './blockchain/blockchain'
 
 import './middleware';
 
@@ -74,6 +75,7 @@ class MainApplication {
       `Blockchain service for ${blockchainWorkerData.id}:${blockchainWorkerData.name}`,
       `online (pid: ${blockchainWorkerData.pid})`,
     );
+    BlockchainService.start()
   }
 
   /**

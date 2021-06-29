@@ -4,6 +4,9 @@ import { objToCamelCase } from './utilities';
 interface ApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
+  walletMnemonic: string;
+  addressRNG: string;
+  addressDuelistKingFairDistributor: string;
   serviceHost: string;
   servicePort: string;
 }

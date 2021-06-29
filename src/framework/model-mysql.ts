@@ -128,19 +128,6 @@ export class ModelMySQL extends EventEmitter {
       result: await Pagination.pagination<T>(query, pagination),
     };
   }
-
-  public async isExist(key?: string, value?: any): Promise<boolean> {
-    const query = this.getDefaultKnex().count('*', { as: 'total' });
-    if (typeof key !== 'undefined' && typeof key !== 'undefined') {
-      query.where(key, value);
-    }
-    const [result] = await query;
-    return result && result.total > 0;
-  }
-
-  public async isNotExist(key?: string, value?: any): Promise<boolean> {
-    return !(await this.isExist(key, value));
-  }
 }
 
 export default ModelMySQL;
