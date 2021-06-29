@@ -81,6 +81,15 @@ export class ModelBase<T> extends ModelMySQL {
     }
     return this.attachConditions(this.basicQuery(), conditions);
   }
+
+  public async isExist(key: keyof T, value: any): Promise<boolean> {
+    const [result] = await this.getDefaultKnex().count('id', { as: 'total' }).where(key, value);
+    return result && result.total > 0;
+  }
+
+  public async isNotExist(key: keyof T, value: any): Promise<boolean> {
+    return !(await this.isExist(key, value));
+  }
 }
 
 export default ModelBase;

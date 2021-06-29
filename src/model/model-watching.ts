@@ -9,7 +9,7 @@ export interface IWatching {
   createdDate: string;
 }
 
-export class ModelToken extends ModelBase<IWatching> {
+export class ModelWatching extends ModelBase<IWatching> {
   constructor() {
     super('watching');
   }
@@ -19,4 +19,4 @@ export class ModelToken extends ModelBase<IWatching> {
   }
 }
 
-export default ModelToken;
+export default ModelWatching;

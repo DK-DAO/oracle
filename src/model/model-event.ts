@@ -4,16 +4,17 @@ import { ModelBase } from './model-base';
 export interface IEvent {
   id: number;
   blockchainId: number;
+  tokenId: number;
   eventName: string;
   processed: boolean;
   from: string;
   to: string;
-  value: number;
+  value: string;
   topics: string;
   rawData: Buffer;
   jsonData: string;
-  blockNumber: string;
-  blockhash: string;
+  blockNumber: number;
+  blockHash: string;
   memo: string;
   contractAddress: string;
   transactionHash: string;
@@ -39,7 +40,7 @@ export class ModelEvent extends ModelBase<IEvent> {
       'rawData',
       'jsonData',
       'blockNumber',
-      'blockhash',
+      'blockHash',
       'memo',
       'contractAddress',
       'transactionHash',
