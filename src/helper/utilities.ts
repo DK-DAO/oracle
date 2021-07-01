@@ -95,6 +95,10 @@ export function buildDigestArray(size: number) {
   };
 }
 
+export function hexToFixedBuffer(inputHexString: string, size: number = 32): Buffer {
+  return Buffer.from(inputHexString.replace(/^0x/g, '').padStart(size * 2, '0'), 'hex');
+}
+
 export default {
   toCamelCase,
   toSnakeCase,

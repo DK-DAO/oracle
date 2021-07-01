@@ -5,6 +5,7 @@ interface ApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
   walletMnemonic: string;
+  activeChainId: string;
   addressRNG: string;
   addressDuelistKingFairDistributor: string;
   serviceHost: string;
