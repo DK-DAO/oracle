@@ -31,11 +31,11 @@ export class ModelBase<T> extends ModelMySQL {
     let result;
     try {
       await this.lock();
-      const id = await this.getDefaultKnex().insert(data, 'id').first();
+      await this.getDefaultKnex().insert(data);
       if (typeof this.basicQuery === 'undefined') {
         throw Error('Basic query was undefined');
       }
-      result = this.basicQuery().where({ id }).first();
+      result = this.basicQuery().whereRaw('`id`=LAST_INSERT_ID()').first();
     } catch (err) {
       logger.error(err);
     } finally {
@@ -75,9 +75,6 @@ export class ModelBase<T> extends ModelMySQL {
   ): Promise<T[]> {
     if (typeof this.basicQuery === 'undefined') {
       throw Error('Basic query was undefined');
-    }
-    if (typeof conditions !== 'undefined') {
-      logger.debug(await this.attachConditions(this.basicQuery(), conditions).toQuery());
     }
     return this.attachConditions(this.basicQuery(), conditions);
   }

@@ -21,13 +21,13 @@ export class Oracle {
 
   private dkDaoOracle: ethers.Wallet;
 
-  private blockchainId: number = parseInt(config.activeChainId, 10);
+  private blockchainId: number = config.activeChainId;
 
   private contracts: IContractList = <IContractList>{};
 
   constructor() {
-    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic.trim(), `m/44'/60'/0'/0/0`);
-    this.dkDaoOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic.trim(), `m/44'/60'/0'/0/1`);
+    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/0`);
+    this.dkDaoOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`);
   }
 
   public async connect() {
@@ -56,8 +56,9 @@ export class Oracle {
     return instance;
   }
 
-  public async issueCard() {
-    this.contracts.distributor.openBox();
+  public async openBox(buyer: string, boxes: number) {
+    // For now we only support one campaign
+    await this.contracts.distributor.openBox(await this.contracts.distributor.getCampaignIndex(), buyer, boxes);
   }
 
   public async commit(sizeOfDigests: number) {

@@ -4,7 +4,7 @@ import config from './helper/config';
 import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
-import BlockchainService from './blockchain/blockchain'
+import BlockchainService from './blockchain/blockchain-service';
 
 import './middleware';
 
@@ -42,6 +42,15 @@ class MainApplication {
       name: 'api',
     });
 
+    const imBlockchain = new ModelBlockchain();
+    const blockchains = await imBlockchain.get();
+    for (let i = 0; i < blockchains.length; i += 1) {
+      startWoker({
+        id: blockchains[i].id,
+        name: blockchains[i].name,
+      });
+    }
+
     // Keep all workers alive
     cluster.on('exit', (worker: any, code: number, signal: number) => {
       const { id, name, pid } = worker.process.env;
@@ -70,12 +79,8 @@ class MainApplication {
    * @static
    * @memberof MainApplication
    */
-  private static startBlockchain(blockchainWorkerData: IWoker) {
-    logger.info(
-      `Blockchain service for ${blockchainWorkerData.id}:${blockchainWorkerData.name}`,
-      `online (pid: ${blockchainWorkerData.pid})`,
-    );
-    BlockchainService.start()
+  private static startBlockchain() {
+    BlockchainService.start();
   }
 
   /**
@@ -95,19 +100,8 @@ class MainApplication {
       }
       // Start blockchain observer
       if (id && name && name !== 'api') {
-        const value = parseInt(id, 10);
-        if (Number.isInteger(value)) {
-          const imBlockchain = new ModelBlockchain();
-          const [blockchain] = await imBlockchain.get([{ field: 'id', value: id }]);
-          if (blockchain) {
-            MainApplication.startBlockchain({
-              id: value,
-              name,
-              pid: process.pid,
-            });
-            return;
-          }
-        }
+        MainApplication.startBlockchain();
+        return;
       }
       logger.alert('Something went wrong:', { id, name });
     }

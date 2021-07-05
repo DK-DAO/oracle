@@ -17,5 +17,5 @@
     "types": ["node"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["built", "node_modules", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["built", "node_modules", "**/*.spec.ts", "**/*.test.ts", "typechain/**/*.ts"]
 }

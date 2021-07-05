@@ -2,6 +2,17 @@ import { noCase } from 'no-case';
 import cluster from 'cluster';
 import crypto from 'crypto';
 import { keccak256 } from 'js-sha3';
+import { BigNumber, ethers, utils } from 'ethers';
+
+export interface IParsedEvent {
+  blockHash: string;
+  contractAddress: string;
+  transactionHash: string;
+  blockNumber: number;
+  from: string;
+  to: string;
+  value: string;
+}
 
 export function toCamelCase(text: string): string {
   return noCase(text, {
@@ -92,6 +103,42 @@ export function buildDigestArray(size: number) {
     h,
     s,
     v: buf,
+  };
+}
+
+export function getLowCaseAddress(hexString: string): string {
+  if (utils.isHexString(hexString) && hexString.length >= 42) {
+    // Get address from bytes 32
+    return `0x${hexString.substr(-40).toLowerCase()}`;
+  }
+  throw new Error('Input data was not a hex string');
+}
+
+export function getChecksumAddress(hexString: string): string {
+  if (utils.isHexString(hexString) && hexString.length >= 42) {
+    // Get checksum address from bytes 32
+    return utils.getAddress(`0x${hexString.substr(-40)}`);
+  }
+  throw new Error('Input data was not a hex string');
+}
+
+export function parseEvent(log: ethers.providers.Log): IParsedEvent {
+  const { blockHash, transactionHash, blockNumber, topics, data, address } = log;
+  // Append data to topic if these data wasn't indexed
+  const eventData = [...topics];
+  for (let i = 2; i < data.length; i += 64) {
+    eventData.push(`0x${data.substr(i, 64)}`);
+  }
+  const [, from, to, value] = eventData;
+
+  return {
+    blockHash,
+    contractAddress: address.toString(),
+    transactionHash,
+    blockNumber,
+    from: getLowCaseAddress(from),
+    to: getLowCaseAddress(to),
+    value: BigNumber.from(value).toString(),
   };
 }
 

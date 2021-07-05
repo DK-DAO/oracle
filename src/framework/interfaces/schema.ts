@@ -7,7 +7,7 @@ export interface IRequestData {
   body: any;
   query: any;
   params: any;
-  any: any;
+  any?: any;
 }
 
 export type TDataType = 'string' | 'number' | 'boolean' | 'object' | 'array';

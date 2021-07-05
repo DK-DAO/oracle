@@ -4,7 +4,7 @@ import config from './helper/config';
 import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
-import BlockchainService from './blockchain/blockchain';
+import BlockchainService from './blockchain/blockchain-service';
 
 import './middleware';
 

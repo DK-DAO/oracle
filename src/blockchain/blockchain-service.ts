@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop } from 'noqueue';
-import { BigNumber, ethers, utils } from 'ethers';
+import { ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
 import { Connector } from '../framework';
@@ -8,77 +8,46 @@ import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
+import { parseEvent } from '../helper/utilities';
 import ModelEvent from '../model/model-event';
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
+// Number of blocks will be synced
 const numberOfBlocksToSync = 25;
+
+// Number of blocks will be splited to worker
 const numberOfBlockSplitForWorker = 5;
+
+// Safe confirmations
 const safeConfirmations = 6;
 
-export interface IParsedEvent {
-  blockHash: string;
-  contractAddress: string;
-  transactionHash: string;
-  blockNumber: number;
-  from: string;
-  to: string;
-  value: string;
-}
-
-export function getLowCaseAddress(hexString: string): string {
-  if (utils.isHexString(hexString) && hexString.length >= 42) {
-    // Get address from bytes 32
-    return `0x${hexString.substr(-40).toLowerCase()}`;
-  }
-  throw new Error('Input data was not a hex string');
-}
-
-export function getChecksumAddress(hexString: string): string {
-  if (utils.isHexString(hexString) && hexString.length >= 42) {
-    // Get checksum address from bytes 32
-    return utils.getAddress(`0x${hexString.substr(-40)}`);
-  }
-  throw new Error('Input data was not a hex string');
-}
-
-export function parseEvent(log: ethers.providers.Log): IParsedEvent {
-  const { blockHash, transactionHash, blockNumber, topics, data, address } = log;
-  // Append data to topic if these data wasn't indexed
-  const eventData = [...topics];
-  for (let i = 2; i < data.length; i += 64) {
-    eventData.push(`0x${data.substr(i, 64)}`);
-  }
-  const [, from, to, value] = eventData;
-
-  return {
-    blockHash,
-    contractAddress: address.toString(),
-    transactionHash,
-    blockNumber,
-    from: getLowCaseAddress(from),
-    to: getLowCaseAddress(to),
-    value: BigNumber.from(value).toString(),
-  };
-}
-
 export class Blockchain {
+  // Blockchain information
   private blockchain: IBlockchain = <any>{};
 
+  // Sync status
   private synced: ISync = <any>{};
 
-  private queue: QueueLoop = new QueueLoop();
+  // Instance of queue loop
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 5000 });
 
+  // RPC provider
   private provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
 
+  // List of watching token
   private watchingToken: IToken[] = [];
 
+  // Watching token address
   private watchingTokenAddresses: Map<string, IToken> = new Map();
 
+  // Watching wallet
   private watchingWallet: IWatching[] = [];
 
+  // Watching wallet address
   private watchingWalletAddresses: Map<string, IWatching> = new Map();
 
+  // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
     const imBlockchain = new ModelBlockchain();
     const id = typeof process.env.id === 'string' ? parseInt(process.env.id, 10) : -1;
@@ -88,41 +57,43 @@ export class Blockchain {
         value: id,
       },
     ]);
-    this.blockchain = bcData;
+
     if (typeof bcData !== 'undefined') {
+      this.blockchain = bcData;
+      logger.info('Loading blockchain data:', bcData);
       this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
       return true;
     }
+    logger.error('Unable to load blockchain data of, blockchain id:', id);
     return false;
   }
 
+  // Star observer
   public async start() {
     if (await this.getBlockchainInfo()) {
-      // @todo: Disable this section
-      await new ModelSync().update({
-        blockchainId: this.blockchain.id,
-        startBlock: 12507990,
-        syncedBlock: 12507990,
-        targetBlock: await this.provider.getBlockNumber(),
-      });
       await this.updateListToken();
       await this.updateListWatching();
-      logger.debug('Blockchain info:', this.blockchain);
-      this.queue.on('success', (job: string) => {
-        logger.info('Completed', job);
-      });
+
       this.queue
         .add('update sync status', async () => {
           await this.updateSync();
         })
-        .add('', async () => {})
         .add('syncing event from blockchain', async () => {
           await this.eventSync();
-        })
-        .start();
+        });
+      
+      // Current watching blockchain is active chain of DKDAO
+      if(this.blockchain.chainId === config.activeChainId) {
+        this.queue.add('oracle processor', async()=>{
+          
+        });
+      }
+
+      this.queue.start();
     }
   }
 
+  // Update list of token
   private async updateListToken() {
     const imToken = new ModelToken();
     this.watchingToken = await imToken.get([
@@ -135,8 +106,11 @@ export class Blockchain {
     for (let i = 0; i < this.watchingToken.length; i += 1) {
       this.watchingTokenAddresses.set(this.watchingToken[i].address.toLowerCase(), this.watchingToken[i]);
     }
+
+    logger.info('Start watching', this.watchingToken.length, 'tokens on', this.blockchain.name);
   }
 
+  // Update list of watching wallet
   private async updateListWatching() {
     const imWatching = new ModelWatching();
     this.watchingWallet = await imWatching.get([
@@ -150,6 +124,7 @@ export class Blockchain {
     }
   }
 
+  // Update sync
   private async updateSync() {
     let isChanged = false;
     const imSync = new ModelSync();
@@ -209,6 +184,7 @@ export class Blockchain {
     }
   }
 
+  // Event sync will split works and pass to event worker
   private async eventWorker(id: number, fromBlock: number, toBlock: number) {
     // Get logs for given address
     const logs = await this.provider.getLogs({
@@ -256,6 +232,7 @@ export class Blockchain {
     await imSync.update({ syncedBlock: toBlock }, [{ field: 'id', value: id }]);
   }
 
+  // Syncing events from blockchain
   private async eventSync() {
     const { id, startBlock, syncedBlock, targetBlock } = this.synced;
     // Check for synced data is good
@@ -277,19 +254,20 @@ export class Blockchain {
           }
           if (fromBlock + numberOfBlockSplitForWorker <= toBlock) {
             logger.debug(
-              'Scanning events from block:',
+              this.blockchain.name,
+              '> Scanning events from block:',
               fromBlock + 1,
               'to block:',
               fromBlock + numberOfBlockSplitForWorker,
             );
             await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlockSplitForWorker);
           } else {
-            logger.debug('Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
+            logger.debug(this.blockchain.name, '> Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
             await this.eventWorker(id, fromBlock + 1, toBlock);
           }
           fromBlock += numberOfBlockSplitForWorker;
         } catch (err) {
-          logger.error('Can not sync from:', fromBlock, 'to:', toBlock, err);
+          logger.error(this.blockchain.name, '> Can not sync from:', fromBlock, 'to:', toBlock, err);
         }
       }
     }
