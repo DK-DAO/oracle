@@ -17,7 +17,7 @@ export class ModelBlockchain extends ModelBase<IBlockchain> {
   }
 
   public basicQuery(): Knex.QueryBuilder {
-    return this.getDefaultKnex().select('id', 'name', 'url', 'explorerUrl', 'nativeToken', 'createdDate');
+    return this.getDefaultKnex().select('id', 'chainId', 'name', 'url', 'explorerUrl', 'nativeToken', 'createdDate');
   }
 }
 

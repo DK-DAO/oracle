@@ -16,6 +16,7 @@ export interface ISecret {
   digest: string;
   status: ESecretStatus;
   createdDate: string;
+  updatedDate: string;
 }
 
 export class ModelSecret extends ModelBase<ISecret> {
@@ -24,7 +25,7 @@ export class ModelSecret extends ModelBase<ISecret> {
   }
 
   public basicQuery(): Knex.QueryBuilder {
-    return this.getDefaultKnex().select('id', 'blockchainId', 'secret', 'digest', 'createdDate');
+    return this.getDefaultKnex().select('id', 'blockchainId', 'secret', 'digest', 'createdDate', 'updatedDate');
   }
 
   public async updateAll(updateData: Partial<ISecret>, idList: number[]) {

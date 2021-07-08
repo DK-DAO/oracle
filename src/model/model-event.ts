@@ -1,12 +1,19 @@
 import { Knex } from 'knex';
 import { ModelBase } from './model-base';
 
+export enum EProcessingStatus {
+  New = 0,
+  Processing = 1,
+  Success = 2,
+  Error = 255,
+}
+
 export interface IEvent {
   id: number;
   blockchainId: number;
   tokenId: number;
   eventName: string;
-  processed: boolean;
+  status: EProcessingStatus;
   from: string;
   to: string;
   value: string;
@@ -26,13 +33,17 @@ export class ModelEvent extends ModelBase<IEvent> {
     super('event');
   }
 
+  public getEvent(): Promise<IEvent | undefined> {
+    return this.basicQuery().where({ status: EProcessingStatus.New }).orderBy('id', 'asc').limit(1).first();
+  }
+
   public basicQuery(): Knex.QueryBuilder {
     return this.getDefaultKnex().select(
       'id',
       'blockchainId',
       'tokenId',
       'eventName',
-      'processed',
+      'status',
       'from',
       'to',
       'value',
