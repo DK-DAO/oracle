@@ -14,7 +14,9 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
-    table.index(['secret', 'digest', 'status'], 'indexed_fields');
+    table.timestamp('updatedDate').defaultTo(knex.fn.now()).index().comment('Updated date');
+
+    table.index(['secret', 'digest', 'status', 'updatedDate'], 'indexed_fields');
   });
 }
 

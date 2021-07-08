@@ -10,13 +10,13 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('eventName', 255).notNullable().comment('Event name, that depend on what will EVM emit');
 
-    table.boolean('processed').notNullable().defaultTo(false).comment('Is the event processed');
+    table.boolean('status').notNullable().defaultTo(0).comment('Status of the processing of event');
 
     table.string('from', 42).notNullable().comment('Sender');
 
     table.string('to', 42).notNullable().comment('Receiver');
 
-    table.decimal('value', 64, 0).notNullable().comment('Value of transaction');
+    table.string('value', 66).notNullable().comment('Value of transaction');
 
     table.json('topics').notNullable().comment('Topics data in JSON format');
 
@@ -43,7 +43,8 @@ export async function up(knex: Knex): Promise<void> {
         'to',
         'value',
         'eventName',
-        'processed',
+        'status',
+        'blockNumber',
         'blockHash',
         'transactionHash',
         'contractAddress',

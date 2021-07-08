@@ -29,6 +29,13 @@ export async function up(knex: Knex): Promise<void> {
       nativeToken: 'MATIC',
       explorerUrl: 'https://polygonscan.com',
     },
+    {
+      url: 'http://localhost:8545',
+      chainId: 911,
+      name: 'Local Network',
+      nativeToken: 'ETH',
+      explorerUrl: '',
+    },
   ]);
 
   const supportedBlockchain = <IBlockchain[]>await knex('blockchain').select();
@@ -118,6 +125,7 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  await knex('event').delete();
   await knex('token').delete();
   await knex('blockchain').delete().whereIn('chainId', [1, 56, 137]);
 }
