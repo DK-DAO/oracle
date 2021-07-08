@@ -4,7 +4,7 @@ import winston, { transports, format, Logger } from 'winston';
 import syslog from 'modern-syslog';
 import chalk from 'chalk';
 import { TransformableInfo } from 'logform';
-import SyslogTransport from './transport';
+// import SyslogTransport from './transport';
 
 type LogLevelType =
   | 'emerg'
@@ -109,7 +109,7 @@ export class LoggerLoader {
         ),
       ),
       defaultMeta: { service },
-      transports: [new transports.Console(), new SyslogTransport({ syslog })],
+      transports: [new transports.Console(), /* new SyslogTransport({ syslog }) */],
     });
     this.level = LogLevel[level];
     this.debug('Start new winston instance', 'service');

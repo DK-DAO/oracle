@@ -5,8 +5,10 @@ import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
 import BlockchainService from './blockchain/blockchain-service';
-
 import './middleware';
+import { IToken } from './model/model-token';
+import { IWatching } from './model/model-watching';
+import { ISync } from './model/model-sync';
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
@@ -36,18 +38,50 @@ class MainApplication {
       logger.info(`${newCluster.name} was loaded at: ${newCluster.pid}`);
     }
 
+    const imBlockchain = new ModelBlockchain();
+    const blockchains = await imBlockchain.get();
+    let activeBlockchains;
+    if (config.nodeEnv === 'development') {
+      // Chain 911 is reserved for development
+      activeBlockchains = blockchains.filter((b) => b.chainId === 911);
+      const knex = Connector.getInstance();
+      await knex('sync').delete();
+      await knex('event').delete();
+      const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
+      if (typeof testToken === 'undefined') {
+        await knex('token').insert(<IToken>{
+          address: '0xB2236AC5C114eaD69B2FEaf014d1e17dd6Fa8e4d',
+          blockchainId: activeBlockchains[0].id,
+          decimal: 18,
+          name: 'Test Token',
+          symbol: 'TEST',
+        });
+        await knex('watching').insert(<IWatching>{
+          address: '0x9ccc80a5beD6f15AdFcB9096109500B3c96a8e52',
+          blockchainId: activeBlockchains[0].id,
+          name: 'Local test account',
+        });
+      }
+      await knex('sync').insert(<ISync>{
+        blockchainId: activeBlockchains[0].id,
+        startBlock: 0,
+        syncedBlock: 0,
+        targetBlock: 0,
+      });
+    } else {
+      activeBlockchains = blockchains.filter((b) => b.chainId !== 911);
+    }
+
     // API woker
     startWoker({
       id: -1,
       name: 'api',
     });
 
-    const imBlockchain = new ModelBlockchain();
-    const blockchains = await imBlockchain.get();
-    for (let i = 0; i < blockchains.length; i += 1) {
+    for (let i = 0; i < activeBlockchains.length; i += 1) {
       startWoker({
-        id: blockchains[i].id,
-        name: blockchains[i].name,
+        id: activeBlockchains[i].id,
+        name: activeBlockchains[i].name,
       });
     }
 

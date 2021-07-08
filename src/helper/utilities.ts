@@ -63,7 +63,7 @@ export interface IWoker {
 }
 
 export function jsToSql(dateTime: Date): string {
-  return dateTime.toISOString().slice(0, 19).replace('T', ' ');
+  return dateTime.toISOString().slice(0, 19).replace('T', ' ').replace('Z', ' ');
 }
 
 export function sqlNow() {

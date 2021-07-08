@@ -6,7 +6,7 @@ interface ApplicationConfig {
   mariadbConnectUrl: string;
   walletMnemonic: string;
   activeChainId: number;
-  addressRNG: string;
+  addressRng: string;
   addressDuelistKingFairDistributor: string;
   serviceHost: string;
   servicePort: string;

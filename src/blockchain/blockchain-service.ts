@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop } from 'noqueue';
-import { ethers, utils } from 'ethers';
+import { BigNumber, ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
 import { Connector } from '../framework';
@@ -9,7 +9,8 @@ import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent } from '../helper/utilities';
-import ModelEvent from '../model/model-event';
+import ModelEvent, { EProcessingStatus } from '../model/model-event';
+import Oracle from '../helper/oracle';
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
@@ -66,31 +67,6 @@ export class Blockchain {
     }
     logger.error('Unable to load blockchain data of, blockchain id:', id);
     return false;
-  }
-
-  // Star observer
-  public async start() {
-    if (await this.getBlockchainInfo()) {
-      await this.updateListToken();
-      await this.updateListWatching();
-
-      this.queue
-        .add('update sync status', async () => {
-          await this.updateSync();
-        })
-        .add('syncing event from blockchain', async () => {
-          await this.eventSync();
-        });
-      
-      // Current watching blockchain is active chain of DKDAO
-      if(this.blockchain.chainId === config.activeChainId) {
-        this.queue.add('oracle processor', async()=>{
-          
-        });
-      }
-
-      this.queue.start();
-    }
   }
 
   // Update list of token
@@ -205,7 +181,7 @@ export class Blockchain {
           await imEvent.create({
             from,
             to,
-            value,
+            value: BigNumber.from(value).toHexString(),
             blockHash,
             blockNumber,
             transactionHash,
@@ -270,6 +246,53 @@ export class Blockchain {
           logger.error(this.blockchain.name, '> Can not sync from:', fromBlock, 'to:', toBlock, err);
         }
       }
+    }
+  }
+
+  // Star observer
+  public async start() {
+    if (await this.getBlockchainInfo()) {
+      await this.updateListToken();
+      await this.updateListWatching();
+
+      this.queue.on('error', (name: string, err: Error) => {
+        logger.error(`Found error in ${name}:`, err);
+      });
+
+      this.queue
+        .add('update sync status', async () => {
+          await this.updateSync();
+        })
+        .add('syncing event from blockchain', async () => {
+          await this.eventSync();
+        });
+
+      // Current watching blockchain is active chain of DKDAO
+      if (this.blockchain.chainId === config.activeChainId) {
+        this.queue
+          .add('oracle processor', async () => {
+            const imEvent = new ModelEvent();
+            const event = await imEvent.getEvent();
+            if (typeof event !== 'undefined') {
+              logger.debug('Start processing event', event.jsonData);
+              /*
+            await imEvent.update(
+              {
+                processed: EProcessingStatus.Processing,
+              },
+              [{ field: 'id', value: event.id }],
+            );
+            */
+            }
+          })
+          .add('oracle rng observer', async () => {
+            const oracle = await Oracle.getInstance();
+
+            console.log('RNG progess', await oracle.getRNGProgess());
+          });
+      }
+
+      this.queue.start();
     }
   }
 }

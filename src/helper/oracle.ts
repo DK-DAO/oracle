@@ -5,7 +5,7 @@ import ModelBlockchain from '../model/model-blockchain';
 import config from './config';
 import logger from './logger';
 import { buildDigestArray } from './utilities';
-import { abi as abiRNG } from '../../artifacts/contracts/infrastructure/RNG.sol/RNG.json';
+import { abi as abiRng } from '../../artifacts/contracts/infrastructure/RNG.sol/RNG.json';
 // eslint-disable-next-line max-len
 import { abi as abiDistributor } from '../../artifacts/contracts/dk/DuelistKingDistributor.sol/DuelistKingDistributor.json';
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
@@ -26,7 +26,7 @@ export class Oracle {
   private contracts: IContractList = <IContractList>{};
 
   constructor() {
-    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/0`);
+    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`);
     this.dkDaoOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`);
   }
 
@@ -34,25 +34,26 @@ export class Oracle {
     const imBlockchain = new ModelBlockchain();
     const [bcData] = await imBlockchain.get([
       {
-        field: 'id',
+        field: 'chainId',
         value: this.blockchainId,
       },
     ]);
     if (typeof bcData !== 'undefined') {
       const provider = new ethers.providers.JsonRpcProvider(bcData.url);
-      this.dkDaoOracle.connect(provider);
-      this.dkOracle.connect(provider);
-      this.contracts.rng = <RNG>new ethers.Contract(config.addressRNG, abiRNG, this.dkDaoOracle);
+      this.dkDaoOracle = this.dkDaoOracle.connect(provider);
+      this.dkOracle = this.dkOracle.connect(provider);
+      this.contracts.rng = <RNG>new ethers.Contract(config.addressRng, abiRng, this.dkDaoOracle);
       this.contracts.distributor = <DuelistKingDistributor>(
         new ethers.Contract(config.addressDuelistKingFairDistributor, abiDistributor, this.dkOracle)
       );
+      return;
     }
     throw new Error('Can not lookup blockchain data from database');
   }
 
   public static async getInstance(): Promise<Oracle> {
     const instance = new Oracle();
-    instance.connect();
+    await instance.connect();
     return instance;
   }
 
@@ -115,6 +116,10 @@ export class Oracle {
     } else {
       logger.error('There are no remaining secret record in our database');
     }
+  }
+
+  public async getRNGProgess() {
+    return this.contracts.rng.getProgess();
   }
 }
 
