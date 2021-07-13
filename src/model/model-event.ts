@@ -28,13 +28,51 @@ export interface IEvent {
   createdDate: string;
 }
 
+export interface IEventDetail extends IEvent {
+  chainId: number;
+  blockchainName: string;
+  tokenSymbol: string;
+  tokenDecimal: number;
+  tokenAddress: string;
+}
+
 export class ModelEvent extends ModelBase<IEvent> {
   constructor() {
     super('event');
   }
 
-  public getEvent(): Promise<IEvent | undefined> {
-    return this.basicQuery().where({ status: EProcessingStatus.New }).orderBy('id', 'asc').limit(1).first();
+  public getEventDetail(): Promise<IEventDetail | undefined> {
+    return this.getDetailQuery().where({ status: EProcessingStatus.New }).orderBy('id', 'asc').limit(1).first();
+  }
+
+  public getDetailQuery() {
+    return this.getKnex()('event as e')
+      .select(
+        'e.id as id',
+        'e.blockchainId as blockchainId',
+        'tokenId',
+        'eventName',
+        'status',
+        'from',
+        'to',
+        'value',
+        'topics',
+        'rawData',
+        'jsonData',
+        'blockNumber',
+        'blockHash',
+        'memo',
+        'contractAddress',
+        'transactionHash',
+        'e.createdDate as createdDate',
+        'b.name as blockchainName',
+        'b.chainId as chainId',
+        't.decimal as tokenDecimal',
+        't.symbol as tokenSymbol',
+        't.address as tokenAddress',
+      )
+      .join('token as t', 'e.tokenId', 't.id')
+      .join('blockchain as b', 'e.blockchainId', 'b.id');
   }
 
   public basicQuery(): Knex.QueryBuilder {

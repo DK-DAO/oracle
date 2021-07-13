@@ -1,4 +1,5 @@
-import dotenv from 'dotenv';
+import { parse } from 'dotenv';
+import fs from 'fs';
 import { objToCamelCase } from './utilities';
 
 interface ApplicationConfig {
@@ -6,6 +7,10 @@ interface ApplicationConfig {
   mariadbConnectUrl: string;
   walletMnemonic: string;
   activeChainId: number;
+  developmentChainId: number;
+  activeCampaignId: number;
+  saleScheduleGenesis: Date;
+  saleScheduleEarlybird: Date;
   addressRng: string;
   addressDuelistKingFairDistributor: string;
   serviceHost: string;
@@ -18,13 +23,19 @@ const config = ((conf) => {
     const [k, v]: [string, string] = kvs[i];
     switch (k) {
       case 'activeChainId':
+      case 'developmentChainId':
+      case 'activeCampaignId':
         converted[k] = parseInt(v, 10);
+        break;
+      case 'saleScheduleGenesis':
+      case 'saleScheduleEarlybird':
+        converted[k] = new Date(v.trim());
         break;
       default:
         converted[k] = v.trim();
     }
   }
   return converted;
-})(objToCamelCase(dotenv.config({ path: `${__dirname}/../../.env` }).parsed));
+})(objToCamelCase(parse(fs.readFileSync(`${__dirname}/../../.env`))));
 
 export default <ApplicationConfig>config;

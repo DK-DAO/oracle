@@ -42,10 +42,10 @@ class MainApplication {
     const blockchains = await imBlockchain.get();
     let activeBlockchains;
     if (config.nodeEnv === 'development') {
-      // Chain 911 is reserved for development
-      activeBlockchains = blockchains.filter((b) => b.chainId === 911);
+      activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
       const knex = Connector.getInstance();
       await knex('sync').delete();
+      await knex('open_schedule').delete();
       await knex('event').delete();
       const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
       if (typeof testToken === 'undefined') {
@@ -69,7 +69,7 @@ class MainApplication {
         targetBlock: 0,
       });
     } else {
-      activeBlockchains = blockchains.filter((b) => b.chainId !== 911);
+      activeBlockchains = blockchains.filter((b) => b.chainId !== config.developmentChainId);
     }
 
     // API woker

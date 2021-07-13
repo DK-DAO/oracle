@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop } from 'noqueue';
-import { BigNumber, ethers, utils } from 'ethers';
+import { ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
 import { Connector } from '../framework';
@@ -8,9 +8,11 @@ import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
-import { parseEvent } from '../helper/utilities';
-import ModelEvent, { EProcessingStatus } from '../model/model-event';
+import { parseEvent, BigNum } from '../helper/utilities';
+import ModelEvent from '../model/model-event';
 import Oracle from '../helper/oracle';
+import ModelOpenSchedule from '../model/model-open-schedule';
+import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
@@ -181,7 +183,7 @@ export class Blockchain {
           await imEvent.create({
             from,
             to,
-            value: BigNumber.from(value).toHexString(),
+            value: BigNum(value).toString(),
             blockHash,
             blockNumber,
             transactionHash,
@@ -272,22 +274,31 @@ export class Blockchain {
         this.queue
           .add('oracle processor', async () => {
             const imEvent = new ModelEvent();
-            const event = await imEvent.getEvent();
+            const event = await imEvent.getEventDetail();
             if (typeof event !== 'undefined') {
               logger.debug('Start processing event', event.jsonData);
-              /*
-            await imEvent.update(
-              {
-                processed: EProcessingStatus.Processing,
-              },
-              [{ field: 'id', value: event.id }],
-            );
-            */
+              const imOpenSchedule = new ModelOpenSchedule();
+              const floatVal = BigNum(event.value).div(BigNum(10).pow(event.tokenDecimal)).toNumber();
+              const numberOfLootBoxes = calculateNoLootBoxes(floatVal);
+              if (!Number.isInteger(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
+                throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
+              }
+              const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
+              await imOpenSchedule.batchBuy(
+                event,
+                lootBoxDistribution.map((item) => ({
+                  campaignId: config.activeCampaignId,
+                  owner: event.from,
+                  memo: `Buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${
+                    event.from
+                  }`,
+                  numberOfBox: item,
+                })),
+              );
             }
           })
           .add('oracle rng observer', async () => {
             const oracle = await Oracle.getInstance();
-
             console.log('RNG progess', await oracle.getRNGProgess());
           });
       }

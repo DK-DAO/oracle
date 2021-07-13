@@ -15,7 +15,7 @@
     "mocha-test": "mocha -r ts-node/register tests/\\*\\*/\\*.spec.ts",
     "lint": "eslint --config .eslintrc.json --ignore-path .eslintignore ./src/**/*.ts",
     "fix": "eslint --config .eslintrc.json --fix --ignore-path .eslintignore ./src/**/*.ts",
-    "clean":"knex migrate:rollback && knex migrate:latest",
+    "clean": "knex migrate:rollback && knex migrate:latest",
     "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
     "dev:debug": "node --inspect -r ts-node/register ./src/index.ts"
   },
@@ -42,6 +42,7 @@
     "typescript": "^4.3.3"
   },
   "dependencies": {
+    "bignumber.js": "^9.0.1",
     "chalk": "^4.1.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",

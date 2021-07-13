@@ -2,7 +2,8 @@ import { noCase } from 'no-case';
 import cluster from 'cluster';
 import crypto from 'crypto';
 import { keccak256 } from 'js-sha3';
-import { BigNumber, ethers, utils } from 'ethers';
+import { ethers, utils } from 'ethers';
+import { BigNumber } from 'bignumber.js';
 
 export interface IParsedEvent {
   blockHash: string;
@@ -122,6 +123,10 @@ export function getChecksumAddress(hexString: string): string {
   throw new Error('Input data was not a hex string');
 }
 
+export function BigNum(n: BigNumber.Value, base?: number) {
+  return new BigNumber(n, base);
+}
+
 export function parseEvent(log: ethers.providers.Log): IParsedEvent {
   const { blockHash, transactionHash, blockNumber, topics, data, address } = log;
   // Append data to topic if these data wasn't indexed
@@ -138,7 +143,7 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
     blockNumber,
     from: getLowCaseAddress(from),
     to: getLowCaseAddress(to),
-    value: BigNumber.from(value).toString(),
+    value: BigNum(value).toString(),
   };
 }
 

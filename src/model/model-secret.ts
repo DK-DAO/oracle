@@ -32,12 +32,14 @@ export class ModelSecret extends ModelBase<ISecret> {
     return this.getDefaultKnex().update(updateData).whereIn('id', idList);
   }
 
+  // Make sure that secrets will be inserted to database one by one
   public async batchCommit(records: Pick<ISecret, 'secret' | 'digest'>[]): Promise<number[] | undefined> {
     const tx = await this.getKnex().transaction();
     const result: number[] = [];
     try {
       for (let i = 0; i < records.length; i += 1) {
-        const id = await tx(this.tableName).insert(records[i], 'id').first();
+        await tx(this.tableName).insert(records[i]);
+        const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
         if (Number.isInteger(id)) {
           result.push(id);
         } else {
