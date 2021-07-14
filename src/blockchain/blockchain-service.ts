@@ -10,9 +10,14 @@ import ModelToken, { IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum } from '../helper/utilities';
 import ModelEvent from '../model/model-event';
-import Oracle from '../helper/oracle';
+import Oracle from './oracle';
 import ModelOpenSchedule from '../model/model-open-schedule';
 import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
+
+interface ICachedNonce {
+  nonce: number;
+  timestamp: number;
+}
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
@@ -24,6 +29,12 @@ const numberOfBlockSplitForWorker = 5;
 
 // Safe confirmations
 const safeConfirmations = 6;
+
+// Reveal duration
+const revealDuration = 30000;
+
+// Const nubmer of digests
+const numberOfDigests = 20;
 
 export class Blockchain {
   // Blockchain information
@@ -49,6 +60,12 @@ export class Blockchain {
 
   // Watching wallet address
   private watchingWalletAddresses: Map<string, IWatching> = new Map();
+
+  // Last time we do reveal
+  private lastReveal: number = Date.now();
+
+  // Recent cached nonce
+  private cachedNonce: Map<string, ICachedNonce> = new Map();
 
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
@@ -225,28 +242,24 @@ export class Blockchain {
       const toBlock =
         targetBlock - syncedBlock > numberOfBlocksToSync ? syncedBlock + numberOfBlocksToSync : targetBlock;
       while (fromBlock < toBlock) {
-        try {
-          // We skip if there diff is too small
-          if (fromBlock + 1 === toBlock) {
-            break;
-          }
-          if (fromBlock + numberOfBlockSplitForWorker <= toBlock) {
-            logger.debug(
-              this.blockchain.name,
-              '> Scanning events from block:',
-              fromBlock + 1,
-              'to block:',
-              fromBlock + numberOfBlockSplitForWorker,
-            );
-            await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlockSplitForWorker);
-          } else {
-            logger.debug(this.blockchain.name, '> Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
-            await this.eventWorker(id, fromBlock + 1, toBlock);
-          }
-          fromBlock += numberOfBlockSplitForWorker;
-        } catch (err) {
-          logger.error(this.blockchain.name, '> Can not sync from:', fromBlock, 'to:', toBlock, err);
+        // We skip if there diff is too small
+        if (fromBlock + 1 === toBlock) {
+          break;
         }
+        if (fromBlock + numberOfBlockSplitForWorker <= toBlock) {
+          logger.debug(
+            this.blockchain.name,
+            '> Scanning events from block:',
+            fromBlock + 1,
+            'to block:',
+            fromBlock + numberOfBlockSplitForWorker,
+          );
+          await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlockSplitForWorker);
+        } else {
+          logger.debug(this.blockchain.name, '> Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
+          await this.eventWorker(id, fromBlock + 1, toBlock);
+        }
+        fromBlock += numberOfBlockSplitForWorker;
       }
     }
   }
@@ -298,8 +311,18 @@ export class Blockchain {
             }
           })
           .add('oracle rng observer', async () => {
-            const oracle = await Oracle.getInstance();
-            console.log('RNG progess', await oracle.getRNGProgess());
+            if (Date.now() - this.lastReveal >= revealDuration) {
+              const oracle = await Oracle.getInstance(this.blockchain);
+              const { total, remaining } = await oracle.getRNGProgess();
+              logger.debug(`Reveal and commit progress: ${remaining.toString()}/${total.toString()}`);
+              if (remaining.lte(10)) {
+                await oracle.commit(numberOfDigests);
+              } else {
+                await oracle.reveal();
+              }
+            } else {
+              logger.debug('Skip reveal and commit');
+            }
           });
       }
 

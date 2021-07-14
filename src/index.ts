@@ -47,6 +47,7 @@ class MainApplication {
       await knex('sync').delete();
       await knex('open_schedule').delete();
       await knex('event').delete();
+      // await knex('secret').delete();
       const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
       if (typeof testToken === 'undefined') {
         await knex('token').insert(<IToken>{
