@@ -8,6 +8,8 @@ export async function up(knex: Knex): Promise<void> {
 
     table.integer('numberOfBox').notNullable().comment('Number of loot box going to to open');
 
+    table.string('transactionHash', 66).comment('Transaction hash of loot box opening');
+
     table.string('owner', 42).notNullable().comment('Address of owner');
 
     table.string('memo', 255).notNullable().comment('Memo of issuance');
@@ -18,7 +20,10 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
-    table.index(['campaignId', 'numberOfBox', 'owner', 'createdDate', 'updatedDate'], 'indexed_fields');
+    table.index(
+      ['campaignId', 'numberOfBox', 'transactionHash', 'owner', 'createdDate', 'updatedDate'],
+      'indexed_fields',
+    );
   });
 }
 

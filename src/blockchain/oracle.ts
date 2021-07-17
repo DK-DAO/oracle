@@ -10,6 +10,9 @@ import { abi as abiRng } from '../../artifacts/contracts/infrastructure/RNG.sol/
 import { abi as abiDistributor } from '../../artifacts/contracts/dk/DuelistKingDistributor.sol/DuelistKingDistributor.json';
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
 import { BytesBuffer } from '../helper/bytes-buffer';
+import ModelOpenSchedule from '../model/model-open-schedule';
+
+const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 export interface IContractList {
   rng: RNG;
@@ -25,23 +28,28 @@ export class Oracle {
 
   private contracts: IContractList = <IContractList>{};
 
+  public provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
+
   public dkOracleAddress: string = '';
 
   constructor() {
-    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`);
+    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`);
     this.dkDaoOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`);
   }
 
   public async connect(bcData: IBlockchain) {
     this.bcData = bcData;
-    const provider = new ethers.providers.JsonRpcProvider(bcData.url);
-    this.dkDaoOracle = this.dkDaoOracle.connect(provider);
-    this.dkOracle = this.dkOracle.connect(provider);
+    this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
+    this.dkDaoOracle = this.dkDaoOracle.connect(this.provider);
+    this.dkOracle = this.dkOracle.connect(this.provider);
+
     this.dkOracleAddress = this.dkOracle.address;
     this.contracts.rng = <RNG>new ethers.Contract(config.addressRng, abiRng, this.dkDaoOracle);
     this.contracts.distributor = <DuelistKingDistributor>(
       new ethers.Contract(config.addressDuelistKingFairDistributor, abiDistributor, this.dkOracle)
     );
+    logger.debug(`DKDAO Oracle: ${this.dkDaoOracle.address}, DK Oracle: ${this.dkOracle.address}`);
+    logger.debug(`DKDAO RNG: ${this.contracts.rng.address}, DK Distributor: ${this.contracts.distributor.address}`);
   }
 
   public static async getInstance(bcData: IBlockchain): Promise<Oracle> {
@@ -50,9 +58,13 @@ export class Oracle {
     return instance;
   }
 
-  public async openBox(buyer: string, boxes: number) {
-    // For now we only support one campaign
-    await this.contracts.distributor.openBox(await this.contracts.distributor.getCampaignIndex(), buyer, boxes);
+  public async openBox() {
+    const imOpenSchedule = new ModelOpenSchedule();
+    imOpenSchedule.openLootBox(
+      async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
+        return this.contracts.distributor.openBox(campaignId, owner, numberOfBox);
+      },
+    );
   }
 
   public async commit(numberOfDigests: number) {
@@ -62,16 +74,12 @@ export class Oracle {
       blockchainId: this.bcData.id,
       digest: `0x${item.toString('hex')}`,
       secret: `0x${digests.s[index].toString('hex')}`,
+      status: ESecretStatus.Committed,
     }));
     try {
-      const listOfId = await imSecret.batchCommit(newRecords);
-      if (Array.isArray(listOfId)) {
-        // Try to commit
+      await imSecret.batchCommit(newRecords, async () => {
         await this.contracts.rng.batchCommit(digests.v);
-        await imSecret.updateAll({ status: ESecretStatus.Committed }, listOfId);
-      } else {
-        throw new Error('We can not get the list of id');
-      }
+      });
       logger.info('Commit', digests.h.length, 'digests to blockchain');
     } catch (err) {
       logger.error(err);
@@ -85,13 +93,25 @@ export class Oracle {
     if (secretRecord) {
       // Lookup for record from blockchain
       const { secret, index, digest } = await this.contracts.rng.getDataByDigest(secretRecord.digest);
-      logger.debug(
-        `Reveal status: ${
-          secret === '0x0000000000000000000000000000000000000000000000000000000000000000' ? 'no' : 'yes'
-        }, index: ${index}, for digest: ${digest}`,
-      );
+      if (digest === zero32Bytes) {
+        logger.error("This digest don't exist on blockchain, we will mark this value as an error");
+        // We're going to to mark it as revealed anyway
+        await imSecret.update(
+          {
+            status: ESecretStatus.Error,
+          },
+          [
+            {
+              field: 'id',
+              value: secretRecord.id,
+            },
+          ],
+        );
+        return;
+      }
+      logger.debug(`Reveal status: ${secret === zero32Bytes ? 'no' : 'yes'}, index: ${index}, for digest: ${digest}`);
       // Make sure that this record never had been used before
-      if (secret === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+      if (secret === zero32Bytes) {
         const data = BytesBuffer.newInstance()
           .writeAddress(this.contracts.distributor.address)
           .writeUint256(index)

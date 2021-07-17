@@ -13,6 +13,7 @@ import ModelEvent from '../model/model-event';
 import Oracle from './oracle';
 import ModelOpenSchedule from '../model/model-open-schedule';
 import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
+import ModelSecret from 'src/model/model-secret';
 
 interface ICachedNonce {
   nonce: number;
@@ -30,8 +31,11 @@ const numberOfBlockSplitForWorker = 5;
 // Safe confirmations
 const safeConfirmations = 6;
 
-// Reveal duration
-const revealDuration = 30000;
+// Safe duration
+const safeDuration = safeConfirmations * 10000;
+
+// Reveal duration 30 mins
+const revealDuration = 3000; // 1800000;
 
 // Const nubmer of digests
 const numberOfDigests = 20;
@@ -284,6 +288,7 @@ export class Blockchain {
 
       // Current watching blockchain is active chain of DKDAO
       if (this.blockchain.chainId === config.activeChainId) {
+        const oracle = await Oracle.getInstance(this.blockchain);
         this.queue
           .add('oracle processor', async () => {
             const imEvent = new ModelEvent();
@@ -312,16 +317,34 @@ export class Blockchain {
           })
           .add('oracle rng observer', async () => {
             if (Date.now() - this.lastReveal >= revealDuration) {
-              const oracle = await Oracle.getInstance(this.blockchain);
-              const { total, remaining } = await oracle.getRNGProgess();
-              logger.debug(`Reveal and commit progress: ${remaining.toString()}/${total.toString()}`);
-              if (remaining.lte(10)) {
+              const imSecret = new ModelSecret();
+              if ((await imSecret.countDigest()) <= 10) {
                 await oracle.commit(numberOfDigests);
               } else {
                 await oracle.reveal();
               }
             } else {
               logger.debug('Skip reveal and commit');
+            }
+          })
+          .add('oracle open loot boxes', async () => {
+            if (this.cachedNonce.has(oracle.dkOracleAddress)) {
+              const latestNocne = await oracle.provider.getTransactionCount(oracle.dkOracleAddress);
+              const { nonce, timestamp } = this.cachedNonce.get(oracle.dkOracleAddress) || { nonce: 0, timestamp: 0 };
+              logger.info(`Cached nonce: ${nonce} of ${oracle.dkOracleAddress}, cached at: ${timestamp}`);
+              if (latestNocne > nonce || Date.now() - timestamp > safeDuration) {
+                await oracle.openBox();
+                // Store back nonce to cache
+                this.cachedNonce.set(oracle.dkOracleAddress, {
+                  nonce: latestNocne,
+                  timestamp: Date.now(),
+                });
+              }
+            } else {
+              this.cachedNonce.set(oracle.dkOracleAddress, {
+                nonce: await oracle.provider.getTransactionCount(oracle.dkOracleAddress),
+                timestamp: Date.now(),
+              });
             }
           });
       }
