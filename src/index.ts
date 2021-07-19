@@ -44,6 +44,7 @@ class MainApplication {
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
       const knex = Connector.getInstance();
+      await knex('transaction').delete();
       await knex('sync').delete();
       await knex('open_schedule').delete();
       await knex('event').delete();

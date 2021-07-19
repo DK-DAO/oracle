@@ -123,8 +123,19 @@ export function getChecksumAddress(hexString: string): string {
   throw new Error('Input data was not a hex string');
 }
 
-export function BigNum(n: BigNumber.Value, base?: number) {
-  return new BigNumber(n, base);
+export class BigNum {
+  public static from(n: BigNumber.Value, base?: number) {
+    return new BigNumber(n, base);
+  }
+
+  public static fromHexString(i: string): BigNumber {
+    return new BigNumber(i.replace(/^0x/gi, ''), 16);
+  }
+
+  public static toHexString(b: BigNumber): string {
+    const hexStr = b.toString(16);
+    return `0x${hexStr.padStart(hexStr.length % 2 === 0 ? hexStr.length : hexStr.length + 1, '0')}`;
+  }
 }
 
 export function parseEvent(log: ethers.providers.Log): IParsedEvent {
@@ -143,7 +154,7 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
     blockNumber,
     from: getLowCaseAddress(from),
     to: getLowCaseAddress(to),
-    value: BigNum(value).toString(),
+    value: BigNum.from(value).toString(),
   };
 }
 
