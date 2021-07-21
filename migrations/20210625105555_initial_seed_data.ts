@@ -44,6 +44,7 @@ export async function up(knex: Knex): Promise<void> {
     // Ethereum blockchain
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 1).id,
+      type: 20,
       name: 'Tether USD (USDT)',
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
       symbol: 'USDT',
@@ -51,6 +52,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 1).id,
+      type: 20,
       name: 'Dai Stablecoin (DAI)',
       address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
       symbol: 'DAI',
@@ -58,6 +60,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 1).id,
+      type: 20,
       name: 'USD Coin (USDC)',
       address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
       symbol: 'USDC',
@@ -65,6 +68,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 1).id,
+      type: 20,
       name: 'Binance USD (BUSD)',
       address: '0x4Fabb145d64652a948d72533023f6E7A623C7C53',
       symbol: 'BUSD',
@@ -73,6 +77,7 @@ export async function up(knex: Knex): Promise<void> {
     // Binance smart chain
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 56).id,
+      type: 20,
       name: 'Binance-Peg BSC-USD',
       address: '0x55d398326f99059fF775485246999027B3197955',
       symbol: 'USDT',
@@ -80,6 +85,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 56).id,
+      type: 20,
       name: 'Binance-Peg Dai Token (DAI)',
       address: '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3',
       symbol: 'DAI',
@@ -87,6 +93,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 56).id,
+      type: 20,
       name: 'Binance-Peg USD Coin (USDC)',
       address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
       symbol: 'USDC',
@@ -94,6 +101,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 56).id,
+      type: 20,
       name: 'Binance-Peg BUSD Token (BUSD)',
       address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
       symbol: 'BUSD',
@@ -102,6 +110,7 @@ export async function up(knex: Knex): Promise<void> {
     // Polygon blockchain
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 137).id,
+      type: 20,
       name: '(PoS) Dai Stablecoin (DAI)',
       address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
       symbol: 'DAI',
@@ -109,6 +118,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 137).id,
+      type: 20,
       name: 'USD Coin (PoS) (USDC)',
       address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
       symbol: 'USDC',
@@ -116,6 +126,7 @@ export async function up(knex: Knex): Promise<void> {
     },
     {
       blockchainId: lookup(supportedBlockchain, 'chainId', 137).id,
+      type: 20,
       name: '(PoS) Tether USD',
       address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
       symbol: 'USDT',

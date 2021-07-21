@@ -6,6 +6,8 @@ export async function up(knex: Knex): Promise<void> {
 
     table.integer('blockchainId').unsigned().references('blockchain.id').comment('Foreign key to blockchain.id');
 
+    table.integer('type').unsigned().notNullable().defaultTo(0).comment('Type of watching account');
+
     table.string('name', 32).notNullable().comment('Name of receiver address');
 
     table.string('address', 256).notNullable().comment('Receiver address');

@@ -59,10 +59,9 @@ function calculateNumberOfLootBoxes(money: number, stage: TStage, today: number)
   return noBoxes;
 }
 
-export function calculateNoLootBoxes(money: number) {
-  const toDay = moment(new Date());
+export function getStage(): TStage {
   let stage: TStage = 'latelybird';
-  let dayCount: number = 0;
+  const toDay = moment(new Date());
   // Genesis =< toDay < earlyBird
   if (toDay.diff(config.saleScheduleGenesis, 'days') >= 0 && toDay.diff(config.saleScheduleEarlybird) < 0) {
     stage = 'genesis';
@@ -72,7 +71,16 @@ export function calculateNoLootBoxes(money: number) {
     toDay.diff(config.saleScheduleEarlybird, 'days') >= 0 &&
     toDay.diff(moment(config.saleScheduleEarlybird).add(30, 'days'), 'days') < 0
   ) {
-    stage = 'genesis';
+    stage = 'earlybird';
+  }
+  return stage;
+}
+
+export function calculateNoLootBoxes(money: number) {
+  const stage = getStage();
+  const toDay = moment(new Date());
+  let dayCount: number = 0;
+  if (stage === 'earlybird') {
     dayCount = toDay.diff(config.saleScheduleEarlybird, 'days');
   }
   return calculateNumberOfLootBoxes(money, stage, dayCount);

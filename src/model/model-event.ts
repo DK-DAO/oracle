@@ -2,10 +2,11 @@ import { Knex } from 'knex';
 import { ModelBase } from './model-base';
 
 export enum EProcessingStatus {
-  New = 0,
-  Processing = 1,
-  Success = 2,
-  Error = 255,
+  NewPayment = 1,
+  NewDonate = 2,
+  NftTransfer = 4,
+  Success = 126,
+  Error = 127,
 }
 
 export interface IEvent {
@@ -41,8 +42,8 @@ export class ModelEvent extends ModelBase<IEvent> {
     super('event');
   }
 
-  public getEventDetail(): Promise<IEventDetail | undefined> {
-    return this.getDetailQuery().where({ status: EProcessingStatus.New }).orderBy('id', 'asc').limit(1).first();
+  public getEventDetail(status: EProcessingStatus): Promise<IEventDetail | undefined> {
+    return this.getDetailQuery().where({ status }).orderBy('id', 'asc').limit(1).first();
   }
 
   public getDetailQuery() {

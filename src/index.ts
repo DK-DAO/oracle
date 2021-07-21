@@ -25,6 +25,7 @@ class MainApplication {
    */
   private static async startMaster() {
     logger.info(`Master ${process.pid} is running`);
+
     logger.debug(`Node running mode: ${config.nodeEnv}`);
     const workerMap: { [key: number]: IWoker } = {};
     const pidMap: { [key: number]: number } = {};
@@ -44,7 +45,8 @@ class MainApplication {
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
       const knex = Connector.getInstance();
-      await knex('transaction').delete();
+      await knex('nft_ownership').delete();
+      await knex('airdrop').delete();
       await knex('sync').delete();
       await knex('open_schedule').delete();
       await knex('event').delete();
@@ -54,14 +56,22 @@ class MainApplication {
         await knex('token').insert(<IToken>{
           address: '0xB2236AC5C114eaD69B2FEaf014d1e17dd6Fa8e4d',
           blockchainId: activeBlockchains[0].id,
+          type: 20,
           decimal: 18,
           name: 'Test Token',
           symbol: 'TEST',
         });
         await knex('watching').insert(<IWatching>{
           address: '0x9ccc80a5beD6f15AdFcB9096109500B3c96a8e52',
+          type: 0,
           blockchainId: activeBlockchains[0].id,
           name: 'Local test account',
+        });
+        await knex('watching').insert(<IWatching>{
+          address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db',
+          type: 1,
+          blockchainId: activeBlockchains[0].id,
+          name: 'Gitcoin account',
         });
       }
       await knex('sync').insert(<ISync>{

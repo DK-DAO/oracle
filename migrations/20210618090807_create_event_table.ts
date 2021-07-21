@@ -10,7 +10,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('eventName', 255).notNullable().comment('Event name, that depend on what will EVM emit');
 
-    table.boolean('status').notNullable().defaultTo(0).comment('Status of the processing of event');
+    table.integer('status').notNullable().defaultTo(0).comment('Status of the processing of event');
 
     table.string('from', 42).notNullable().comment('Sender');
 

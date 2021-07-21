@@ -6,20 +6,28 @@ import logger from '../helper/logger';
 import { Connector } from '../framework';
 import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
-import ModelToken, { IToken } from '../model/model-token';
-import { IWatching, ModelWatching } from '../model/model-watching';
+import ModelToken, { EToken, IToken } from '../model/model-token';
+import { EWatching, IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum } from '../helper/utilities';
-import ModelEvent from '../model/model-event';
+import ModelEvent, { EProcessingStatus } from '../model/model-event';
 import Oracle from './oracle';
 import ModelOpenSchedule from '../model/model-open-schedule';
 import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
 import ModelSecret from '../model/model-secret';
-import ModelNft, { INft } from '../model/model-nft';
-import ModelTransaction from '../model/model-transaction';
 
 interface ICachedNonce {
   nonce: number;
   timestamp: number;
+}
+
+function getType(tokenType?: EToken | undefined, wachingType?: EWatching) {
+  if (typeof tokenType !== 'undefined' && typeof wachingType !== 'undefined') {
+    if (tokenType === EToken.ERC20) {
+      return wachingType === EWatching.Donate ? EProcessingStatus.NewDonate : EProcessingStatus.NewPayment;
+    }
+    return EProcessingStatus.NftTransfer;
+  }
+  throw new Error('Unexpected token type');
 }
 
 Connector.connectByUrl(config.mariadbConnectUrl);
@@ -73,11 +81,6 @@ export class Blockchain {
   // Recent cached nonce
   private cachedNonce: Map<string, ICachedNonce> = new Map();
 
-  // Cache watching
-  private watchingNft: Map<string, INft> = new Map();
-
-  private issued: number = 0;
-
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
     const imBlockchain = new ModelBlockchain();
@@ -114,23 +117,6 @@ export class Blockchain {
     }
 
     logger.info('Start watching', this.watchingToken.length, 'tokens on', this.blockchain.name);
-  }
-
-  // Update list of NFT
-  private async updateListNft() {
-    const imNft = new ModelNft();
-    const nftList = await imNft.get([
-      {
-        field: 'blockchainId',
-        value: this.blockchain.id,
-      },
-    ]);
-
-    for (let i = 0; i < nftList.length; i += 1) {
-      this.watchingNft.set(nftList[i].address.toLowerCase(), nftList[i]);
-    }
-
-    logger.info('Start watching', nftList.length, 'tokens on', this.blockchain.name);
   }
 
   // Update list of watching wallet
@@ -216,37 +202,25 @@ export class Blockchain {
       topics: [utils.id('Transfer(address,address,uint256)')],
     });
     const imEvent = new ModelEvent();
-    const imTransaction = new ModelTransaction();
     // Get log and push the events outside
     for (let i = 0; i < logs.length; i += 1) {
       const log = logs[i];
       const tokenAddress = log.address.toLowerCase();
-      // Watching NFT for card issuance
-      if (this.watchingNft.has(tokenAddress)) {
-        this.issued += 1;
-        const nft = this.watchingNft.get(tokenAddress);
-        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress } = parseEvent(log);
-        const nftTokenId = BigNum.toHexString(BigNum.from(value));
-        await imTransaction.create({
-          blockHash,
-          blockchainId: this.blockchain.id,
-          blockNumber,
-          contractAddress,
-          nftId: nft?.id,
-          from,
-          to,
-          nftTokenId,
-          transactionHash,
-          memo: `Transfer ${from} -> ${to}: ${nftTokenId}`,
-        });
-      }
+
       // Watching a given wallet for stable deposit
       if (this.watchingTokenAddresses.has(tokenAddress)) {
         const token = this.watchingTokenAddresses.get(tokenAddress);
         const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress } = parseEvent(log);
-        if (this.watchingWalletAddresses.has(to) && (await imEvent.isNotExist('transactionHash', transactionHash))) {
+        if (
+          token &&
+          this.watchingWalletAddresses.has(to) &&
+          (await imEvent.isNotExist('transactionHash', transactionHash))
+        ) {
+          const watchingAddress = this.watchingWalletAddresses.get(to);
+          logger.debug(token, watchingAddress);
           logger.info(`New event, transfer ${from} -> ${to} ${value}`);
           await imEvent.create({
+            status: getType(token.type, watchingAddress?.type),
             from,
             to,
             value: BigNum.toHexString(BigNum.from(value)),
@@ -333,14 +307,25 @@ export class Blockchain {
 
       // Current watching blockchain is active chain of DKDAO
       if (this.blockchain.chainId === config.activeChainId) {
-        await this.updateListNft();
         const oracle = await Oracle.getInstance(this.blockchain);
         this.queue
-          .add('oracle processor', async () => {
+          .add('oracle processor donate', async () => {
             const imEvent = new ModelEvent();
-            const event = await imEvent.getEventDetail();
+            const event = await imEvent.getEventDetail(EProcessingStatus.NewDonate);
             if (typeof event !== 'undefined') {
-              logger.debug('Start processing event', event.jsonData);
+              logger.debug('Start processing event (Donate)', event.jsonData);
+              /*
+            const floatVal = BigNum.fromHexString(event.value)
+              .div(BigNum.from(10).pow(event.tokenDecimal))
+              .toNumber();
+              */
+            }
+          })
+          .add('oracle processor payment', async () => {
+            const imEvent = new ModelEvent();
+            const event = await imEvent.getEventDetail(EProcessingStatus.NewPayment);
+            if (typeof event !== 'undefined') {
+              logger.debug('Start processing event [Payment]', event.jsonData);
               const imOpenSchedule = new ModelOpenSchedule();
               const floatVal = BigNum.fromHexString(event.value)
                 .div(BigNum.from(10).pow(event.tokenDecimal))
@@ -356,7 +341,7 @@ export class Blockchain {
                 lootBoxDistribution.map((item) => ({
                   campaignId: config.activeCampaignId,
                   owner: event.from,
-                  memo: `Buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${
+                  memo: `Buy ${item} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${
                     event.from
                   }`,
                   numberOfBox: item,
@@ -399,6 +384,8 @@ export class Blockchain {
       }
 
       this.queue.start();
+    } else {
+      throw new Error("Unexpected error! can't find blockchain data");
     }
   }
 }
