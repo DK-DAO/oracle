@@ -1,14 +1,16 @@
+/* eslint-disable no-await-in-loop */
 import cluster from 'cluster';
-import { Connector } from './framework';
+import { Connector, Mux } from './framework';
 import config from './helper/config';
 import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
 import BlockchainService from './blockchain/blockchain-service';
-import './middleware';
 import { IToken } from './model/model-token';
 import { IWatching } from './model/model-watching';
 import { ISync } from './model/model-sync';
+import './middleware';
+import './mux';
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
@@ -41,10 +43,10 @@ class MainApplication {
 
     const imBlockchain = new ModelBlockchain();
     const blockchains = await imBlockchain.get();
+    const knex = Connector.getInstance();
     let activeBlockchains;
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
-      const knex = Connector.getInstance();
       await knex('nft_ownership').delete();
       await knex('airdrop').delete();
       await knex('sync').delete();
@@ -81,7 +83,46 @@ class MainApplication {
         targetBlock: 0,
       });
     } else {
-      activeBlockchains = blockchains.filter((b) => b.chainId !== config.developmentChainId);
+      // Now we active ethereum and bsc
+      activeBlockchains = blockchains.filter((b) => [1, 56].includes(b.chainId));
+      /*
+      await knex('nft_ownership').delete();
+      await knex('sync').delete();
+      await knex('open_schedule').delete();
+      await knex('event').delete();
+      await knex('watching').delete();
+      await knex('sync').delete();
+      const watchingDonation = await knex('watching')
+        .select('*')
+        .where({ address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db' });
+      if (watchingDonation.length <= 0) {
+        for (let i = 0; i < activeBlockchains.length; i += 1) {
+          const blockchain = activeBlockchains[i];
+          if (blockchain.chainId === 1) {
+            await knex('sync').insert(<ISync>{
+              blockchainId: blockchain.id,
+              startBlock: 12710065,
+              syncedBlock: 12710065,
+              targetBlock: 12710065,
+            });
+          }
+          if (blockchain.chainId === 56) {
+            await knex('sync').insert(<ISync>{
+              blockchainId: blockchain.id,
+              startBlock: 8789740,
+              syncedBlock: 8789740,
+              targetBlock: 8789740,
+            });
+          }
+          await knex('watching').insert(<IWatching>{
+            address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db',
+            type: 1,
+            blockchainId: blockchain.id,
+            name: 'Gitcoin account',
+          });
+        }
+      }
+      */
     }
 
     // API woker
@@ -117,6 +158,7 @@ class MainApplication {
    */
   private static startAPI() {
     logger.info('Start API service');
+    Mux.init(false, config.servicePort, config.serviceHost);
   }
 
   /**

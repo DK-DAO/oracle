@@ -11,7 +11,7 @@ export interface IConfig {
   updatedDate: string;
 }
 
-export type TKeyOfConfig  = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistributor';
+export type TKeyOfConfig = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistributor';
 
 export class ModelConfig extends ModelBase<IConfig> {
   constructor() {

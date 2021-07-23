@@ -7,3 +7,5 @@ export * from './logger/index';
 export * from './logger/transport';
 export * from './model-mysql';
 export * from './connector';
+export * from './pagination';
+export { IPagination, IResponseList } from './interfaces';

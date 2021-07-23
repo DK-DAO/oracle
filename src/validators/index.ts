@@ -1,7 +1,4 @@
-export * from './article';
-export * from './comment';
-export * from './constant';
-export * from './user';
+export * from './pagination';
 
 // Please take note other file will be private and only available
 // to internal of validator

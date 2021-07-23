@@ -12,8 +12,9 @@ import { parseEvent, BigNum } from '../helper/utilities';
 import ModelEvent, { EProcessingStatus } from '../model/model-event';
 import Oracle from './oracle';
 import ModelOpenSchedule from '../model/model-open-schedule';
-import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
+import { calculateDistribution, calculateNoLootBoxes, getStage, TStage } from '../helper/calculate-loot-boxes';
 import ModelSecret from '../model/model-secret';
+import ModelAirdrop from '../model/model-airdrop';
 
 interface ICachedNonce {
   nonce: number;
@@ -81,6 +82,8 @@ export class Blockchain {
   // Recent cached nonce
   private cachedNonce: Map<string, ICachedNonce> = new Map();
 
+  private stage: TStage = 'genesis';
+
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
     const imBlockchain = new ModelBlockchain();
@@ -94,7 +97,7 @@ export class Blockchain {
 
     if (typeof bcData !== 'undefined') {
       this.blockchain = bcData;
-      logger.info('Loading blockchain data:', bcData);
+      logger.info('Loading blockchain data:', bcData.name, bcData.chainId);
       this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
       return true;
     }
@@ -113,10 +116,14 @@ export class Blockchain {
     ]);
 
     for (let i = 0; i < this.watchingToken.length; i += 1) {
+      logger.info(
+        'Start watching',
+        this.watchingToken[i].name,
+        `(${this.watchingToken[i].address}) tokens on`,
+        this.blockchain.name,
+      );
       this.watchingTokenAddresses.set(this.watchingToken[i].address.toLowerCase(), this.watchingToken[i]);
     }
-
-    logger.info('Start watching', this.watchingToken.length, 'tokens on', this.blockchain.name);
   }
 
   // Update list of watching wallet
@@ -129,6 +136,12 @@ export class Blockchain {
       },
     ]);
     for (let i = 0; i < this.watchingWallet.length; i += 1) {
+      logger.info(
+        'Start watching',
+        this.watchingWallet[i].name,
+        `(${this.watchingWallet[i].address}) address on`,
+        this.blockchain.name,
+      );
       this.watchingWalletAddresses.set(this.watchingWallet[i].address.toLowerCase(), this.watchingWallet[i]);
     }
   }
@@ -136,6 +149,7 @@ export class Blockchain {
   // Update sync
   private async updateSync() {
     let isChanged = false;
+    this.stage = getStage();
     const imSync = new ModelSync();
     // We will try to read synced state from database
     if (typeof this.synced.id === 'undefined') {
@@ -217,7 +231,6 @@ export class Blockchain {
           (await imEvent.isNotExist('transactionHash', transactionHash))
         ) {
           const watchingAddress = this.watchingWalletAddresses.get(to);
-          logger.debug(token, watchingAddress);
           logger.info(`New event, transfer ${from} -> ${to} ${value}`);
           await imEvent.create({
             status: getType(token.type, watchingAddress?.type),
@@ -303,29 +316,28 @@ export class Blockchain {
         })
         .add('syncing event from blockchain', async () => {
           await this.eventSync();
+        })
+        .add('oracle processor donate', async () => {
+          if (this.stage === 'genesis') {
+            const imEvent = new ModelEvent();
+            const event = await imEvent.getEventDetail(EProcessingStatus.NewDonate);
+            if (typeof event !== 'undefined') {
+              logger.debug(this.blockchain.name, '> Start processing event (Donate)', event.jsonData);
+              const imAirdrop = new ModelAirdrop();
+              await imAirdrop.batchProcessEvent(event);
+            }
+          }
         });
 
       // Current watching blockchain is active chain of DKDAO
       if (this.blockchain.chainId === config.activeChainId) {
         const oracle = await Oracle.getInstance(this.blockchain);
         this.queue
-          .add('oracle processor donate', async () => {
-            const imEvent = new ModelEvent();
-            const event = await imEvent.getEventDetail(EProcessingStatus.NewDonate);
-            if (typeof event !== 'undefined') {
-              logger.debug('Start processing event (Donate)', event.jsonData);
-              /*
-            const floatVal = BigNum.fromHexString(event.value)
-              .div(BigNum.from(10).pow(event.tokenDecimal))
-              .toNumber();
-              */
-            }
-          })
           .add('oracle processor payment', async () => {
             const imEvent = new ModelEvent();
             const event = await imEvent.getEventDetail(EProcessingStatus.NewPayment);
             if (typeof event !== 'undefined') {
-              logger.debug('Start processing event [Payment]', event.jsonData);
+              logger.debug(this.blockchain.name, '> Start processing event [Payment]', event.jsonData);
               const imOpenSchedule = new ModelOpenSchedule();
               const floatVal = BigNum.fromHexString(event.value)
                 .div(BigNum.from(10).pow(event.tokenDecimal))
@@ -341,9 +353,7 @@ export class Blockchain {
                 lootBoxDistribution.map((item) => ({
                   campaignId: config.activeCampaignId,
                   owner: event.from,
-                  memo: `Buy ${item} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${
-                    event.from
-                  }`,
+                  memo: `Buy ${item} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${event.from}`,
                   numberOfBox: item,
                 })),
               );

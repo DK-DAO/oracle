@@ -6,6 +6,9 @@ interface ApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
   walletMnemonic: string;
+  rpcEthereum: string;
+  rpcBinance: string;
+  rpcPolygon: string;
   activeChainId: number;
   developmentChainId: number;
   activeCampaignId: number;
@@ -14,8 +17,11 @@ interface ApplicationConfig {
   addressRng: string;
   addressDuelistKingFairDistributor: string;
   serviceHost: string;
-  servicePort: string;
+  servicePort: number;
+  apiUser: string;
+  apiSecret: string;
 }
+
 const config = ((conf) => {
   const converted: any = {};
   const kvs = <[string, string][]>Object.entries(conf);
@@ -25,6 +31,7 @@ const config = ((conf) => {
       case 'activeChainId':
       case 'developmentChainId':
       case 'activeCampaignId':
+      case 'servicePort':
         converted[k] = parseInt(v, 10);
         break;
       case 'saleScheduleGenesis':

@@ -1,6 +1,6 @@
 import { noCase } from 'no-case';
 import cluster from 'cluster';
-import crypto from 'crypto';
+import crypto, { createHmac, randomBytes } from 'crypto';
 import { keccak256 } from 'js-sha3';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'bignumber.js';
@@ -13,6 +13,12 @@ export interface IParsedEvent {
   from: string;
   to: string;
   value: string;
+}
+
+export interface IWoker {
+  id: number;
+  pid: number;
+  name: string;
 }
 
 export function toCamelCase(text: string): string {
@@ -55,12 +61,6 @@ export function objToCamelCase(obj: any): any {
 export function loadWorker(env: Partial<IWoker>) {
   const worker = cluster.fork(env);
   return { id: env.id || -1, name: env.name || 'undefined', pid: worker.process.pid };
-}
-
-export interface IWoker {
-  id: number;
-  pid: number;
-  name: string;
 }
 
 export function jsToSql(dateTime: Date): string {
@@ -156,6 +156,25 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
     to: getLowCaseAddress(to),
     value: BigNum.from(value).toString(),
   };
+}
+
+export function createHmacProof(user: string, secret: string) {
+  const message = randomBytes(12);
+  message.writeUInt32BE(Math.round(Date.now() / 1000), 8);
+  const proof = Buffer.concat([message, createHmac('sha256', secret).update(message).digest()]).toString('hex');
+  return `${user}-${proof}`;
+}
+
+export function verifyProof(user: string, secret: string, signature: string) {
+  const [username, proof] = signature.split('-');
+  if (user === username) {
+    const message = Buffer.from(proof.substr(0, 24), 'hex');
+    const timeStamp = Math.round(Date.now() / 1000);
+    if (timeStamp - message.readUInt32BE(8) < 3) {
+      return createHmac('sha256', secret).update(message).digest('hex') === proof.substr(-64);
+    }
+  }
+  return false;
 }
 
 export function hexToFixedBuffer(inputHexString: string, size: number = 32): Buffer {

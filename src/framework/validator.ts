@@ -131,10 +131,10 @@ export class Validator {
         } else {
           result[name] = value;
         }
-      } else if (require && typeof defaultValue !== 'undefined') {
+      } else if (typeof defaultValue !== 'undefined') {
         // Field is required and have defaultValue
         result[name] = defaultValue;
-      } else if (require && typeof defaultValue === 'undefined') {
+      } else if (require && typeof defaultValue !== 'undefined') {
         // Field is required but don't have value or defaultValue
         throw new Error(`Field ${name} is required`);
       }

@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
 import { IBlockchain } from '../src/model/model-blockchain';
 import { IToken } from '../src/model/model-token';
 
@@ -9,21 +10,21 @@ function lookup<T extends any>(data: T[], field: keyof T, value: any): T {
 export async function up(knex: Knex): Promise<void> {
   await knex.batchInsert('blockchain', <IBlockchain[]>[
     {
-      url: 'https://eth-mainnet.alchemyapi.io/v2/lZCtMtVZSVJUOPODOs0h2lEDfIm_-2C8',
+      url: config.rpcEthereum,
       name: 'Ethereum Mainnet',
       chainId: 1,
       explorerUrl: 'https://bscscan.com',
       nativeToken: 'ETH',
     },
     {
-      url: 'https://bsc-dataseed.binance.org/',
+      url: config.rpcBinance,
       name: 'Binance Smart Chain',
       chainId: 56,
       explorerUrl: 'https://etherscan.io',
       nativeToken: 'BNB',
     },
     {
-      url: 'https://rpc-mainnet.matic.network',
+      url: config.rpcPolygon,
       chainId: 137,
       name: 'Polygon',
       nativeToken: 'MATIC',
@@ -140,3 +141,4 @@ export async function down(knex: Knex): Promise<void> {
   await knex('token').delete();
   await knex('blockchain').delete().whereIn('chainId', [1, 56, 137]);
 }
+

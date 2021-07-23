@@ -10,8 +10,7 @@ export interface IRequestData {
   params: any;
 }
 
-export interface IMuxRequest extends express.Request {
-}
+export interface IMuxRequest extends express.Request {}
 
 export interface IMuxResponse extends express.Response {}
 
@@ -120,12 +119,13 @@ export class Mux {
     });
   }
 
-  public static init(production: boolean = true) {
+  public static init(production: boolean = true, port: number, host: string) {
     Mux.production = production;
     for (let i = 0; i < Mux.muxMap.length; i += 1) {
       const { method, url, validator, handler } = Mux.muxMap[i];
       Mux.addHandler(method, url, validator, handler);
     }
+    Mux.expressApp.listen(port, host);
   }
 }
 

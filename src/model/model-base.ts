@@ -6,7 +6,7 @@ export class ModelBase<T> extends ModelMySQL {
   protected basicQuery?(): Knex.QueryBuilder;
 
   // eslint-disable-next-line class-methods-use-this
-  private attachConditions<T>(
+  private attachConditions(
     ik: Knex.QueryBuilder,
     conditions?: {
       field: keyof T;

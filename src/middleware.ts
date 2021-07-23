@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import logger from './helper/logger';
+import { verifyProof } from './helper/utilities';
 import { Mux } from './framework';
 import config from './helper/config';
 
@@ -23,4 +24,13 @@ if (config.nodeEnv === 'development') {
 
   // Cors for development with origin: *
   Mux.use(cors());
+} else {
+  // Add debug middle ware
+  Mux.use(function DebugMiddleWare(req: express.Request, _res: express.Response, next: Function) {
+    const signature = req.header('x-signature');
+    if (typeof signature !== 'undefined' && verifyProof(config.apiUser, config.apiSecret, signature)) {
+      return next();
+    }
+    _res.send('{"success":false,"result":{"message":"Access denied"}}');
+  });
 }

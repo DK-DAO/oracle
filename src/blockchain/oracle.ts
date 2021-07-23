@@ -5,9 +5,9 @@ import { IBlockchain } from '../model/model-blockchain';
 import config from '../helper/config';
 import logger from '../helper/logger';
 import { buildDigestArray } from '../helper/utilities';
-import { abi as abiRng } from '../../artifacts/contracts/infrastructure/RNG.sol/RNG.json';
+import { abi as abiRng } from '../../artifacts/RNG.json';
 // eslint-disable-next-line max-len
-import { abi as abiDistributor } from '../../artifacts/contracts/dk/DuelistKingDistributor.sol/DuelistKingDistributor.json';
+import { abi as abiDistributor } from '../../artifacts/DuelistKingDistributor.json';
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
 import { BytesBuffer } from '../helper/bytes-buffer';
 import ModelOpenSchedule from '../model/model-open-schedule';
