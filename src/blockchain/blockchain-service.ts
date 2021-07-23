@@ -46,7 +46,7 @@ const safeConfirmations = 6;
 const safeDuration = safeConfirmations * 10000;
 
 // Reveal duration 30 mins
-const revealDuration = 3000; // 1800000;
+const revealDuration = 1800000;
 
 // Const nubmer of digests
 const numberOfDigests = 20;
@@ -59,7 +59,7 @@ export class Blockchain {
   private synced: ISync = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 5000 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 10000 });
 
   // RPC provider
   private provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
