@@ -12,7 +12,7 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": false,
-    "outDir": "./built/",
+    "outDir": "./build/",
     "baseUrl": ".",
     "types": ["node"]
   },
