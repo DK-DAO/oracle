@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
 import { Knex } from 'knex';
+import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import { EProcessingStatus, IEventDetail } from './model-event';
 import logger from '../helper/logger';
@@ -71,6 +72,17 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     } else {
       logger.info('We run out of schedule to open loot boxes');
     }
+  }
+
+  public async getScheduling(
+    pagination: IPagination = { offset: 0, limit: 20, order: [] },
+    conditions?: {
+      field: keyof IOpenSchedule;
+      operator?: '=' | '>' | '<' | '>=' | '<=';
+      value: string | number;
+    }[],
+  ): Promise<IResponseList<IOpenSchedule>> {
+    return this.getListByCondition<IOpenSchedule>(this.attachConditions(this.basicQuery(), conditions), pagination);
   }
 
   // Perform batch buy based on recored event

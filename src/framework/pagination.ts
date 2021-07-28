@@ -8,7 +8,7 @@ import { Validator } from './validator';
  */
 export class Pagination {
   public static async countTotal(knexQuery: Knex.QueryBuilder<any, any>): Promise<number> {
-    const totalResult = await knexQuery.clone().count('*').first();
+    const totalResult = await knexQuery.clone().clearSelect().count('* as total').first();
     return typeof totalResult === 'undefined' || !totalResult.total ? 0 : totalResult.total;
   }
 
