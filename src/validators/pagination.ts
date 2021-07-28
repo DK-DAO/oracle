@@ -1,19 +1,19 @@
 import { Validator } from '../framework';
-import { DefaultPagination } from './constant';
 
 export const ValidatorPagination = new Validator(
   {
     name: 'limit',
     location: 'query',
     type: 'number',
-    defaultValue: DefaultPagination.limit,
-    validator: (v: number) => Number.isInteger(v) && v <= DefaultPagination.limit,
+    defaultValue: 20,
+    validator: (v: number) => Number.isInteger(v) && v <= 1000,
     message: 'Invalid limit number',
   },
   {
     name: 'offset',
     location: 'query',
     type: 'number',
+    defaultValue: 0,
     validator: (v: number) => Number.isInteger(v),
     message: 'Invalid offset number',
   },
@@ -21,7 +21,12 @@ export const ValidatorPagination = new Validator(
     name: 'order',
     location: 'query',
     type: 'array',
-    defaultValue: [],
+    defaultValue: [
+      {
+        column: 'id',
+        order: 'desc',
+      },
+    ],
     validator: (v: any[]) =>
       v.every((e: any) => typeof e === 'object' && e.column && e.order && ['asc', 'desc'].includes(e.order)),
     message: 'Invalid order type',

@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 import { BigNum } from '../helper/utilities';
 import { ModelBase } from './model-base';
 import { IEventDetail, EProcessingStatus } from './model-event';
-import { IPagination, IResponseList, Pagination } from '../framework';
+import { IPagination, IResponseList } from '../framework';
 
 export interface IAirdrop {
   id: number;
@@ -48,32 +48,12 @@ export class ModelAirdrop extends ModelBase<IAirdrop> {
     return this.getDefaultKnex().select('id', 'owner', 'value', 'createdDate as createdDate');
   }
 
-  public async getList(
-    conditions: {
-      field: keyof IAirdrop;
-      operator?: '=' | '>' | '<' | '>=' | '<=';
-      value: string | number;
-    }[] = [],
+  public async getDonateBalanceList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
   ): Promise<IResponseList<IAirdrop>> {
-    const query = this.basicQuery();
-    for (let i = 0; i < conditions.length; i += 1) {
-      const { field, operator, value } = conditions[i];
-      if (operator) {
-        query.where(field, operator, value);
-      } else {
-        query.where(field, '=', value);
-      }
-    }
-    for (let i = 0; i < pagination.order.length; i += 1) {
-      const { column, order } = pagination.order[i];
-      query.orderBy(column, order);
-    }
-    return {
-      success: true,
-      result: await Pagination.pagination<IAirdrop>(query, pagination),
-    };
+    return this.getListByCondition<IAirdrop>(this.basicQuery(), pagination);
   }
+
 }
 
 export default ModelAirdrop;

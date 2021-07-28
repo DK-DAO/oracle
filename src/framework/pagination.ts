@@ -20,11 +20,11 @@ export class Pagination {
     const query = knexQuery.clone();
     const { order, offset, limit } = pagination;
     // Set offset
-    if (offset) {
+    if (Number.isInteger(offset)) {
       query.offset(offset);
     }
     // Set limit
-    if (limit) {
+    if (Number.isInteger(limit)) {
       query.limit(limit);
     }
     // Set order

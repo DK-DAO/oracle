@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { ModelBase } from './model-base';
-import { IPagination, IResponseList, Pagination } from '../framework';
+import { IPagination, IResponseList } from '../framework';
 import { BigNum } from '../helper/utilities';
 
 export enum EProcessingStatus {
@@ -109,35 +109,22 @@ export class ModelEvent extends ModelBase<IEvent> {
       .join('blockchain as b', 'e.blockchainId', 'b.id');
   }
 
-  public async getList(
-    conditions: {
-      field: keyof IEvent;
-      operator?: '=' | '>' | '<' | '>=' | '<=';
-      value: string | number;
-    }[] = [],
+  public async getDonateList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
-  ): Promise<IResponseList<IEventDetail>> {
-    const query = this.getDonate();
-    for (let i = 0; i < conditions.length; i += 1) {
-      const { field, operator, value } = conditions[i];
-      if (operator) {
-        query.where(field, operator, value);
-      } else {
-        query.where(field, '=', value);
-      }
-    }
-    for (let i = 0; i < pagination.order.length; i += 1) {
-      const { column, order } = pagination.order[i];
-      query.orderBy(column, order);
-    }
-    const result = await Pagination.pagination<IEventDetail>(query, pagination);
+  ): Promise<IResponseList<IDonateTransaction>> {
+    const { success, result } = await this.getListByCondition<IDonateTransaction>(
+      this.attachConditions(this.getDonate(), [
+        {
+          field: 'status',
+          value: EProcessingStatus.NewDonate,
+        },
+      ]),
+      pagination,
+    );
     result.records = result.records.map((i) => {
       return { ...i, value: BigNum.fromHexString(i.value).div(BigNum.from(10).pow(i.tokenDecimal)).toFixed(2) };
     });
-    return {
-      success: true,
-      result,
-    };
+    return { success, result };
   }
 
   public basicQuery(): Knex.QueryBuilder {

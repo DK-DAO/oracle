@@ -1,12 +1,12 @@
 import { Knex } from 'knex';
-import { ModelMySQL } from '../framework';
+import { ModelMySQL, Pagination, IPagination, IResponseList } from '../framework';
 import logger from '../helper/logger';
 
 export class ModelBase<T> extends ModelMySQL {
   protected basicQuery?(): Knex.QueryBuilder;
 
   // eslint-disable-next-line class-methods-use-this
-  private attachConditions(
+  protected attachConditions(
     ik: Knex.QueryBuilder,
     conditions?: {
       field: keyof T;
@@ -86,6 +86,20 @@ export class ModelBase<T> extends ModelMySQL {
 
   public async isNotExist(key: keyof T, value: any): Promise<boolean> {
     return !(await this.isExist(key, value));
+  }
+
+  /**
+   * Get list of records by simple conditions
+   */
+  // eslint-disable-next-line class-methods-use-this
+  protected async getListByCondition<V>(
+    query: Knex.QueryBuilder,
+    pagination: IPagination = { offset: 0, limit: 20, order: [] },
+  ): Promise<IResponseList<V>> {
+    return {
+      success: true,
+      result: await Pagination.pagination<V>(query, pagination),
+    };
   }
 }
 

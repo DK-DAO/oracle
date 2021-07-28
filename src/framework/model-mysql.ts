@@ -1,8 +1,7 @@
 import { EventEmitter } from 'events';
 import { Knex } from 'knex';
-import { IResponseList, IPagination, EModelLock, IModelCondition } from './interfaces';
+import { EModelLock } from './interfaces';
 import { Connector } from './connector';
-import { Pagination } from './pagination';
 
 /**
  * @event
@@ -98,35 +97,6 @@ export class ModelMySQL extends EventEmitter {
     const result = await this.getKnex().raw('UNLOCK TABLES');
     this.emit('table-unlock', this.tableName);
     return result;
-  }
-
-  /**
-   * Get list of records by simple conditions
-   * @protected
-   * @param {string[]} selectFields Fields will be returned after process
-   * @param {IModelCondition[]} [conditions=[]] Conditions to query data from database
-   * @param {IPagination} pagination Pagination example
-   * @returns {Promise<IResponseList>}
-   * @memberof [[ModelMySQL]]
-   */
-  protected async getListByCondition<T>(
-    selectFields: string[],
-    conditions: IModelCondition[] = [],
-    pagination: IPagination = { offset: 0, limit: 20, order: [] },
-  ): Promise<IResponseList<T>> {
-    const query = this.getDefaultKnex().select(selectFields);
-    for (let i = 0; i < conditions.length; i += 1) {
-      const { field, operator, value } = conditions[i];
-      if (operator) {
-        query.where(field, operator, value);
-      } else {
-        query.where(field, '=', value);
-      }
-    }
-    return {
-      success: true,
-      result: await Pagination.pagination<T>(query, pagination),
-    };
   }
 }
 
