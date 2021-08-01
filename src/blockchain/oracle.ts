@@ -60,7 +60,7 @@ export class Oracle {
 
   public async openBox() {
     const imOpenSchedule = new ModelOpenSchedule();
-    imOpenSchedule.openLootBox(
+    await imOpenSchedule.openLootBox(
       async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
         return this.contracts.distributor.openBox(campaignId, owner, numberOfBox);
       },

@@ -20,6 +20,7 @@ export interface IEvent {
   from: string;
   to: string;
   value: string;
+  eventId: string;
   topics: string;
   rawData: Buffer;
   jsonData: string;
@@ -95,6 +96,7 @@ export class ModelEvent extends ModelBase<IEvent> {
         'jsonData',
         'blockNumber',
         'blockHash',
+        'eventId',
         'memo',
         'contractAddress',
         'transactionHash',
@@ -142,6 +144,7 @@ export class ModelEvent extends ModelBase<IEvent> {
       'jsonData',
       'blockNumber',
       'blockHash',
+      'eventId',
       'memo',
       'contractAddress',
       'transactionHash',

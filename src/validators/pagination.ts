@@ -28,6 +28,7 @@ export const ValidatorPagination = new Validator(
       },
     ],
     validator: (v: any[]) =>
+      Array.isArray(v) &&
       v.every((e: any) => typeof e === 'object' && e.column && e.order && ['asc', 'desc'].includes(e.order)),
     message: 'Invalid order type',
   },

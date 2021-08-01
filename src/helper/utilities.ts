@@ -4,8 +4,10 @@ import crypto, { createHmac, randomBytes } from 'crypto';
 import { keccak256 } from 'js-sha3';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'bignumber.js';
+import BytesBuffer from './bytes-buffer';
 
 export interface IParsedEvent {
+  eventId: string;
   blockHash: string;
   contractAddress: string;
   transactionHash: string;
@@ -147,7 +149,7 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
   }
   const [, from, to, value] = eventData;
 
-  return {
+  const result = {
     blockHash,
     contractAddress: address.toString(),
     transactionHash,
@@ -156,6 +158,18 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
     to: getLowCaseAddress(to),
     value: BigNum.from(value).toString(),
   };
+  const buf = new BytesBuffer();
+  const eventId = utils.sha256(
+    buf
+      .writeAddress(from)
+      .writeAddress(to)
+      .writeAddress(address.toString())
+      .writeUint256(value)
+      .writeUint256(transactionHash)
+      .invoke(),
+  );
+
+  return { ...result, eventId };
 }
 
 export function createHmacProof(user: string, secret: string) {

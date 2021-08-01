@@ -3,8 +3,11 @@ import { ethers } from 'ethers';
 import { Knex } from 'knex';
 import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
-import { EProcessingStatus, IEventDetail } from './model-event';
+import ModelEvent, { EProcessingStatus } from './model-event';
 import logger from '../helper/logger';
+import { BigNum } from '../helper/utilities';
+import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
+import config from '../helper/config';
 
 export enum EOpenScheduleStatus {
   New = 0,
@@ -86,12 +89,32 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
   }
 
   // Perform batch buy based on recored event
-  public async batchBuy(
-    event: IEventDetail,
-    records: Pick<IOpenSchedule, 'campaignId' | 'numberOfBox' | 'owner' | 'memo'>[],
-  ): Promise<void> {
+  public async batchBuy(): Promise<void> {
+    const imEvent = new ModelEvent();
+    // Start transaction
     const tx = await this.getKnex().transaction();
+    const event = await imEvent.getEventDetail(EProcessingStatus.NewPayment);
+    // We will end the process if event is undefined
+    if (typeof event === 'undefined') {
+      tx.rollback();
+      return;
+    }
     try {
+      // Calculate number of loot boxes
+      const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal)).toNumber();
+      const numberOfLootBoxes = calculateNoLootBoxes(floatVal);
+      if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
+        throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
+      }
+      // Calculate distribution of loot boxes
+      const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
+      logger.debug('Total number of loot boxes:', numberOfLootBoxes, lootBoxDistribution);
+      const records = lootBoxDistribution.map((item) => ({
+        campaignId: config.activeCampaignId,
+        owner: event.from,
+        memo: `Buy ${item} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${event.from}`,
+        numberOfBox: item,
+      }));
       for (let i = 0; i < records.length; i += 1) {
         await tx(this.tableName).insert(records[i]);
       }

@@ -12,9 +12,11 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('nftTokenId', 66).notNullable().unique().comment('Token id of NFT');
 
+    table.string('transactionHash', 66).notNullable().comment('Transaction of the issuance');
+
     table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
-    table.index(['blockchainId', 'tokenId', 'owner', 'nftTokenId', 'createdDate'], 'indexed_fields');
+    table.index(['blockchainId', 'transactionHash', 'tokenId', 'owner', 'nftTokenId', 'createdDate'], 'indexed_fields');
   });
 }
 

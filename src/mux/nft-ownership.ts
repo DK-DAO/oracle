@@ -1,14 +1,15 @@
 import { IRequestData } from '../framework/interfaces';
 import { Mux, Validator } from '../framework';
 import { ValidatorPagination } from '../validators';
-import ModelOpenSchedule from '../model/model-open-schedule';
+import ModelNftOwnership from '../model/model-nft-ownership';
 
 Mux.get(
-  '/api/v1/boxSchedule',
+  '/api/v1/nftOwnership',
   new Validator(
     {
-      name: 'status',
-      type: 'number',
+      name: 'nftTokenId',
+      type: 'string',
+      validator: (e): boolean => /^0x[0-9a-f]+$/gi.test(e),
       location: 'query',
     },
     {
@@ -19,23 +20,23 @@ Mux.get(
     },
   ).merge(ValidatorPagination),
   async (req: IRequestData) => {
-    const imOpenSchedule = new ModelOpenSchedule();
-    const conditions = [];
+    const imNftOwnership = new ModelNftOwnership();
+    const conditions: any[] = [];
     const {
-      query: { status, owner },
+      query: { owner, nftTokenId },
     } = req;
-    if (typeof status === 'number' && Number.isInteger(status)) {
-      conditions.push({
-        field: 'status',
-        value: status,
-      });
-    }
     if (typeof owner === 'string') {
       conditions.push({
         field: 'owner',
         value: owner,
       });
     }
-    return imOpenSchedule.getScheduling(req.query, <any>conditions);
+    if (typeof nftTokenId === 'string') {
+      conditions.push({
+        field: 'nftTokenId',
+        value: nftTokenId,
+      });
+    }
+    return imNftOwnership.getNftList(req.query, conditions);
   },
 );

@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import cluster from 'cluster';
-import { Connector, Mux } from './framework';
+import { Connector, FrameworkEvent, Mux } from './framework';
 import config from './helper/config';
 import logger from './helper/logger';
 import { IWoker, loadWorker } from './helper/utilities';
@@ -11,6 +11,8 @@ import { IWatching } from './model/model-watching';
 import { ISync } from './model/model-sync';
 import './middleware';
 import './mux';
+
+FrameworkEvent.on('error', (e) => logger.error(e));
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
