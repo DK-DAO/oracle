@@ -49,6 +49,7 @@ class MainApplication {
     let activeBlockchains;
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
+      await knex('open_result').delete();
       await knex('nft_ownership').delete();
       await knex('airdrop').delete();
       await knex('sync').delete();

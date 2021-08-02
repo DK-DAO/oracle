@@ -1,4 +1,6 @@
 import './donate-transaction';
 import './donate-balance';
-import './box-schedule';
 import './nft-ownership';
+import './box-schedule';
+import './box-price';
+import './box-result';

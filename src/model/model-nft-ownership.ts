@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
+import logger from '../helper/logger';
 import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
@@ -43,7 +44,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         'n.createdDate as createdDate',
         'b.name as blockchainName',
         'b.chainId as chainId',
-        't.decimal as tokenDecimal',
+        't.name as tokenName',
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
@@ -58,53 +59,91 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
       operator?: '=' | '>' | '<' | '>=' | '<=';
       value: string | number;
     }[],
-  ): Promise<IResponseList<INftOwnership>> {
-    return this.getListByCondition<INftOwnership>(this.attachConditions(this.detailQuery(), conditions), pagination);
+  ): Promise<IResponseList<INftOwnershipDetail>> {
+    return this.getListByCondition<INftOwnershipDetail>(
+      this.attachConditions(this.detailQuery(), conditions),
+      pagination,
+    );
   }
 
   // Perform batch buy based on recored event
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
-    // Start transaction
-    const tx = await this.getKnex().transaction();
-    const event = await imEvent.getEventDetail(EProcessingStatus.NftTransfer);
+    const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
     // We will end the process if event is undefined
-    if (typeof event === 'undefined') {
-      await tx.rollback();
+    if (typeof events === 'undefined' || events.length === 0) {
       return;
     }
-    try {
-      const [ownership] = await this.get([
-        {
-          field: 'nftTokenId',
-          value: event.value,
-        },
-      ]);
+    logger.info(`Processing ${events.length} card issurance events`);
+    for (let i = 0; i < events.length; i += 1) {
+      const event = events[i];
+      // Start transaction
+      const tx = await this.getKnex().transaction();
 
-      const record = <INftOwnership>{
-        blockchainId: event.blockchainId,
-        tokenId: event.tokenId,
-        nftTokenId: event.value,
-        transactionHash: event.transactionHash,
-        owner: event.to,
-      };
+      // We will end the process if event is undefined
+      try {
+        const [ownership] = await this.get([
+          {
+            field: 'nftTokenId',
+            value: event.value,
+          },
+        ]);
 
-      // If record didn't exist insert one otherwise update existing record
-      if (typeof ownership === 'undefined') {
-        await tx(this.tableName).insert(record);
-      } else {
-        await tx(this.tableName)
-          .update({ owner: event.to, transactionHash: event.transactionHash })
-          .where({ id: ownership.id });
+        const record = <INftOwnership>{
+          blockchainId: event.blockchainId,
+          tokenId: event.tokenId,
+          nftTokenId: event.value,
+          transactionHash: event.transactionHash,
+          owner: event.to,
+        };
+
+        // Issue a new nft
+        if (event.from === '0x0000000000000000000000000000000000000000') {
+          const cardList = [
+            'Verdict of God',
+            'Banished Fairy',
+            'Wrath of The Sea',
+            'Eternal Storm',
+            'Skadi',
+            'Unforgiven Creatures',
+            'Deadly Pool',
+            'Euphemia',
+            'Sayyida',
+            'Shadowmare',
+            "Deepsea's Hunger",
+            'Krakenetics',
+            'Death Knight',
+            'Mighty Fist',
+            'Aoife',
+            'Corock',
+            'Little Johnny',
+            'Nix',
+            'Regalia of the Sea',
+            'Undying Sailor',
+          ];
+          const rarenessMap = [6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1];
+          const cardId = cardList.indexOf(event.tokenName);
+          const rareness = rarenessMap[cardId];
+          await tx('open_result').insert({ ...record, cardId, rareness });
+        }
+
+        // If record didn't exist insert one otherwise update existing record
+        if (typeof ownership === 'undefined') {
+          await tx(this.tableName).insert(record);
+        } else {
+          await tx(this.tableName)
+            .update({ owner: event.to, transactionHash: event.transactionHash })
+            .where({ id: ownership.id });
+        }
+
+        // Update status to successed
+        await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
+        await tx.commit();
+      } catch (err) {
+        await tx.rollback();
+        await this.getKnex()('event').update({ status: EProcessingStatus.Error }).where({ id: event.id });
+        throw err;
       }
-
-      // Update status to successed
-      await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
-      await tx.commit();
-    } catch (err) {
-      await tx.rollback();
-      await this.getKnex()('event').update({ status: EProcessingStatus.Error }).where({ id: event.id });
-      throw err;
     }
   }
 }

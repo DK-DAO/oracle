@@ -18,19 +18,19 @@ function repeat(el: any, times: number): any[] {
   return r;
 }
 
-function calculateDiscountByDuration(today: number, discountDuration: number = 30) {
+export function calculateDiscountByDuration(today: number, discountDuration: number = 30) {
   return Math.sqrt(discountDuration ** 2 - discountDuration * today) / 100;
 }
 
-function calculateDiscountByNumberOfBoxes(numberOfLootBoxes: number) {
+export function calculateDiscountByNumberOfBoxes(numberOfLootBoxes: number) {
   return Math.log(numberOfLootBoxes) / Math.log(100) / 5;
 }
 
-function applyDiscount(basePrice: number, percent: number) {
+export function applyDiscount(basePrice: number, percent: number) {
   return basePrice * (1 - percent);
 }
 
-function calculateDiscount(numberOfLootBoxes: number, stage: TStage, today: number) {
+export function calculateDiscount(numberOfLootBoxes: number, stage: TStage, today: number) {
   let price = 5;
   switch (stage) {
     case 'genesis':

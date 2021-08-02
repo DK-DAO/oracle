@@ -35,6 +35,7 @@ export interface IEvent {
 export interface IEventDetail extends IEvent {
   chainId: number;
   blockchainName: string;
+  tokenName: string;
   tokenSymbol: string;
   tokenDecimal: number;
   tokenAddress: string;
@@ -60,6 +61,10 @@ export class ModelEvent extends ModelBase<IEvent> {
 
   public getEventDetail(status: EProcessingStatus): Promise<IEventDetail | undefined> {
     return this.getDetailQuery().where({ status }).orderBy('id', 'asc').limit(1).first();
+  }
+
+  public getAllEventDetail(status: EProcessingStatus): Promise<IEventDetail[] | undefined> {
+    return this.getDetailQuery().where({ status }).orderBy('id', 'asc');
   }
 
   public getDonate() {
@@ -104,6 +109,7 @@ export class ModelEvent extends ModelBase<IEvent> {
         'b.name as blockchainName',
         'b.chainId as chainId',
         't.decimal as tokenDecimal',
+        't.name as tokenName',
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
