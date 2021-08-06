@@ -11,6 +11,7 @@ import { abi as abiDistributor } from '../../artifacts/DuelistKingDistributor.js
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
 import { BytesBuffer } from '../helper/bytes-buffer';
 import ModelOpenSchedule from '../model/model-open-schedule';
+import ModelConfig from '../model/model-config';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -38,16 +39,26 @@ export class Oracle {
   }
 
   public async connect(bcData: IBlockchain) {
+    const imConfig = new ModelConfig();
     this.bcData = bcData;
     this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
     this.dkDaoOracle = this.dkDaoOracle.connect(this.provider);
     this.dkOracle = this.dkOracle.connect(this.provider);
 
     this.dkOracleAddress = this.dkOracle.address;
-    this.contracts.rng = <RNG>new ethers.Contract(config.addressRng, abiRng, this.dkDaoOracle);
-    this.contracts.distributor = <DuelistKingDistributor>(
-      new ethers.Contract(config.addressDuelistKingFairDistributor, abiDistributor, this.dkOracle)
-    );
+
+    const contractRNGAddress = await imConfig.getConfig('contractRNG');
+    const contractDistributor = await imConfig.getConfig('contractDistributor');
+    if (typeof contractDistributor === 'string' && typeof contractRNGAddress === 'string') {
+      
+      this.contracts.rng = <RNG>new ethers.Contract(contractRNGAddress, abiRng, this.dkDaoOracle);
+      this.contracts.distributor = <DuelistKingDistributor>(
+        new ethers.Contract(contractDistributor, abiDistributor, this.dkOracle)
+      );
+    } else {
+      throw new Error('There are no RNG and Distributor in data');
+    }
+
     logger.debug(`DKDAO Oracle: ${this.dkDaoOracle.address}, DK Oracle: ${this.dkOracle.address}`);
     logger.debug(`DKDAO RNG: ${this.contracts.rng.address}, DK Distributor: ${this.contracts.distributor.address}`);
   }

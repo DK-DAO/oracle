@@ -4,6 +4,8 @@ import logger from '../helper/logger';
 import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
+import Card from '../helper/card';
+import { IOpenResult } from './model-open-result';
 
 export interface INftOwnership {
   id: number;
@@ -66,7 +68,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
     );
   }
 
-  // Perform batch buy based on recored event
+  // Perform batch buy based on recorded event
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
@@ -97,34 +99,19 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
           owner: event.to,
         };
 
-        // Issue a new nft
+        // Issue a new nft please aware of max_safe_int 2^53 issue
         if (event.from === '0x0000000000000000000000000000000000000000') {
-          const cardList = [
-            'Verdict of God',
-            'Banished Fairy',
-            'Wrath of The Sea',
-            'Eternal Storm',
-            'Skadi',
-            'Unforgiven Creatures',
-            'Deadly Pool',
-            'Euphemia',
-            'Sayyida',
-            'Shadowmare',
-            "Deepsea's Hunger",
-            'Krakenetics',
-            'Death Knight',
-            'Mighty Fist',
-            'Aoife',
-            'Corock',
-            'Little Johnny',
-            'Nix',
-            'Regalia of the Sea',
-            'Undying Sailor',
-          ];
-          const rarenessMap = [6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1];
-          const cardId = cardList.indexOf(event.tokenName);
-          const rareness = rarenessMap[cardId];
-          await tx('open_result').insert({ ...record, cardId, rareness });
+          const card = Card.from(event.value);
+          await tx('open_result').insert(<IOpenResult>{
+            ...record,
+            applicationId: Number(card.getApplicationId()),
+            itemEdition: card.getEdition(),
+            itemGeneration: card.getGeneration(),
+            itemRareness: card.getRareness(),
+            itemType: card.getType(),
+            itemId: Number(card.getId()),
+            itemSerial: Number(card.getSerial()),
+          });
         }
 
         // If record didn't exist insert one otherwise update existing record
@@ -136,7 +123,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
             .where({ id: ownership.id });
         }
 
-        // Update status to successed
+        // Update status to succeed
         await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
         await tx.commit();
       } catch (err) {

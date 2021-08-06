@@ -140,6 +140,12 @@ export class BigNum {
   }
 }
 
+export function stringToBytes32(v: string) {
+  const buf = Buffer.alloc(32);
+  buf.write(v);
+  return `0x${buf.toString('hex')}`;
+}
+
 export function parseEvent(log: ethers.providers.Log): IParsedEvent {
   const { blockHash, transactionHash, blockNumber, topics, data, address } = log;
   // Append data to topic if these data wasn't indexed

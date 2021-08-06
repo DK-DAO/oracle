@@ -12,9 +12,19 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('nftTokenId', 66).notNullable().unique().comment('Token id of NFT');
 
-    table.integer('cardId').notNullable().comment('Card Id to return to front-end');
+    table.bigInteger('applicationId').notNullable().comment('Application Id of the item');
 
-    table.integer('rareness').notNullable().defaultTo(1).comment('Rareness of the card');
+    table.integer('itemEdition').notNullable().comment('Edition of the item');
+
+    table.integer('itemGeneration').notNullable().comment('Generation of the item');
+
+    table.integer('itemRareness').notNullable().comment('Rareness of the item');
+
+    table.integer('itemType').notNullable().comment('Type of the item');
+
+    table.bigInteger('itemId').notNullable().comment('Id  of the item');
+
+    table.bigInteger('itemSerial').notNullable().comment('Serial of the item');
 
     table.string('transactionHash', 66).notNullable().comment('Transaction of the issuance');
 

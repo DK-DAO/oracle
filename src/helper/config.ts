@@ -14,13 +14,13 @@ interface ApplicationConfig {
   activeCampaignId: number;
   saleScheduleGenesis: Date;
   saleScheduleEarlybird: Date;
-  addressRng: string;
-  addressDuelistKingFairDistributor: string;
+  addressRegistry: string;
   serviceHost: string;
   servicePort: number;
   apiUser: string;
   apiSecret: string;
 }
+
 
 const config = ((conf) => {
   const converted: any = {};

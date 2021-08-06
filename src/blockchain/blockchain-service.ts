@@ -39,7 +39,7 @@ const safeDuration = safeConfirmations * 10000;
 // Reveal duration 30 mins
 const revealDuration = 1800000;
 
-// Const nubmer of digests
+// Const number of digests
 const numberOfDigests = 20;
 
 export class Blockchain {
@@ -72,6 +72,8 @@ export class Blockchain {
 
   // Recent cached nonce
   private cachedNonce: Map<string, ICachedNonce> = new Map();
+
+  private oracleInstance?: Oracle;
 
   private stage: TStage = 'genesis';
 
@@ -244,7 +246,7 @@ export class Blockchain {
               }),
             });
           } else if (token.type === EToken.ERC721) {
-            logger.info(`New event, ERC721 transfer ${from} -> ${to} ${value}`);
+            logger.info(`New event, ERC721 transfer ${from} -> ${to} ${BigNum.toHexString(BigNum.from(value))}`);
             await imEvent.create({
               status: EProcessingStatus.NftTransfer,
               from,
@@ -346,7 +348,12 @@ export class Blockchain {
 
       // Current watching blockchain is active chain of DKDAO
       if (this.blockchain.chainId === config.activeChainId) {
-        const oracle = await Oracle.getInstance(this.blockchain);
+        if (typeof this.oracleInstance === 'undefined') {
+          // Init oracle if not exist
+          this.oracleInstance = await Oracle.getInstance(this.blockchain);
+        }
+        const oracle = this.oracleInstance;
+
         this.queue
           .add('oracle schedule loot boxes opening', async () => {
             const imOpenSchedule = new ModelOpenSchedule();

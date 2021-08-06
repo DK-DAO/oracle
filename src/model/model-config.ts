@@ -15,7 +15,7 @@ export type TKeyOfConfig = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistr
 
 export class ModelConfig extends ModelBase<IConfig> {
   constructor() {
-    super('watching');
+    super('config');
   }
 
   public basicQuery(): Knex.QueryBuilder {

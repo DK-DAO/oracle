@@ -8,9 +8,14 @@ export interface IOpenResult {
   blockchainId: number;
   tokenId: number;
   owner: string;
-  cardId: number;
-  rareness: number;
   nftTokenId: string;
+  applicationId: number;
+  itemEdition: number;
+  itemGeneration: number;
+  itemRareness: number;
+  itemType: number;
+  itemId: number;
+  itemSerial: number;
   transactionHash: string;
   createdDate: string;
 }
@@ -39,9 +44,14 @@ export class ModelOpenResult extends ModelBase<IOpenResult> {
         'o.blockchainId as blockchainId',
         'tokenId',
         'owner',
-        'cardId',
-        'rareness',
         'nftTokenId',
+        'applicationId',
+        'itemEdition',
+        'itemGeneration',
+        'itemRareness',
+        'itemType',
+        'itemId',
+        'itemSerial',
         'transactionHash',
         'o.createdDate as createdDate',
         'b.name as blockchainName',
