@@ -21,12 +21,15 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
-interface ERC721Interface extends ethers.utils.Interface {
+interface NFTInterface extends ethers.utils.Interface {
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
+    "getDomain()": FunctionFragment;
+    "getRegistry()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
+    "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
@@ -46,9 +49,18 @@ interface ERC721Interface extends ethers.utils.Interface {
     functionFragment: "getApproved",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getRegistry",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
     values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mint",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
@@ -83,10 +95,16 @@ interface ERC721Interface extends ethers.utils.Interface {
     functionFragment: "getApproved",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getRegistry",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
@@ -119,7 +137,7 @@ interface ERC721Interface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
-export class ERC721 extends Contract {
+export class NFT extends Contract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -158,7 +176,7 @@ export class ERC721 extends Contract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<T & G>>>;
 
-  interface: ERC721Interface;
+  interface: NFTInterface;
 
   functions: {
     approve(
@@ -190,6 +208,14 @@ export class ERC721 extends Contract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    getDomain(overrides?: CallOverrides): Promise<[string]>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
+
+    getRegistry(overrides?: CallOverrides): Promise<[string]>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -201,6 +227,18 @@ export class ERC721 extends Contract {
       operator: string,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    mint(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "mint(address,uint256)"(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
@@ -311,6 +349,14 @@ export class ERC721 extends Contract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  getDomain(overrides?: CallOverrides): Promise<string>;
+
+  "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+  getRegistry(overrides?: CallOverrides): Promise<string>;
+
+  "getRegistry()"(overrides?: CallOverrides): Promise<string>;
+
   isApprovedForAll(
     owner: string,
     operator: string,
@@ -322,6 +368,18 @@ export class ERC721 extends Contract {
     operator: string,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  mint(
+    to: string,
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "mint(address,uint256)"(
+    to: string,
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
 
   name(overrides?: CallOverrides): Promise<string>;
 
@@ -426,6 +484,14 @@ export class ERC721 extends Contract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    getDomain(overrides?: CallOverrides): Promise<string>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+    getRegistry(overrides?: CallOverrides): Promise<string>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<string>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -435,6 +501,18 @@ export class ERC721 extends Contract {
     "isApprovedForAll(address,address)"(
       owner: string,
       operator: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    mint(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "mint(address,uint256)"(
+      to: string,
+      tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -571,6 +649,14 @@ export class ERC721 extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getDomain(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -581,6 +667,18 @@ export class ERC721 extends Contract {
       owner: string,
       operator: string,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    mint(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "mint(address,uint256)"(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
     ): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
@@ -696,6 +794,14 @@ export class ERC721 extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getDomain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -706,6 +812,18 @@ export class ERC721 extends Contract {
       owner: string,
       operator: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    mint(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "mint(address,uint256)"(
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;

@@ -26,12 +26,9 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
     "compute(bytes)": FunctionFragment;
     "getCampaign(uint256)": FunctionFragment;
     "getCampaignIndex()": FunctionFragment;
-    "getCard(uint256)": FunctionFragment;
-    "getCardIndex()": FunctionFragment;
     "getDomain()": FunctionFragment;
     "getRegistry()": FunctionFragment;
-    "issueCard(string,string)": FunctionFragment;
-    "issueGenesisEdittion(uint256,address)": FunctionFragment;
+    "issueGenesisEdittion(address,uint256)": FunctionFragment;
     "newCampaign(tuple)": FunctionFragment;
     "openBox(uint256,address,uint256)": FunctionFragment;
   };
@@ -45,26 +42,14 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
     functionFragment: "getCampaignIndex",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "getCard",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getCardIndex",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getRegistry",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "issueCard",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "issueGenesisEdittion",
-    values: [BigNumberish, string]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "newCampaign",
@@ -76,7 +61,6 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       }
     ]
@@ -95,17 +79,11 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
     functionFragment: "getCampaignIndex",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getCard", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getCardIndex",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getRegistry",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "issueCard", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "issueGenesisEdittion",
     data: BytesLike
@@ -118,11 +96,9 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
 
   events: {
     "NewCampaign(uint256,uint256,uint64)": EventFragment;
-    "NewCard(uint256,address,string)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "NewCampaign"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NewCard"): EventFragment;
 }
 
 export class DuelistKingDistributor extends Contract {
@@ -189,7 +165,6 @@ export class DuelistKingDistributor extends Contract {
           BigNumber,
           BigNumber,
           BigNumber,
-          BigNumber,
           BigNumber[]
         ] & {
           opened: BigNumber;
@@ -198,7 +173,6 @@ export class DuelistKingDistributor extends Contract {
           generation: BigNumber;
           start: BigNumber;
           end: BigNumber;
-          designs: BigNumber;
           distribution: BigNumber[];
         }
       ]
@@ -216,7 +190,6 @@ export class DuelistKingDistributor extends Contract {
           BigNumber,
           BigNumber,
           BigNumber,
-          BigNumber,
           BigNumber[]
         ] & {
           opened: BigNumber;
@@ -225,7 +198,6 @@ export class DuelistKingDistributor extends Contract {
           generation: BigNumber;
           start: BigNumber;
           end: BigNumber;
-          designs: BigNumber;
           distribution: BigNumber[];
         }
       ]
@@ -235,17 +207,6 @@ export class DuelistKingDistributor extends Contract {
 
     "getCampaignIndex()"(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    getCard(index: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
-
-    "getCard(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getCardIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    "getCardIndex()"(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     getDomain(overrides?: CallOverrides): Promise<[string]>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
@@ -254,27 +215,15 @@ export class DuelistKingDistributor extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
 
-    issueCard(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "issueCard(string,string)"(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
     issueGenesisEdittion(
-      cardId: BigNumberish,
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "issueGenesisEdittion(uint256,address)"(
-      cardId: BigNumberish,
+    "issueGenesisEdittion(address,uint256)"(
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
@@ -286,13 +235,12 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
+    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
       campaign: {
         opened: BigNumberish;
         softCap: BigNumberish;
@@ -300,7 +248,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
@@ -308,14 +255,14 @@ export class DuelistKingDistributor extends Contract {
 
     openBox(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
     "openBox(uint256,address,uint256)"(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
@@ -339,7 +286,6 @@ export class DuelistKingDistributor extends Contract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
       BigNumber[]
     ] & {
       opened: BigNumber;
@@ -348,7 +294,6 @@ export class DuelistKingDistributor extends Contract {
       generation: BigNumber;
       start: BigNumber;
       end: BigNumber;
-      designs: BigNumber;
       distribution: BigNumber[];
     }
   >;
@@ -364,7 +309,6 @@ export class DuelistKingDistributor extends Contract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
       BigNumber[]
     ] & {
       opened: BigNumber;
@@ -373,7 +317,6 @@ export class DuelistKingDistributor extends Contract {
       generation: BigNumber;
       start: BigNumber;
       end: BigNumber;
-      designs: BigNumber;
       distribution: BigNumber[];
     }
   >;
@@ -381,17 +324,6 @@ export class DuelistKingDistributor extends Contract {
   getCampaignIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
   "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getCard(index: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-  "getCard(uint256)"(
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getCardIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-  "getCardIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
 
   getDomain(overrides?: CallOverrides): Promise<string>;
 
@@ -401,27 +333,15 @@ export class DuelistKingDistributor extends Contract {
 
   "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
-  issueCard(
-    name: string,
-    symbol: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "issueCard(string,string)"(
-    name: string,
-    symbol: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
   issueGenesisEdittion(
-    cardId: BigNumberish,
     owner: string,
+    id: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "issueGenesisEdittion(uint256,address)"(
-    cardId: BigNumberish,
+  "issueGenesisEdittion(address,uint256)"(
     owner: string,
+    id: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
@@ -433,13 +353,12 @@ export class DuelistKingDistributor extends Contract {
       generation: BigNumberish;
       start: BigNumberish;
       end: BigNumberish;
-      designs: BigNumberish;
       distribution: BigNumberish[];
     },
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
+  "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
     campaign: {
       opened: BigNumberish;
       softCap: BigNumberish;
@@ -447,7 +366,6 @@ export class DuelistKingDistributor extends Contract {
       generation: BigNumberish;
       start: BigNumberish;
       end: BigNumberish;
-      designs: BigNumberish;
       distribution: BigNumberish[];
     },
     overrides?: Overrides
@@ -455,14 +373,14 @@ export class DuelistKingDistributor extends Contract {
 
   openBox(
     campaignId: BigNumberish,
-    buyer: string,
+    owner: string,
     numberOfBoxes: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
   "openBox(uint256,address,uint256)"(
     campaignId: BigNumberish,
-    buyer: string,
+    owner: string,
     numberOfBoxes: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
@@ -486,7 +404,6 @@ export class DuelistKingDistributor extends Contract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         BigNumber[]
       ] & {
         opened: BigNumber;
@@ -495,7 +412,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumber;
         start: BigNumber;
         end: BigNumber;
-        designs: BigNumber;
         distribution: BigNumber[];
       }
     >;
@@ -511,7 +427,6 @@ export class DuelistKingDistributor extends Contract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         BigNumber[]
       ] & {
         opened: BigNumber;
@@ -520,7 +435,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumber;
         start: BigNumber;
         end: BigNumber;
-        designs: BigNumber;
         distribution: BigNumber[];
       }
     >;
@@ -528,17 +442,6 @@ export class DuelistKingDistributor extends Contract {
     getCampaignIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
     "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getCard(index: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-    "getCard(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getCardIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "getCardIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
 
     getDomain(overrides?: CallOverrides): Promise<string>;
 
@@ -548,27 +451,15 @@ export class DuelistKingDistributor extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
-    issueCard(
-      name: string,
-      symbol: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    "issueCard(string,string)"(
-      name: string,
-      symbol: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
     issueGenesisEdittion(
-      cardId: BigNumberish,
       owner: string,
+      id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    "issueGenesisEdittion(uint256,address)"(
-      cardId: BigNumberish,
+    "issueGenesisEdittion(address,uint256)"(
       owner: string,
+      id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -580,13 +471,12 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
+    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
       campaign: {
         opened: BigNumberish;
         softCap: BigNumberish;
@@ -594,7 +484,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: CallOverrides
@@ -602,14 +491,14 @@ export class DuelistKingDistributor extends Contract {
 
     openBox(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     "openBox(uint256,address,uint256)"(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
@@ -619,19 +508,10 @@ export class DuelistKingDistributor extends Contract {
     NewCampaign(
       campaginId: BigNumberish | null,
       generation: BigNumberish | null,
-      designs: BigNumberish | null
+      softcap: BigNumberish | null
     ): TypedEventFilter<
       [BigNumber, BigNumber, BigNumber],
-      { campaginId: BigNumber; generation: BigNumber; designs: BigNumber }
-    >;
-
-    NewCard(
-      cardIndex: BigNumberish | null,
-      cardAddress: string | null,
-      cardName: string | null
-    ): TypedEventFilter<
-      [BigNumber, string, string],
-      { cardIndex: BigNumber; cardAddress: string; cardName: string }
+      { campaginId: BigNumber; generation: BigNumber; softcap: BigNumber }
     >;
   };
 
@@ -657,17 +537,6 @@ export class DuelistKingDistributor extends Contract {
 
     "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getCard(index: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    "getCard(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getCardIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "getCardIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
     getDomain(overrides?: CallOverrides): Promise<BigNumber>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -676,27 +545,15 @@ export class DuelistKingDistributor extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    issueCard(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "issueCard(string,string)"(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
     issueGenesisEdittion(
-      cardId: BigNumberish,
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "issueGenesisEdittion(uint256,address)"(
-      cardId: BigNumberish,
+    "issueGenesisEdittion(address,uint256)"(
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
@@ -708,13 +565,12 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
+    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
       campaign: {
         opened: BigNumberish;
         softCap: BigNumberish;
@@ -722,7 +578,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
@@ -730,14 +585,14 @@ export class DuelistKingDistributor extends Contract {
 
     openBox(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
     "openBox(uint256,address,uint256)"(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
@@ -770,20 +625,6 @@ export class DuelistKingDistributor extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getCard(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    "getCard(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getCardIndex(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    "getCardIndex()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     getDomain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -792,27 +633,15 @@ export class DuelistKingDistributor extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    issueCard(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "issueCard(string,string)"(
-      name: string,
-      symbol: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
     issueGenesisEdittion(
-      cardId: BigNumberish,
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "issueGenesisEdittion(uint256,address)"(
-      cardId: BigNumberish,
+    "issueGenesisEdittion(address,uint256)"(
       owner: string,
+      id: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
@@ -824,13 +653,12 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
+    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
       campaign: {
         opened: BigNumberish;
         softCap: BigNumberish;
@@ -838,7 +666,6 @@ export class DuelistKingDistributor extends Contract {
         generation: BigNumberish;
         start: BigNumberish;
         end: BigNumberish;
-        designs: BigNumberish;
         distribution: BigNumberish[];
       },
       overrides?: Overrides
@@ -846,14 +673,14 @@ export class DuelistKingDistributor extends Contract {
 
     openBox(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     "openBox(uint256,address,uint256)"(
       campaignId: BigNumberish,
-      buyer: string,
+      owner: string,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;

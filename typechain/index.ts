@@ -4,4 +4,5 @@
 export type { ERC20 } from './ERC20';
 export type { DuelistKingDistributor } from './DuelistKingDistributor';
 export type { RNG } from './RNG';
-export type { ERC721 } from './ERC721';
+export type { NFT } from './NFT';
+export type { Registry } from './Registry';
