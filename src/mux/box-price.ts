@@ -26,7 +26,7 @@ Mux.get(
   '/api/v1/boxPrice',
   new Validator({
     name: 'numberOfBoxes',
-    type: 'number',
+    type: 'integer',
     require: true,
     defaultValue: 1,
     location: 'query',

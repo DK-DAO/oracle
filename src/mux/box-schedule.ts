@@ -8,7 +8,7 @@ Mux.get(
   new Validator(
     {
       name: 'status',
-      type: 'number',
+      type: 'integer',
       location: 'query',
     },
     {

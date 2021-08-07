@@ -87,10 +87,14 @@ export function calculateNoLootBoxes(money: number) {
 }
 
 export function calculateDistribution(noBoxes: number) {
-  let r = noBoxes;
-  const i = (r / 10) >>> 0;
-  r -= i * 10;
-  const j = (r / 5) >>> 0;
-  r -= j * 5;
-  return repeat(10, i).concat(repeat(5, j)).concat(repeat(1, r));
+  if (noBoxes < 10) {
+    return [noBoxes];
+  }
+  const i = Math.round(noBoxes / 10);
+  const j = noBoxes - i * 10;
+  const result = repeat(10, i);
+  if (j > 0) {
+    result.push(j);
+  }
+  return result;
 }

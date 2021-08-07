@@ -49,13 +49,13 @@ export class Pagination {
     {
       location: 'any',
       name: 'offset',
-      type: 'number',
+      type: 'integer',
       defaultValue: 0,
     },
     {
       location: 'any',
       name: 'limit',
-      type: 'number',
+      type: 'integer',
       defaultValue: 20,
     },
     {

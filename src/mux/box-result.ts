@@ -8,7 +8,7 @@ Mux.get(
   '/api/v1/boxResult',
   new Validator({
     name: 'openScheduleId',
-    type: 'number',
+    type: 'integer',
     require: true,
     location: 'query',
     validator: (v) => Number.isFinite(v) && Number.isInteger(v),

@@ -201,6 +201,21 @@ export function hexToFixedBuffer(inputHexString: string, size: number = 32): Buf
   return Buffer.from(inputHexString.replace(/^0x/g, '').padStart(size * 2, '0'), 'hex');
 }
 
+export function objectToCondition<T>(val: T, ...selectFields: string[]): { field: keyof T; value: any }[] {
+  const entries = Object.entries(val);
+  const condition = [];
+  for (let i = 0; i < entries.length; i += 1) {
+    const [k, v] = entries[i];
+    if (selectFields.includes(k)) {
+      condition.push({
+        field: <keyof T>k,
+        value: v,
+      });
+    }
+  }
+  return condition;
+}
+
 export default {
   toCamelCase,
   toSnakeCase,

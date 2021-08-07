@@ -10,7 +10,7 @@ export interface IValidateMethod {
 
 export type TLocation = 'body' | 'query' | 'params' | 'any';
 
-export type TType = 'string' | 'number' | 'array' | 'boolean' | 'object';
+export type TType = 'string' | 'integer' |'float' | 'array' | 'boolean' | 'object';
 
 export interface IField {
   location: TLocation;
@@ -76,8 +76,12 @@ export class Validator {
     return val.toString();
   }
 
-  private static number(val: any): number {
+  private static integer(val: any): number {
     return Number.parseInt(val, 10);
+  }
+
+  private static float(val: any): number {
+    return Number.parseFloat(val);
   }
 
   private static object(val: any): any {
