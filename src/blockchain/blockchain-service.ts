@@ -374,14 +374,14 @@ export class Blockchain {
           })
           .add('oracle open loot boxes', async () => {
             if (this.cachedNonce.has(oracle.dkOracleAddress)) {
-              const latestNocne = await oracle.provider.getTransactionCount(oracle.dkOracleAddress);
+              const latestNonce = await oracle.provider.getTransactionCount(oracle.dkOracleAddress);
               const { nonce, timestamp } = this.cachedNonce.get(oracle.dkOracleAddress) || { nonce: 0, timestamp: 0 };
               logger.info(`Cached nonce: ${nonce} of ${oracle.dkOracleAddress}, cached at: ${timestamp}`);
-              if (latestNocne > nonce || Date.now() - timestamp > safeDuration) {
+              if (latestNonce > nonce || Date.now() - timestamp > safeDuration) {
                 await oracle.openBox();
                 // Store back nonce to cache
                 this.cachedNonce.set(oracle.dkOracleAddress, {
-                  nonce: latestNocne,
+                  nonce: latestNonce,
                   timestamp: Date.now(),
                 });
               }

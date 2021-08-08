@@ -22,9 +22,12 @@ export class ModelDiscount extends ModelBase<IDiscount> {
     return this.getDefaultKnex().select('*');
   }
 
-  public async getDiscountByAddress(address: string): Promise<Number> {
-    const [{ discount }] = await this.getDefaultKnex().select({ address });
-    return discount || 0;
+  public async getDiscountByAddress(address: string): Promise<number> {
+    const [result] = await this.basicQuery().where({ address });
+    if (typeof result !== 'undefined' && typeof result.discount !== 'undefined') {
+      return result.discount;
+    }
+    return 0;
   }
 
   public async insertIfNotExist(record: Partial<IDiscount>): Promise<IDiscount> {

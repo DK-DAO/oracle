@@ -12,8 +12,7 @@ interface ApplicationConfig {
   activeChainId: number;
   developmentChainId: number;
   activeCampaignId: number;
-  saleScheduleGenesis: Date;
-  saleScheduleEarlybird: Date;
+  saleScheduleSale: Date;
   addressRegistry: string;
   serviceHost: string;
   servicePort: number;
@@ -35,7 +34,7 @@ const config = ((conf) => {
         converted[k] = parseInt(v, 10);
         break;
       case 'saleScheduleGenesis':
-      case 'saleScheduleEarlybird':
+      case 'saleScheduleSale':
         converted[k] = new Date(v.trim());
         break;
       default:

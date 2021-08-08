@@ -19,9 +19,10 @@ Mux.get(
       name: 'discount',
       type: 'float',
       require: true,
+      defaultValue: 0,
       location: 'query',
-      validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 1,
-      message: 'Percent of discount must be a float in range 0 -> 1',
+      validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 0.4,
+      message: 'Percent of discount must be a float in range 0 -> 0.4',
     },
   ).merge(ValidatorPagination),
   async (req: IRequestData): Promise<IResponseRecord<IDiscount>> => {

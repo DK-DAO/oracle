@@ -6,8 +6,12 @@ import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import logger from '../helper/logger';
 import { BigNum } from '../helper/utilities';
-import { calculateDistribution, calculateNoLootBoxes } from '../helper/calculate-loot-boxes';
+import {
+  calculateDistribution,
+  calculateNumberOfLootBoxes,
+} from '../helper/calculate-loot-boxes';
 import config from '../helper/config';
+import ModelDiscount from './model-discount';
 
 export enum EOpenScheduleStatus {
   New = 0,
@@ -88,8 +92,9 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     return this.getListByCondition<IOpenSchedule>(this.attachConditions(this.basicQuery(), conditions), pagination);
   }
 
-  // Perform batch buy based on recored event
+  // Perform batch buy based on recorded event
   public async batchBuy(): Promise<void> {
+    const imDiscount = new ModelDiscount();
     const imEvent = new ModelEvent();
     // Start transaction
     const tx = await this.getKnex().transaction();
@@ -102,7 +107,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     try {
       // Calculate number of loot boxes
       const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal)).toNumber();
-      const numberOfLootBoxes = calculateNoLootBoxes(floatVal);
+      const numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));
       if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
         throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
       }
@@ -118,7 +123,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       for (let i = 0; i < records.length; i += 1) {
         await tx(this.tableName).insert(records[i]);
       }
-      // Update status to successed
+      // Update status to succeed
       await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
       await tx.commit();
     } catch (err) {

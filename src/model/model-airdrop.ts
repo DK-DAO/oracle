@@ -23,7 +23,7 @@ export class ModelAirdrop extends ModelBase<IAirdrop> {
       const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal));
       // If existed we update it otherwise we create a new one
       if (typeof airdrop !== 'undefined') {
-        // Caculate float value, we will store in float string
+        // Calculate float value, we will store in float string
         await tx(this.tableName)
           .update({
             value: BigNum.from(airdrop.value).plus(floatVal).toString(),
