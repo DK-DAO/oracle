@@ -10,11 +10,13 @@ export async function up(knex: Knex): Promise<void> {
 
     table.float('discount').comment('Discount amount');
 
+    table.string('code', 32).notNullable().comment('Code of this discount');
+
     table.string('memo', 255).notNullable().comment('Memo of this discount');
 
     table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
 
-    table.index(['campaignId', 'address', 'discount', 'memo', 'createdDate'], 'indexed_fields');
+    table.index(['campaignId', 'address', 'discount', 'code', 'memo', 'createdDate'], 'indexed_fields');
   });
 }
 

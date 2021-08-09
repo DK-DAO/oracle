@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
-import { RNG, DuelistKingDistributor } from '../../typechain';
+import { RNG, DuelistKingDistributor, OracleProxy } from '../../typechain';
 import { IBlockchain } from '../model/model-blockchain';
 import config from '../helper/config';
 import logger from '../helper/logger';
 import { buildDigestArray } from '../helper/utilities';
 import { abi as abiRng } from '../../artifacts/RNG.json';
+import { abi as abiOracleProxy } from '../../artifacts/OracleProxy.json';
 // eslint-disable-next-line max-len
 import { abi as abiDistributor } from '../../artifacts/DuelistKingDistributor.json';
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
@@ -15,52 +16,102 @@ import ModelConfig from '../model/model-config';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
+interface ICachedNonce {
+  nonce: number;
+  timestamp: number;
+}
+
 export interface IContractList {
+  dkOracleProxy: OracleProxy;
+  dkdaoOracleProxy: OracleProxy;
   rng: RNG;
   distributor: DuelistKingDistributor;
 }
 
-export class Oracle {
-  private dkOracle: ethers.Wallet;
+// Safe duration
+const safeDuration = 60000;
 
-  private dkDaoOracle: ethers.Wallet;
+export class Oracle {
+  private dkOracle: ethers.Wallet[] = [];
+
+  private dkDaoOracle: ethers.Wallet[] = [];
 
   private bcData: IBlockchain = <IBlockchain>{};
 
   private contracts: IContractList = <IContractList>{};
+
+  // Recent cached nonce
+  private cachedNonce: Map<string, ICachedNonce> = new Map();
+
+  private oracleSelect: number = 0;
 
   public provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
 
   public dkOracleAddress: string = '';
 
   constructor() {
-    this.dkOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`);
-    this.dkDaoOracle = ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`);
+    this.dkDaoOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/0`));
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`));
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`));
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
+  }
+
+  private async checkNonce(address: string): Promise<boolean> {
+    if (this.cachedNonce.has(address)) {
+      const latestNonce = await this.provider.getTransactionCount(address);
+      const { nonce, timestamp } = this.cachedNonce.get(address) || { nonce: 0, timestamp: 0 };
+      logger.info(`Cached nonce: ${nonce} of ${address}, cached at: ${timestamp}`);
+      if (latestNonce > nonce || Date.now() - timestamp > safeDuration) {
+        // Store back nonce to cache
+        this.cachedNonce.set(address, {
+          nonce: latestNonce,
+          timestamp: Date.now(),
+        });
+        return true;
+      }
+    } else {
+      this.cachedNonce.set(address, {
+        nonce: await this.provider.getTransactionCount(address),
+        timestamp: Date.now(),
+      });
+    }
+    return false;
   }
 
   public async connect(bcData: IBlockchain) {
     const imConfig = new ModelConfig();
     this.bcData = bcData;
     this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
-    this.dkDaoOracle = this.dkDaoOracle.connect(this.provider);
-    this.dkOracle = this.dkOracle.connect(this.provider);
-
-    this.dkOracleAddress = this.dkOracle.address;
+    // Connect wallet to provider
+    this.dkDaoOracle = this.dkDaoOracle.map((i) => i.connect(this.provider));
+    this.dkOracle = this.dkOracle.map((i) => i.connect(this.provider));
 
     const contractRNGAddress = await imConfig.getConfig('contractRNG');
-    const contractDistributor = await imConfig.getConfig('contractDistributor');
-    if (typeof contractDistributor === 'string' && typeof contractRNGAddress === 'string') {
-      
-      this.contracts.rng = <RNG>new ethers.Contract(contractRNGAddress, abiRng, this.dkDaoOracle);
+    const contractDistributorAddress = await imConfig.getConfig('contractDistributor');
+    const contractDuelistKingOracleProxyAddress = await imConfig.getConfig('contractDuelistKingOracleProxy');
+    const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
+
+    if (
+      typeof contractDistributorAddress === 'string' &&
+      typeof contractRNGAddress === 'string' &&
+      typeof contractDuelistKingOracleProxyAddress === 'string' &&
+      typeof contractDKDAOOracleAddress === 'string'
+    ) {
+      // RNG
+      this.contracts.rng = <RNG>new ethers.Contract(contractRNGAddress, abiRng);
+      // Distributor
       this.contracts.distributor = <DuelistKingDistributor>(
-        new ethers.Contract(contractDistributor, abiDistributor, this.dkOracle)
+        new ethers.Contract(contractDistributorAddress, abiDistributor)
       );
+      // Oracle proxy of Duelist King
+      this.contracts.dkOracleProxy = <OracleProxy>(
+        new ethers.Contract(contractDuelistKingOracleProxyAddress, abiOracleProxy)
+      );
+      // Oracle Proxy of DKDAO
+      this.contracts.dkdaoOracleProxy = <OracleProxy>new ethers.Contract(contractDKDAOOracleAddress, abiOracleProxy);
     } else {
       throw new Error('There are no RNG and Distributor in data');
     }
-
-    logger.debug(`DKDAO Oracle: ${this.dkDaoOracle.address}, DK Oracle: ${this.dkOracle.address}`);
-    logger.debug(`DKDAO RNG: ${this.contracts.rng.address}, DK Distributor: ${this.contracts.distributor.address}`);
   }
 
   public static async getInstance(bcData: IBlockchain): Promise<Oracle> {
@@ -70,12 +121,26 @@ export class Oracle {
   }
 
   public async openBox() {
-    const imOpenSchedule = new ModelOpenSchedule();
-    await imOpenSchedule.openLootBox(
-      async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
-        return this.contracts.distributor.openBox(campaignId, owner, numberOfBox);
-      },
-    );
+    if (this.oracleSelect >= this.dkOracle.length) {
+      this.oracleSelect = 0;
+    }
+    const currentOracle = this.dkOracle[this.oracleSelect];
+    if ((await this.checkNonce(currentOracle.address)) === true) {
+      const imOpenSchedule = new ModelOpenSchedule();
+      await imOpenSchedule.openLootBox(
+        async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
+          logger.info(`Forwarding call from ${currentOracle.address} -> Distributor::openLootBox()`);
+          return this.contracts.dkOracleProxy
+            .connect(currentOracle)
+            .safeCall(
+              this.contracts.distributor.address,
+              0,
+              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+            );
+        },
+      );
+    }
+    this.oracleSelect += 1;
   }
 
   public async commit(numberOfDigests: number) {
@@ -89,7 +154,13 @@ export class Oracle {
     }));
     try {
       await imSecret.batchCommit(newRecords, async () => {
-        await this.contracts.rng.batchCommit(digests.v);
+        await this.contracts.dkdaoOracleProxy
+          .connect(this.dkDaoOracle[0])
+          .safeCall(
+            this.contracts.rng.address,
+            0,
+            this.contracts.rng.interface.encodeFunctionData('batchCommit', [digests.v]),
+          );
       });
       logger.info('Commit', digests.h.length, 'digests to blockchain');
     } catch (err) {
@@ -128,7 +199,9 @@ export class Oracle {
           .writeUint256(index)
           .writeUint256(secretRecord.secret)
           .invoke();
-        await this.contracts.rng.reveal(data);
+        await this.contracts.dkdaoOracleProxy
+          .connect(this.dkDaoOracle[0])
+          .safeCall(this.contracts.rng.address, 0, this.contracts.rng.interface.encodeFunctionData('reveal', [data]));
       }
       // We're going to to mark it as revealed anyway
       await imSecret.update(
@@ -147,8 +220,8 @@ export class Oracle {
     }
   }
 
-  public async getRNGProgess() {
-    return this.contracts.rng.getProgess();
+  public async getRNGProgress() {
+    return this.contracts.rng.getProgress();
   }
 }
 

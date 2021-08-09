@@ -7,6 +7,7 @@ export interface IDiscount {
   campaignId: number;
   address: string;
   discount: number;
+  code: string;
   memo: string;
   createdDate: string;
 }

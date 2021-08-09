@@ -24,10 +24,18 @@ Mux.get(
       validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 0.4,
       message: 'Percent of discount must be a float in range 0 -> 0.4',
     },
+    {
+      name: 'code',
+      type: 'string',
+      require: true,
+      location: 'query',
+      validator: (e): boolean => e.length <= 32,
+      message: 'Discount code will be applied',
+    },
   ).merge(ValidatorPagination),
   async (req: IRequestData): Promise<IResponseRecord<IDiscount>> => {
     const {
-      query: { address, discount },
+      query: { address, discount, code },
     } = req;
     const imDiscount = new ModelDiscount();
     return {
@@ -35,8 +43,9 @@ Mux.get(
       result: await imDiscount.insertIfNotExist({
         address,
         discount,
+        code,
         campaignId: config.activeCampaignId,
-        memo: 'Input from server',
+        memo: 'Input from web server',
       }),
     };
   },

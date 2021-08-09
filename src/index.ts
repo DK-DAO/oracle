@@ -59,7 +59,7 @@ class MainApplication {
       const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
       if (typeof testToken === 'undefined') {
         await knex('token').insert(<IToken>{
-          address: '0xB2236AC5C114eaD69B2FEaf014d1e17dd6Fa8e4d',
+          address: '0x17b6cB153684139DFB8267275F4504Ba1F05a3bF',
           blockchainId: activeBlockchains[0].id,
           type: 20,
           decimal: 18,

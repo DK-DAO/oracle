@@ -39,7 +39,7 @@ export function applyDiscount(basePrice: number, percent: number) {
 }
 
 export function calculatePriceAfterDiscount(noBoxes: number, discount: number = 0) {
-  if (getStage() === 'genesis') return 1;
+  // if (getStage() === 'genesis') return 1;
   return applyDiscount(applyDiscount(basedBoxPrice, discount), discountByBoxes(noBoxes));
 }
 

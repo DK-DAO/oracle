@@ -33,9 +33,23 @@ export async function up(knex: Knex): Promise<void> {
   });
 
   await knex('config').insert(<Partial<IConfig>>{
+    key: 'contractDuelistKingOracleProxy',
+    type: 'string',
+    value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Oracle'))),
+  });
+
+
+  await knex('config').insert(<Partial<IConfig>>{
     key: 'contractRNG',
     type: 'string',
     value: Buffer.from(await registry.getAddress(stringToBytes32('DKDAO Infrastructure'), stringToBytes32('RNG'))),
+  });
+
+
+  await knex('config').insert(<Partial<IConfig>>{
+    key: 'contractDKDAOOracle',
+    type: 'string',
+    value: Buffer.from(await registry.getAddress(stringToBytes32('DKDAO Infrastructure'), stringToBytes32('Oracle'))),
   });
 
   await knex.batchInsert('token', nftList);

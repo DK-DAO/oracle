@@ -3,7 +3,6 @@ import { QueueLoop } from 'noqueue';
 import { ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
-import { Connector } from '../framework';
 import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
@@ -17,13 +16,6 @@ import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
 import ModelNftOwnership from '../model/model-nft-ownership';
 
-interface ICachedNonce {
-  nonce: number;
-  timestamp: number;
-}
-
-Connector.connectByUrl(config.mariadbConnectUrl);
-
 // Number of blocks will be synced
 const numberOfBlocksToSync = 25;
 
@@ -32,9 +24,6 @@ const numberOfBlockSplitForWorker = 5;
 
 // Safe confirmations
 const safeConfirmations = 6;
-
-// Safe duration
-const safeDuration = safeConfirmations * 10000;
 
 // Reveal duration 30 mins
 const revealDuration = 1800000;
@@ -69,9 +58,6 @@ export class Blockchain {
 
   // Last time we do reveal
   private lastReveal: number = Date.now();
-
-  // Recent cached nonce
-  private cachedNonce: Map<string, ICachedNonce> = new Map();
 
   private oracleInstance?: Oracle;
 
@@ -353,7 +339,7 @@ export class Blockchain {
           this.oracleInstance = await Oracle.getInstance(this.blockchain);
         }
         const oracle = this.oracleInstance;
-
+        // Start doing oracle job by sequence
         this.queue
           .add('oracle schedule loot boxes opening', async () => {
             const imOpenSchedule = new ModelOpenSchedule();
@@ -373,24 +359,7 @@ export class Blockchain {
             }
           })
           .add('oracle open loot boxes', async () => {
-            if (this.cachedNonce.has(oracle.dkOracleAddress)) {
-              const latestNonce = await oracle.provider.getTransactionCount(oracle.dkOracleAddress);
-              const { nonce, timestamp } = this.cachedNonce.get(oracle.dkOracleAddress) || { nonce: 0, timestamp: 0 };
-              logger.info(`Cached nonce: ${nonce} of ${oracle.dkOracleAddress}, cached at: ${timestamp}`);
-              if (latestNonce > nonce || Date.now() - timestamp > safeDuration) {
-                await oracle.openBox();
-                // Store back nonce to cache
-                this.cachedNonce.set(oracle.dkOracleAddress, {
-                  nonce: latestNonce,
-                  timestamp: Date.now(),
-                });
-              }
-            } else {
-              this.cachedNonce.set(oracle.dkOracleAddress, {
-                nonce: await oracle.provider.getTransactionCount(oracle.dkOracleAddress),
-                timestamp: Date.now(),
-              });
-            }
+            await oracle.openBox();
           })
           .add('oracle monitoring nft ownership', async () => {
             const nftOwnership = new ModelNftOwnership();
