@@ -1,15 +1,13 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
+import crypto from 'crypto';
 import { Knex } from 'knex';
 import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import logger from '../helper/logger';
 import { BigNum } from '../helper/utilities';
-import {
-  calculateDistribution,
-  calculateNumberOfLootBoxes,
-} from '../helper/calculate-loot-boxes';
+import { calculateDistribution, calculateNumberOfLootBoxes } from '../helper/calculate-loot-boxes';
 import config from '../helper/config';
 import ModelDiscount from './model-discount';
 
@@ -112,12 +110,15 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
         throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
       }
       // Calculate distribution of loot boxes
+
       const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
       logger.debug('Total number of loot boxes:', numberOfLootBoxes, lootBoxDistribution);
       const records = lootBoxDistribution.map((item) => ({
         campaignId: config.activeCampaignId,
         owner: event.from,
-        memo: `Buy ${item} boxes with ${floatVal.toFixed(2)} ${event.tokenSymbol} direct from ${event.from}`,
+        memo: `${crypto.randomBytes(20).toString('hex')} buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${
+          event.tokenSymbol
+        }, from ${event.from}`,
         numberOfBox: item,
       }));
       for (let i = 0; i < records.length; i += 1) {
