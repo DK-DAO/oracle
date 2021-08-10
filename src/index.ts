@@ -87,7 +87,7 @@ class MainApplication {
       });
     } else {
       // Now we active ethereum and bsc
-      activeBlockchains = blockchains.filter((b) => [1, 56].includes(b.chainId));
+      activeBlockchains = blockchains.filter((b) => b.chainId !== config.developmentChainId);
       /*
       await knex('nft_ownership').delete();
       await knex('sync').delete();
