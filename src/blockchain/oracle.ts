@@ -98,17 +98,19 @@ export class Oracle {
       typeof contractDKDAOOracleAddress === 'string'
     ) {
       // RNG
-      this.contracts.rng = <RNG>new ethers.Contract(contractRNGAddress, abiRng);
+      this.contracts.rng = <RNG>new ethers.Contract(contractRNGAddress, abiRng, this.provider);
       // Distributor
       this.contracts.distributor = <DuelistKingDistributor>(
-        new ethers.Contract(contractDistributorAddress, abiDistributor)
+        new ethers.Contract(contractDistributorAddress, abiDistributor, this.provider)
       );
       // Oracle proxy of Duelist King
       this.contracts.dkOracleProxy = <OracleProxy>(
-        new ethers.Contract(contractDuelistKingOracleProxyAddress, abiOracleProxy)
+        new ethers.Contract(contractDuelistKingOracleProxyAddress, abiOracleProxy, this.provider)
       );
       // Oracle Proxy of DKDAO
-      this.contracts.dkdaoOracleProxy = <OracleProxy>new ethers.Contract(contractDKDAOOracleAddress, abiOracleProxy);
+      this.contracts.dkdaoOracleProxy = <OracleProxy>(
+        new ethers.Contract(contractDKDAOOracleAddress, abiOracleProxy, this.provider)
+      );
     } else {
       throw new Error('There are no RNG and Distributor in data');
     }
