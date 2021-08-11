@@ -32,6 +32,7 @@ interface NFTInterface extends ethers.utils.Interface {
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
+    "safeTransfer(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
@@ -66,6 +67,10 @@ interface NFTInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "ownerOf",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "safeTransfer",
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom",
@@ -107,6 +112,10 @@ interface NFTInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "safeTransfer",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "safeTransferFrom",
     data: BytesLike
@@ -254,6 +263,20 @@ export class NFT extends Contract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    safeTransfer(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "safeTransfer(address,address,uint256)"(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
     "safeTransferFrom(address,address,uint256)"(
       from: string,
       to: string,
@@ -392,6 +415,20 @@ export class NFT extends Contract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  safeTransfer(
+    from: string,
+    to: string,
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "safeTransfer(address,address,uint256)"(
+    from: string,
+    to: string,
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
   "safeTransferFrom(address,address,uint256)"(
     from: string,
     to: string,
@@ -526,6 +563,20 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    safeTransfer(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "safeTransfer(address,address,uint256)"(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: string,
@@ -695,6 +746,20 @@ export class NFT extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    safeTransfer(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "safeTransfer(address,address,uint256)"(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     "safeTransferFrom(address,address,uint256)"(
       from: string,
       to: string,
@@ -838,6 +903,20 @@ export class NFT extends Contract {
     "ownerOf(uint256)"(
       tokenId: BigNumberish,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    safeTransfer(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "safeTransfer(address,address,uint256)"(
+      from: string,
+      to: string,
+      tokenId: BigNumberish,
+      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     "safeTransferFrom(address,address,uint256)"(

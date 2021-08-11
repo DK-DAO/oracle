@@ -99,7 +99,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     const event = await imEvent.getEventDetail(EProcessingStatus.NewPayment);
     // We will end the process if event is undefined
     if (typeof event === 'undefined') {
-      tx.rollback();
+      await tx.rollback();
       return;
     }
     try {

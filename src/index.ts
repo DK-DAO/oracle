@@ -160,7 +160,7 @@ class MainApplication {
    * @memberof MainApplication
    */
   private static startAPI() {
-    logger.info('Start API service');
+    logger.info(`Start API service ${config.serviceHost}:${config.servicePort}`);
     Mux.init(false, config.servicePort, config.serviceHost);
   }
 
