@@ -131,13 +131,27 @@ export class Oracle {
       const imOpenSchedule = new ModelOpenSchedule();
       await imOpenSchedule.openLootBox(
         async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
-          logger.info(`Forwarding call from ${currentOracle.address} -> Distributor::openLootBox()`);
+          const estimatedGas = await this.contracts.dkOracleProxy
+            .connect(currentOracle)
+            .estimateGas.safeCall(
+              this.contracts.distributor.address,
+              0,
+              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+            );
+          logger.info(
+            `Forwarding call from ${
+              currentOracle.address
+            } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas`,
+          );
           return this.contracts.dkOracleProxy
             .connect(currentOracle)
             .safeCall(
               this.contracts.distributor.address,
               0,
               this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+              {
+                gasLimit: estimatedGas.add(200000),
+              },
             );
         },
       );
