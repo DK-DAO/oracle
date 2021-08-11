@@ -63,6 +63,14 @@ export class ModelEvent extends ModelBase<IEvent> {
     return this.getDetailQuery().where({ status }).orderBy('id', 'asc').limit(1).first();
   }
 
+  public getPaymentOrDonateEventDetail(): Promise<IEventDetail | undefined> {
+    return this.getDetailQuery()
+      .whereIn('status', [EProcessingStatus.NewDonate, EProcessingStatus.NewPayment])
+      .orderBy('id', 'asc')
+      .limit(1)
+      .first();
+  }
+
   public getAllEventDetail(status: EProcessingStatus): Promise<IEventDetail[] | undefined> {
     return this.getDetailQuery().where({ status }).orderBy('id', 'asc');
   }

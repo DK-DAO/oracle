@@ -96,7 +96,8 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     const imEvent = new ModelEvent();
     // Start transaction
     const tx = await this.getKnex().transaction();
-    const event = await imEvent.getEventDetail(EProcessingStatus.NewPayment);
+    const event = await imEvent.getPaymentOrDonateEventDetail();
+
     // We will end the process if event is undefined
     if (typeof event === 'undefined') {
       await tx.rollback();
@@ -105,7 +106,15 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     try {
       // Calculate number of loot boxes
       const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal)).toNumber();
-      const numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));
+      let numberOfLootBoxes = 0;
+
+      // Issue boxes for donors
+      if (event.status === EProcessingStatus.NewDonate) {
+        numberOfLootBoxes = Math.round(floatVal);
+      } else {
+        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));
+      }
+
       if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
         throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
       }
