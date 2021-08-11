@@ -58,7 +58,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     if (opening) {
       const tx = await this.getKnex().transaction();
       try {
-        logger.info(`Trying to issue: ${opening.numberOfBox} loot boxes for ${opening.owner}`);
+        logger.info(`Trying to issue: ${opening.numberOfBox} loot boxes for ${opening.owner}, id: ${opening.id}`);
         const txResult = await contractCallback(opening.campaignId, opening.owner, opening.numberOfBox);
         // Update status and update transaction hash
         await tx(this.tableName)

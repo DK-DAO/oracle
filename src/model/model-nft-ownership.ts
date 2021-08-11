@@ -5,7 +5,7 @@ import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
-import { IOpenResult } from './model-open-result';
+import ModelOpenResult, { IOpenResult } from './model-open-result';
 
 export interface INftOwnership {
   id: number;
@@ -71,6 +71,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
   // Perform batch buy based on recorded event
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
+    const imOpenResult = new ModelOpenResult();
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
     // We will end the process if event is undefined
     if (typeof events === 'undefined' || events.length === 0) {
@@ -102,16 +103,21 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         // Issue a new nft please aware of max_safe_int 2^53 issue
         if (event.from === '0x0000000000000000000000000000000000000000') {
           const card = Card.from(event.value);
-          await tx('open_result').insert(<IOpenResult>{
-            ...record,
-            applicationId: Number(card.getApplicationId()),
-            itemEdition: card.getEdition(),
-            itemGeneration: card.getGeneration(),
-            itemRareness: card.getRareness(),
-            itemType: card.getType(),
-            itemId: Number(card.getId()),
-            itemSerial: Number(card.getSerial()),
-          });
+          // Insert if not existed otherwise update
+          if (await imOpenResult.isNotExist('nftTokenId', event.value)) {
+            await tx('open_result').insert(<IOpenResult>{
+              ...record,
+              applicationId: Number(card.getApplicationId()),
+              itemEdition: card.getEdition(),
+              itemGeneration: card.getGeneration(),
+              itemRareness: card.getRareness(),
+              itemType: card.getType(),
+              itemId: Number(card.getId()),
+              itemSerial: Number(card.getSerial()),
+            });
+          } else {
+            await tx('open_result').update({ owner: event.to }).where({ nftTokenId: event.value });
+          }
         }
 
         // If record didn't exist insert one otherwise update existing record
