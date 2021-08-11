@@ -35,7 +35,7 @@ export class ModelAirdrop extends ModelBase<IAirdrop> {
           value: floatVal.toString(),
         });
       }
-      await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
+      await tx('event').update({ status: EProcessingStatus.ProcessedDonate }).where({ id: event.id });
       await tx.commit();
     } catch (err) {
       await tx.rollback();

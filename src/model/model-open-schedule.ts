@@ -109,7 +109,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       let numberOfLootBoxes = 0;
 
       // Issue boxes for donors
-      if (event.status === EProcessingStatus.NewDonate) {
+      if (event.status === EProcessingStatus.ProcessedDonate) {
         numberOfLootBoxes = Math.round(floatVal);
       } else {
         numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));

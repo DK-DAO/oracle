@@ -76,7 +76,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
     if (typeof events === 'undefined' || events.length === 0) {
       return;
     }
-    logger.info(`Processing ${events.length} card issurance events`);
+    logger.info(`Processing ${events.length} card issuance events`);
     for (let i = 0; i < events.length; i += 1) {
       const event = events[i];
       // Start transaction

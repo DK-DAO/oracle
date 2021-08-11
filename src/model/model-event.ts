@@ -7,8 +7,9 @@ export enum EProcessingStatus {
   NewPayment = 1,
   NewDonate = 2,
   NftTransfer = 4,
-  Success = 126,
-  Error = 127,
+  Error = 100,
+  ProcessedDonate = 126,
+  Success = 127,
 }
 
 export interface IEvent {
@@ -65,7 +66,7 @@ export class ModelEvent extends ModelBase<IEvent> {
 
   public getPaymentOrDonateEventDetail(): Promise<IEventDetail | undefined> {
     return this.getDetailQuery()
-      .whereIn('status', [EProcessingStatus.NewDonate, EProcessingStatus.NewPayment])
+      .whereIn('status', [EProcessingStatus.ProcessedDonate, EProcessingStatus.NewPayment])
       .orderBy('id', 'asc')
       .limit(1)
       .first();
