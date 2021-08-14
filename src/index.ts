@@ -34,7 +34,7 @@ class MainApplication {
     const workerMap: { [key: number]: IWoker } = {};
     const pidMap: { [key: number]: number } = {};
 
-    function startWoker(worker: Partial<IWoker>) {
+    function startWorker(worker: Partial<IWoker>) {
       // This block to isolate API loading
       const newCluster = loadWorker(worker);
       // Add to worker map
@@ -129,13 +129,13 @@ class MainApplication {
     }
 
     // API woker
-    startWoker({
+    startWorker({
       id: -1,
       name: 'api',
     });
 
     for (let i = 0; i < activeBlockchains.length; i += 1) {
-      startWoker({
+      startWorker({
         id: activeBlockchains[i].id,
         name: activeBlockchains[i].name,
       });
@@ -146,7 +146,7 @@ class MainApplication {
       const { id, name, pid } = worker.process.env;
       logger.info(`Worker pid: ${pid} name: ${name} died with code: ${code}, received: ${signal}`);
       // Respawn
-      startWoker({ id, name, pid });
+      startWorker({ id, name, pid });
       // Remove old record
       delete workerMap[pid];
       delete pidMap[id];

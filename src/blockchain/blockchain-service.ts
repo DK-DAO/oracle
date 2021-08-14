@@ -19,14 +19,14 @@ import ModelNftOwnership from '../model/model-nft-ownership';
 // Number of blocks will be synced
 const numberOfBlocksToSync = 25;
 
-// Number of blocks will be splited to worker
+// Number of blocks will be split to workers
 const numberOfBlockSplitForWorker = 5;
 
 // Safe confirmations
-const safeConfirmations = 6;
+const safeConfirmations = 30;
 
 // Reveal duration 30 mins
-const revealDuration = 1800000;
+const revealDuration = 3600000;
 
 // Const number of digests
 const numberOfDigests = 20;
@@ -39,7 +39,7 @@ export class Blockchain {
   private synced: ISync = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 1000 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 2000 });
 
   // RPC provider
   private provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
@@ -157,7 +157,7 @@ export class Blockchain {
       typeof syncedBlock !== 'undefined' &&
       typeof targetBlock !== 'undefined'
     ) {
-      // Only check latest block number from blockchain if synced is less than 100 away
+      // Only check latest block number from blockchain if synced is less than 25 away
       if (targetBlock - syncedBlock < numberOfBlocksToSync) {
         const currentBlockNumber = (await this.provider.getBlockNumber()) - safeConfirmations;
         // Re-target
