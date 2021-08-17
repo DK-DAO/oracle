@@ -190,7 +190,7 @@ export function verifyProof(user: string, secret: string, signature: string) {
   if (user === username) {
     const message = Buffer.from(proof.substr(0, 24), 'hex');
     const timeStamp = Math.round(Date.now() / 1000);
-    if (timeStamp - message.readUInt32BE(8) < 60) {
+    if (timeStamp - message.readUInt32BE(8) < 360) {
       return createHmac('sha256', secret).update(message).digest('hex') === proof.substr(-64);
     }
   }

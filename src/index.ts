@@ -59,7 +59,7 @@ class MainApplication {
       const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
       if (typeof testToken === 'undefined') {
         await knex('token').insert(<IToken>{
-          address: '0x17b6cB153684139DFB8267275F4504Ba1F05a3bF',
+          address: '0xd3E30bfCc3a49DB790Bc918d080c91A285FbdC98',
           blockchainId: activeBlockchains[0].id,
           type: 20,
           decimal: 18,
@@ -71,12 +71,6 @@ class MainApplication {
           type: 0,
           blockchainId: activeBlockchains[0].id,
           name: 'Local test account',
-        });
-        await knex('watching').insert(<IWatching>{
-          address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db',
-          type: 1,
-          blockchainId: activeBlockchains[0].id,
-          name: 'Gitcoin account',
         });
       }
       await knex('sync').insert(<ISync>{

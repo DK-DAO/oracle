@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { QueueLoop } from 'noqueue';
+import { QueueLoop, Utilities } from 'noqueue';
 import { ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
@@ -16,14 +16,21 @@ import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
 import ModelNftOwnership from '../model/model-nft-ownership';
 
-// Number of blocks will be synced
-const numberOfBlocksToSync = 25;
+interface Log {
+  blockNumber: number;
+  blockHash: string;
+  transactionIndex: number;
 
-// Number of blocks will be split to workers
-const numberOfBlockSplitForWorker = 5;
+  removed: boolean;
 
-// Safe confirmations
-const safeConfirmations = 30;
+  address: string;
+  data: string;
+
+  topics: string[];
+
+  transactionHash: string;
+  logIndex: number;
+}
 
 // Reveal duration 30 mins
 const revealDuration = 3600000;
@@ -66,6 +73,7 @@ export class Blockchain {
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
     const imBlockchain = new ModelBlockchain();
+    // Get blockchain Id from process env
     const id = typeof process.env.id === 'string' ? parseInt(process.env.id, 10) : -1;
     const [bcData] = await imBlockchain.get([
       {
@@ -134,7 +142,7 @@ export class Blockchain {
     if (typeof this.synced.id === 'undefined') {
       const [tmpSyncState] = await imSync.get([{ field: 'blockchainId', value: this.blockchain.id }]);
       if (typeof tmpSyncState === 'undefined') {
-        const startPoint = (await this.provider.getBlockNumber()) - safeConfirmations;
+        const startPoint = (await this.provider.getBlockNumber()) - this.blockchain.safeConfirmations;
         const newRecord = await imSync.create({
           blockchainId: this.blockchain.id,
           startBlock: startPoint,
@@ -157,9 +165,9 @@ export class Blockchain {
       typeof syncedBlock !== 'undefined' &&
       typeof targetBlock !== 'undefined'
     ) {
-      // Only check latest block number from blockchain if synced is less than 25 away
-      if (targetBlock - syncedBlock < numberOfBlocksToSync) {
-        const currentBlockNumber = (await this.provider.getBlockNumber()) - safeConfirmations;
+      // Only check safe blocks
+      if (targetBlock - syncedBlock < this.blockchain.numberOfBlocksToSync) {
+        const currentBlockNumber = (await this.provider.getBlockNumber()) - this.blockchain.safeConfirmations;
         // Re-target
         if (currentBlockNumber > targetBlock) {
           updateData.targetBlock = currentBlockNumber;
@@ -189,11 +197,18 @@ export class Blockchain {
   // Event sync will split works and pass to event worker
   private async eventWorker(id: number, fromBlock: number, toBlock: number) {
     // Get logs for given address
-    const logs = await this.provider.getLogs({
-      fromBlock,
-      toBlock,
-      topics: [utils.id('Transfer(address,address,uint256)')],
-    });
+    const logs = await Utilities.TillSuccess<Log[]>(
+      async () => {
+        return this.provider.getLogs({
+          fromBlock,
+          toBlock,
+          topics: [utils.id('Transfer(address,address,uint256)')],
+        });
+      },
+      2000,
+      5,
+    );
+
     const imEvent = new ModelEvent();
     // Get log and push the events outside
     for (let i = 0; i < logs.length; i += 1) {
@@ -269,6 +284,7 @@ export class Blockchain {
   // Syncing events from blockchain
   private async eventSync() {
     const { id, startBlock, syncedBlock, targetBlock } = this.synced;
+    const { numberOfBlocksToSync, numberOfBlocksToWorker } = this.blockchain;
     // Check for synced data is good
     if (
       typeof id !== 'undefined' &&
@@ -280,25 +296,29 @@ export class Blockchain {
       // Try to sync each 100 blocks at once
       const toBlock =
         targetBlock - syncedBlock > numberOfBlocksToSync ? syncedBlock + numberOfBlocksToSync : targetBlock;
+      if (fromBlock >= toBlock) {
+        logger.info('Skip syncing blocks due to no diff');
+        return;
+      }
       while (fromBlock < toBlock) {
         // We skip if there diff is too small
         if (fromBlock + 1 === toBlock) {
           break;
         }
-        if (fromBlock + numberOfBlockSplitForWorker <= toBlock) {
+        if (fromBlock + numberOfBlocksToWorker <= toBlock) {
           logger.debug(
             this.blockchain.name,
             '> Scanning events from block:',
             fromBlock + 1,
             'to block:',
-            fromBlock + numberOfBlockSplitForWorker,
+            fromBlock + numberOfBlocksToWorker,
           );
-          await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlockSplitForWorker);
+          await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlocksToWorker);
         } else {
           logger.debug(this.blockchain.name, '> Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
           await this.eventWorker(id, fromBlock + 1, toBlock);
         }
-        fromBlock += numberOfBlockSplitForWorker;
+        fromBlock += numberOfBlocksToWorker;
       }
     }
   }

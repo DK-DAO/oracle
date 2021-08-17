@@ -15,6 +15,10 @@ export interface IBoxPrice {
   serverTime: string;
 }
 
+function prettyValue(v: number) {
+  return Math.ceil(v * 100) / 100;
+}
+
 Mux.get(
   '/api/v1/boxPrice',
   new Validator(
@@ -24,7 +28,7 @@ Mux.get(
       require: true,
       defaultValue: 1,
       location: 'query',
-      validator: (v) => Number.isFinite(v) && Number.isInteger(v),
+      validator: (v) => Number.isFinite(v) && Number.isInteger(v) && v < 1000 && v > 0,
       message: 'Number of boxes, it must be an integer',
     },
     {
@@ -52,11 +56,11 @@ Mux.get(
       result: {
         numberOfBoxes: noBoxes,
         basedBoxPrice,
-        pricePerBox,
-        subtotal,
-        total,
+        pricePerBox: prettyValue(pricePerBox),
+        subtotal: prettyValue(subtotal),
+        total: prettyValue(total),
         stage,
-        discountByNumberOfBoxes,
+        discountByNumberOfBoxes: prettyValue(discountByNumberOfBoxes),
         discountByAgency: discount,
         serverTime: toDay.toISOString(),
       },
