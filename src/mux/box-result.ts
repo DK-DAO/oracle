@@ -21,7 +21,7 @@ Mux.get(
     const imOpenSchedule = new ModelOpenSchedule();
     const imOpenResult = new ModelOpenResult();
     const [openSchedule] = await imOpenSchedule.get([{ field: 'id', value: openScheduleId }]);
-    if (typeof openSchedule === 'undefined' || openSchedule.status !== EOpenScheduleStatus.Opened) {
+    if (typeof openSchedule === 'undefined' || openSchedule.status !== EOpenScheduleStatus.ResultArrived) {
       throw new Error("This schedule is unavailable or wasn't opened yet");
     }
     return imOpenResult.getOpenResultList(req.query, [

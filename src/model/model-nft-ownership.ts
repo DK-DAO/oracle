@@ -6,6 +6,7 @@ import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
 import ModelOpenResult, { IOpenResult } from './model-open-result';
+import { EOpenScheduleStatus } from './model-open-schedule';
 
 export interface INftOwnership {
   id: number;
@@ -72,6 +73,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
     const imOpenResult = new ModelOpenResult();
+    const txHashes: string[] = [];
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
     // We will end the process if event is undefined
     if (typeof events === 'undefined' || events.length === 0) {
@@ -102,6 +104,10 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
 
         // Issue a new nft please aware of max_safe_int 2^53 issue
         if (event.from === '0x0000000000000000000000000000000000000000') {
+          // Push tx hash to stack
+          if (!txHashes.includes(event.transactionHash)) {
+            txHashes.push(event.transactionHash);
+          }
           const card = Card.from(event.value);
           // Insert if not existed otherwise update
           if (await imOpenResult.isNotExist('nftTokenId', event.value)) {
@@ -128,6 +134,12 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
             .update({ owner: event.to, transactionHash: event.transactionHash })
             .where({ id: ownership.id });
         }
+        // Update open schedule status
+        await tx('open_schedule')
+          .update({
+            status: EOpenScheduleStatus.ResultArrived,
+          })
+          .whereIn('transactionHash', txHashes);
 
         // Update status to succeed
         await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });

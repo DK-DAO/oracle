@@ -15,6 +15,7 @@ export enum EOpenScheduleStatus {
   New = 0,
   Opening = 1,
   Opened = 2,
+  ResultArrived = 3,
   Error = 255,
 }
 

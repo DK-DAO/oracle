@@ -5,7 +5,7 @@ export const ValidatorPagination = new Validator(
     name: 'limit',
     location: 'query',
     type: 'integer',
-    defaultValue: 20,
+    defaultValue: 100,
     validator: (v: number) => Number.isInteger(v) && v <= 1000,
     message: 'Invalid limit number',
   },
