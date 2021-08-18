@@ -51,7 +51,7 @@ export function calculateNumberOfLootBoxes(money: number, discount: number = 0):
   do {
     noBoxes += 1;
   } while (noBoxes * calculatePriceAfterDiscount(noBoxes, discount) < money);
-  return noBoxes;
+  return Math.round(noBoxes);
 }
 
 export function calculateDistribution(noBoxes: number) {
