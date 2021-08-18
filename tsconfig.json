@@ -16,6 +16,6 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["**/*.ts"],
   "exclude": ["built", "node_modules", "**/*.spec.ts", "**/*.test.ts", "typechain/**/*.ts"]
 }
