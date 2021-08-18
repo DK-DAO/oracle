@@ -13,9 +13,9 @@
     "skipLibCheck": true,
     "declaration": false,
     "outDir": "./build/",
-    "baseUrl": ".",
+    "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["built", "node_modules", "**/*.spec.ts", "**/*.test.ts", "typechain/**/*.ts"]
 }

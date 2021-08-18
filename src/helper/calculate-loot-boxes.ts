@@ -62,7 +62,7 @@ export function calculateDistribution(noBoxes: number) {
   const j = noBoxes - i * 10;
   const result = repeat(10, i);
   if (j > 0) {
-    result.push(j);
+    result.push(Math.round(j));
   }
   return result;
 }

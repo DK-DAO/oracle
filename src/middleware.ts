@@ -9,7 +9,7 @@ import config from './helper/config';
 Mux.use(express.json());
 
 // Development addition debug
-if (config.nodeEnv === 'development') {
+if (config.nodeEnv !== 'production') {
   // Add debug middle ware
   Mux.use(function DebugMiddleWare(req: express.Request, _res: express.Response, next: Function) {
     logger.debug(`Request to ${req.url} was handled by ${process.pid}`);
