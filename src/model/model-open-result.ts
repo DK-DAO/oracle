@@ -7,6 +7,7 @@ export interface IOpenResult {
   id: number;
   blockchainId: number;
   tokenId: number;
+  issuanceId: number;
   owner: string;
   nftTokenId: string;
   applicationId: number;
@@ -43,6 +44,7 @@ export class ModelOpenResult extends ModelBase<IOpenResult> {
         'o.id as id',
         'o.blockchainId as blockchainId',
         'tokenId',
+        'issuanceId',
         'owner',
         'nftTokenId',
         'applicationId',

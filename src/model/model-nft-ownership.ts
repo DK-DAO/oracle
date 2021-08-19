@@ -6,7 +6,7 @@ import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
 import ModelOpenResult, { IOpenResult } from './model-open-result';
-import { EOpenScheduleStatus } from './model-open-schedule';
+import ModelOpenSchedule, { EOpenScheduleStatus } from './model-open-schedule';
 
 export interface INftOwnership {
   id: number;
@@ -73,6 +73,8 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
     const imOpenResult = new ModelOpenResult();
+    const imOpenSchedule = new ModelOpenSchedule();
+    const issuanceIdMap = new Map<string, number>();
     const txHashes: string[] = [];
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
     // We will end the process if event is undefined
@@ -106,14 +108,27 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         if (event.from === '0x0000000000000000000000000000000000000000') {
           // Push tx hash to stack
           if (!txHashes.includes(event.transactionHash)) {
+            const [currentSchedule] = await imOpenSchedule.get([
+              {
+                field: 'transactionHash',
+                value: event.transactionHash,
+              },
+            ]);
+            if (typeof currentSchedule !== 'undefined') {
+              issuanceIdMap.set(event.transactionHash, currentSchedule.issuanceId || 0);
+            } else {
+              logger.error(`Transaction ${event.transactionHash} was not existed.`);
+            }
             txHashes.push(event.transactionHash);
           }
+
           const card = Card.from(event.value);
           // Insert if not existed otherwise update
           if (await imOpenResult.isNotExist('nftTokenId', event.value)) {
             await tx('open_result').insert(<IOpenResult>{
               ...record,
               applicationId: Number(card.getApplicationId()),
+              issuanceId: issuanceIdMap.get(event.transactionHash) || 0,
               itemEdition: card.getEdition(),
               itemGeneration: card.getGeneration(),
               itemRareness: card.getRareness(),
@@ -122,7 +137,9 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
               itemSerial: Number(card.getSerial()),
             });
           } else {
-            await tx('open_result').update({ owner: event.to }).where({ nftTokenId: event.value });
+            await tx('open_result')
+              .update({ owner: event.to, issuanceId: issuanceIdMap.get(event.transactionHash) || 0 })
+              .where({ nftTokenId: event.value });
           }
         }
 

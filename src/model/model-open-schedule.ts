@@ -22,6 +22,7 @@ export enum EOpenScheduleStatus {
 export interface IOpenSchedule {
   id: number;
   campaignId: number;
+  issuanceId: number;
   numberOfBox: number;
   transactionHash: string | null;
   owner: string;
@@ -40,6 +41,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     return this.getDefaultKnex().select(
       'id',
       'campaignId',
+      'issuanceId',
       'numberOfBox',
       'transactionHash',
       'owner',
@@ -48,6 +50,14 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       'updatedDate',
       'createdDate',
     );
+  }
+
+  public async getNextIssuanceId(): Promise<number> {
+    const knex = this.getKnex();
+    const result = await knex(this.tableName)
+      .select(knex.raw('(IFNULL(MAX(`issuanceId`), 0) + 1) AS nextIssuanceId'))
+      .first();
+    return result.nextIssuanceId || 0;
   }
 
   public async openLootBox(
@@ -95,6 +105,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
   public async batchBuy(): Promise<void> {
     const imDiscount = new ModelDiscount();
     const imEvent = new ModelEvent();
+    const issuanceId = await this.getNextIssuanceId();
     // Start transaction
     const tx = await this.getKnex().transaction();
     const event = await imEvent.getPaymentOrDonateEventDetail();
@@ -123,14 +134,17 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
 
       const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
       logger.debug('Total number of loot boxes:', numberOfLootBoxes, lootBoxDistribution);
-      const records = lootBoxDistribution.map((item) => ({
-        campaignId: config.activeCampaignId,
-        owner: event.from,
-        memo: `${crypto.randomBytes(20).toString('hex')} buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${
-          event.tokenSymbol
-        }, from ${event.from}`,
-        numberOfBox: item,
-      }));
+      const records = lootBoxDistribution.map((item) => {
+        return {
+          campaignId: config.activeCampaignId,
+          issuanceId,
+          owner: event.from,
+          memo: `${crypto.randomBytes(20).toString('hex')} buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${
+            event.tokenSymbol
+          }, from ${event.from}`,
+          numberOfBox: item,
+        };
+      });
       for (let i = 0; i < records.length; i += 1) {
         await tx(this.tableName).insert(records[i]);
       }
