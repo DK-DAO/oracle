@@ -16,7 +16,7 @@ export interface IBoxPrice {
 }
 
 function prettyValue(v: number) {
-  return Math.ceil(v * 100) / 100;
+  return Math.ceil(v * 1000000) / 1000000;
 }
 
 Mux.get(
@@ -28,7 +28,7 @@ Mux.get(
       require: true,
       defaultValue: 1,
       location: 'query',
-      validator: (v) => Number.isFinite(v) && Number.isInteger(v) && v < 1000 && v > 0,
+      validator: (v) => Number.isFinite(v) && Number.isInteger(v) && v <= 500 && v > 0,
       message: 'Number of boxes, it must be an integer',
     },
     {
