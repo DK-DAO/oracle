@@ -24,6 +24,7 @@ export interface IOpenSchedule {
   campaignId: number;
   issuanceId: number;
   numberOfBox: number;
+  totalBoxes: number;
   transactionHash: string | null;
   owner: string;
   memo: string;
@@ -43,6 +44,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       'campaignId',
       'issuanceId',
       'numberOfBox',
+      'totalBoxes',
       'transactionHash',
       'owner',
       'memo',

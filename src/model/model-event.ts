@@ -7,7 +7,7 @@ export enum EProcessingStatus {
   NewPayment = 1,
   NewDonate = 2,
   NftTransfer = 4,
-  Error = 100,
+  Error = 255,
   ProcessedDonate = 126,
   Success = 127,
 }

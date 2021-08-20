@@ -3,22 +3,14 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable('open_schedule', (table) => {
-    table
-      .bigInteger('issuanceId')
-      .unsigned()
-      .index()
-      .comment('Issuance id to link issued cards and boxes');
+    table.bigInteger('issuanceId').unsigned().index().comment('Issuance id to link issued cards and boxes');
   });
 
   await knex.schema.alterTable('open_result', (table) => {
-    table
-      .bigInteger('issuanceId')
-      .index()
-      .unsigned()
-      .comment('Issuance id to link issued cards and boxes');
+    table.bigInteger('issuanceId').index().unsigned().comment('Issuance id to link issued cards and boxes');
   });
 
-  const openScheduleList = await knex('open_schedule');
+  const openScheduleList = await knex('open_schedule').select('*');
   let issuanceId = 1;
   const tx = await knex.transaction();
   try {
