@@ -140,6 +140,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
         return {
           campaignId: config.activeCampaignId,
           issuanceId,
+          totalBoxes: numberOfLootBoxes,
           owner: event.from,
           memo: `${crypto.randomBytes(20).toString('hex')} buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${
             event.tokenSymbol
