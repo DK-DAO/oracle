@@ -85,29 +85,3 @@ export function calculateDistribution(noBoxes: number) {
   return result;
 }
 
-/*
-export interface IDistribution {
-  totalTicket: number;
-  distribution: {
-    numberOfPackage: number;
-    numberOfTicket: number;
-  }[];
-}
-
-function divMod(value: number, base: number): [number, number] {
-  const k = value % base;
-  const l = (value - k) / base;
-  return [l, k];
-}
-
-export function calculateRaffleTicket(numberOfBoxes: number): IDistribution {
-  const packages = [50, 20, 10, 4];
-  const tickets = [20, 7, 3, 1];
-  const total = 0;
-  const distribution = [];
-  const remaining = numberOfBoxes;
-  for (let i = 0; i < packages.length; i += 1) {
-
-  }
-}
-*/
