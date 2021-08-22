@@ -209,6 +209,8 @@ export class Blockchain {
       5,
     );
 
+    logger.info(`${this.blockchain.name} > Found ${logs.length} events in range ${fromBlock} -> ${toBlock}`);
+
     const imEvent = new ModelEvent();
     // Get log and push the events outside
     for (let i = 0; i < logs.length; i += 1) {
