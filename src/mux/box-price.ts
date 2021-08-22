@@ -1,7 +1,13 @@
 import moment from 'moment';
 import { IRequestData, IResponseRecord } from '../framework/interfaces';
 import { Mux, Validator } from '../framework';
-import { getStage, basedBoxPrice, discountByBoxes, calculatePriceAfterDiscount } from '../helper/calculate-loot-boxes';
+import {
+  getStage,
+  basedBoxPrice,
+  discountByBoxes,
+  calculatePriceAfterDiscount,
+  prettyValue,
+} from '../helper/calculate-loot-boxes';
 
 export interface IBoxPrice {
   total: number;
@@ -13,10 +19,6 @@ export interface IBoxPrice {
   pricePerBox: number;
   subtotal: number;
   serverTime: string;
-}
-
-function prettyValue(v: number) {
-  return Math.ceil(v * 1000000) / 1000000;
 }
 
 Mux.get(

@@ -20,6 +20,10 @@ function repeat(el: any, times: number): any[] {
   return r;
 }
 
+export function prettyValue(v: number, p: number = 1000000) {
+  return Math.ceil(v * p) / p;
+}
+
 export function getStage(): TStage {
   let stage: TStage = 'sale';
   const toDay = moment(new Date());
@@ -31,30 +35,38 @@ export function getStage(): TStage {
 }
 
 export function discountByBoxes(noBoxes: number) {
-  if (noBoxes < 10) {
-    return 0;
-  }
   return Math.log(noBoxes) / Math.log(100) / basedBoxPrice;
 }
 
 export function applyDiscount(basePrice: number, percent: number) {
-  return basePrice * (1 - percent);
+  return basePrice * (1 - prettyValue(percent, 100));
 }
 
 export function calculatePriceAfterDiscount(noBoxes: number, discount: number = 0) {
   return applyDiscount(applyDiscount(basedBoxPrice, discount), discountByBoxes(noBoxes));
 }
 
-export function approximate(a: number, b: number, r: number = 0.0001) {
+export function approximate(a: number, b: number, r: number = 0.5) {
   return b - b * r < a && a < b + b * r;
 }
 
 export function calculateNumberOfLootBoxes(money: number, discount: number = 0): number {
-  let noBoxes = money / basedBoxPrice;
-  do {
-    noBoxes += 1;
-  } while (noBoxes * calculatePriceAfterDiscount(noBoxes, discount) < money);
-  return Math.round(noBoxes);
+  // Cheapest is 1$ for 1 box
+  const maxBoxes = Math.ceil(money);
+  let noBoxes = 1;
+  let price = 0;
+  let diff = Infinity;
+  let calculatedBox = maxBoxes;
+  for (; noBoxes < maxBoxes; noBoxes += 1) {
+    price = calculatePriceAfterDiscount(noBoxes, discount);
+    const calculatedDiff = Math.abs(money - noBoxes * price);
+    // console.log(calculatedDiff <= diff, money - noBoxes * price, calculatedDiff, noBoxes);
+    if (calculatedDiff <= diff) {
+      calculatedBox = noBoxes;
+      diff = calculatedDiff;
+    }
+  }
+  return calculatedBox;
 }
 
 export function calculateDistribution(noBoxes: number) {
@@ -69,3 +81,30 @@ export function calculateDistribution(noBoxes: number) {
   }
   return result;
 }
+
+/*
+export interface IDistribution {
+  totalTicket: number;
+  distribution: {
+    numberOfPackage: number;
+    numberOfTicket: number;
+  }[];
+}
+
+function divMod(value: number, base: number): [number, number] {
+  const k = value % base;
+  const l = (value - k) / base;
+  return [l, k];
+}
+
+export function calculateRaffleTicket(numberOfBoxes: number): IDistribution {
+  const packages = [50, 20, 10, 4];
+  const tickets = [20, 7, 3, 1];
+  const total = 0;
+  const distribution = [];
+  const remaining = numberOfBoxes;
+  for (let i = 0; i < packages.length; i += 1) {
+
+  }
+}
+*/
