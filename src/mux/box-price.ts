@@ -49,20 +49,20 @@ Mux.get(
     } = req;
     const toDay = moment(new Date());
     const stage = getStage();
-    const discountByNumberOfBoxes = discountByBoxes(noBoxes);
-    const pricePerBox = calculatePriceAfterDiscount(noBoxes, discount);
-    const subtotal = noBoxes * basedBoxPrice;
-    const total = noBoxes * pricePerBox;
+    const discountByNumberOfBoxes = prettyValue(discountByBoxes(noBoxes));
+    const pricePerBox = prettyValue(calculatePriceAfterDiscount(noBoxes, discount));
+    const subtotal = prettyValue(noBoxes * basedBoxPrice);
+    const total = prettyValue(noBoxes * pricePerBox);
     return {
       success: true,
       result: {
         numberOfBoxes: noBoxes,
         basedBoxPrice,
-        pricePerBox: prettyValue(pricePerBox),
-        subtotal: prettyValue(subtotal),
-        total: prettyValue(total),
+        pricePerBox,
+        subtotal,
+        total,
         stage,
-        discountByNumberOfBoxes: prettyValue(discountByNumberOfBoxes),
+        discountByNumberOfBoxes,
         discountByAgency: discount,
         serverTime: toDay.toISOString(),
       },

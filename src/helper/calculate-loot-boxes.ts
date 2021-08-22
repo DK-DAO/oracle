@@ -35,6 +35,9 @@ export function getStage(): TStage {
 }
 
 export function discountByBoxes(noBoxes: number) {
+  if(noBoxes < 5){
+    return 0;
+  }
   return Math.log(noBoxes) / Math.log(100) / basedBoxPrice;
 }
 
