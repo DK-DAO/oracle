@@ -1,9 +1,10 @@
 /* eslint-disable no-await-in-loop */
+import { ethers } from 'ethers';
 import cluster from 'cluster';
 import { Connector, FrameworkEvent, Mux } from './framework';
 import config from './helper/config';
 import logger from './helper/logger';
-import { IWoker, loadWorker } from './helper/utilities';
+import { IWorker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
 import BlockchainService from './blockchain/blockchain-service';
 import { IToken } from './model/model-token';
@@ -31,10 +32,10 @@ class MainApplication {
     logger.info(`Master ${process.pid} is running`);
 
     logger.debug(`Node running mode: ${config.nodeEnv}`);
-    const workerMap: { [key: number]: IWoker } = {};
+    const workerMap: { [key: number]: IWorker } = {};
     const pidMap: { [key: number]: number } = {};
 
-    function startWorker(worker: Partial<IWoker>) {
+    function startWorker(worker: Partial<IWorker>) {
       // This block to isolate API loading
       const newCluster = loadWorker(worker);
       // Add to worker map
@@ -49,6 +50,14 @@ class MainApplication {
     let activeBlockchains;
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
+      const [localnetwork] = activeBlockchains;
+      const provider = new ethers.providers.JsonRpcProvider(localnetwork.url);
+      // Keep node mining
+      setInterval(async () => {
+        await provider.send('evm_mine', []);
+      }, 1000);
+
+      // Clean test data
       await knex('open_result').delete();
       await knex('nft_ownership').delete();
       await knex('airdrop').delete();
@@ -122,7 +131,7 @@ class MainApplication {
       */
     }
 
-    // API woker
+    // API worker
     startWorker({
       id: -1,
       name: 'api',

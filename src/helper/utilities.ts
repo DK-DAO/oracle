@@ -17,7 +17,7 @@ export interface IParsedEvent {
   value: string;
 }
 
-export interface IWoker {
+export interface IWorker {
   id: number;
   pid: number;
   name: string;
@@ -60,7 +60,7 @@ export function objToCamelCase(obj: any): any {
   return remap;
 }
 
-export function loadWorker(env: Partial<IWoker>) {
+export function loadWorker(env: Partial<IWorker>) {
   const worker = cluster.fork(env);
   return { id: env.id || -1, name: env.name || 'undefined', pid: worker.process.pid };
 }
