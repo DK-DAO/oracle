@@ -121,12 +121,15 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       // Calculate number of loot boxes
       const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal)).toNumber();
       let numberOfLootBoxes = 0;
+      let discount = 0;
 
       // Issue boxes for donors
       if (event.status === EProcessingStatus.ProcessedDonate) {
         numberOfLootBoxes = Math.round(floatVal);
+        discount = 0.8;
       } else {
-        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));
+        discount = await imDiscount.getDiscountByAddress(event.from);
+        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, discount);
       }
 
       if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
@@ -135,7 +138,11 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       // Calculate distribution of loot boxes
 
       const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
-      logger.debug('Total number of loot boxes:', numberOfLootBoxes, lootBoxDistribution);
+      logger.debug(
+        `Total number of loot boxes: ${numberOfLootBoxes} (${lootBoxDistribution}) for: ${event.from} discount: ${
+          discount * 100
+        }%`,
+      );
       const records = lootBoxDistribution.map((item) => {
         return {
           campaignId: config.activeCampaignId,

@@ -308,16 +308,8 @@ export class Blockchain {
           break;
         }
         if (fromBlock + numberOfBlocksToWorker <= toBlock) {
-          logger.debug(
-            this.blockchain.name,
-            '> Scanning events from block:',
-            fromBlock + 1,
-            'to block:',
-            fromBlock + numberOfBlocksToWorker,
-          );
           await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlocksToWorker);
         } else {
-          logger.debug(this.blockchain.name, '> Scanning events from block:', fromBlock + 1, 'to block:', toBlock);
           await this.eventWorker(id, fromBlock + 1, toBlock);
         }
         fromBlock += numberOfBlocksToWorker;

@@ -1,6 +1,5 @@
 import { IRequestData, IResponseRecord } from '../framework/interfaces';
 import { Mux, Validator } from '../framework';
-import { ValidatorPagination } from '../validators';
 import ModelDiscount, { IDiscount } from '../model/model-discount';
 import config from '../helper/config';
 
@@ -32,7 +31,7 @@ Mux.get(
       validator: (e): boolean => e.length <= 32,
       message: 'Discount code will be applied',
     },
-  ).merge(ValidatorPagination),
+  ),
   async (req: IRequestData): Promise<IResponseRecord<IDiscount>> => {
     const {
       query: { address, discount, code },

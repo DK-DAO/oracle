@@ -17,12 +17,12 @@ export async function up(knex: Knex): Promise<void> {
     })
     .where({ chainId: 1 });
 
-  // Just 20, i think it's enough
+  // Just 20, i think it's enough for BSC
   await knex('blockchain')
     .update({
       safeConfirmations: 20,
       numberOfBlocksToSync: 100,
-      numberOfBlocksToWorker: 25,
+      numberOfBlocksToWorker: 20,
     })
     .where({ chainId: 56 });
 
@@ -31,7 +31,7 @@ export async function up(knex: Knex): Promise<void> {
     .update({
       safeConfirmations: 30,
       numberOfBlocksToSync: 100,
-      numberOfBlocksToWorker: 25,
+      numberOfBlocksToWorker: 20,
     })
     .where({ chainId: 137 });
 
