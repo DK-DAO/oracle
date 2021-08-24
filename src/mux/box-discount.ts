@@ -1,6 +1,5 @@
 import { IRequestData, IResponseRecord } from '../framework/interfaces';
 import { Mux, Validator } from '../framework';
-import { ValidatorPagination } from '../validators';
 import ModelDiscount, { IDiscount } from '../model/model-discount';
 import config from '../helper/config';
 
@@ -25,6 +24,15 @@ Mux.get(
       message: 'Percent of discount must be a float in range 0 -> 0.4',
     },
     {
+      name: 'noBoxes',
+      type: 'integer',
+      require: true,
+      defaultValue: 0,
+      location: 'query',
+      validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 500,
+      message: 'Percent of discount must be a float in range 0 -> 0.4',
+    },
+    {
       name: 'code',
       type: 'string',
       require: true,
@@ -32,21 +40,26 @@ Mux.get(
       validator: (e): boolean => e.length <= 32,
       message: 'Discount code will be applied',
     },
-  ).merge(ValidatorPagination),
+  ),
   async (req: IRequestData): Promise<IResponseRecord<IDiscount>> => {
     const {
-      query: { address, discount, code },
+      query: { address, discount, code, noBoxes },
     } = req;
     const imDiscount = new ModelDiscount();
-    return {
-      success: true,
-      result: await imDiscount.insertIfNotExist({
-        address,
-        discount,
-        code,
-        campaignId: config.activeCampaignId,
-        memo: 'Input from web server',
-      }),
-    };
+    const insertedRecord = await imDiscount.create({
+      address,
+      discount,
+      code,
+      noBoxes,
+      campaignId: config.activeCampaignId,
+      memo: 'Input from web server',
+    });
+    if (insertedRecord) {
+      return {
+        success: true,
+        result: insertedRecord,
+      };
+    }
+    throw new Error('Internal error: We can not update data');
   },
 );

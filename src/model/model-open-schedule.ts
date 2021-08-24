@@ -9,7 +9,7 @@ import logger from '../helper/logger';
 import { BigNum } from '../helper/utilities';
 import { calculateDistribution, calculateNumberOfLootBoxes } from '../helper/calculate-loot-boxes';
 import config from '../helper/config';
-import ModelDiscount from './model-discount';
+import ModelDiscount, { IDiscount } from './model-discount';
 
 export enum EOpenScheduleStatus {
   New = 0,
@@ -121,12 +121,22 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       // Calculate number of loot boxes
       const floatVal = BigNum.fromHexString(event.value).div(BigNum.from(10).pow(event.tokenDecimal)).toNumber();
       let numberOfLootBoxes = 0;
+      let databaseResult: IDiscount | undefined;
 
       // Issue boxes for donors
       if (event.status === EProcessingStatus.ProcessedDonate) {
-        numberOfLootBoxes = Math.round(floatVal);
+        // It must be a finite integer
+        numberOfLootBoxes = Math.round(Math.round(floatVal));
       } else {
-        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, await imDiscount.getDiscountByAddress(event.from));
+        databaseResult = await imDiscount.getDiscountByAddress(event.from);
+        logger.debug('Discount data:', databaseResult);
+        const discount = typeof databaseResult === 'undefined' ? 0 : databaseResult.discount || 0;
+        const estimatedBoxes = typeof databaseResult === 'undefined' ? 0 : databaseResult.noBoxes || 0;
+        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, discount);
+        // If there are a mini diff, we prefer to use the greater value
+        if (estimatedBoxes > 0 && Math.abs(numberOfLootBoxes - estimatedBoxes) <= 2) {
+          numberOfLootBoxes = numberOfLootBoxes > estimatedBoxes ? numberOfLootBoxes : estimatedBoxes;
+        }
       }
 
       if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
@@ -135,7 +145,13 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       // Calculate distribution of loot boxes
 
       const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
-      logger.debug('Total number of loot boxes:', numberOfLootBoxes, lootBoxDistribution);
+      logger.debug(
+        'Total number of loot boxes:',
+        numberOfLootBoxes,
+        `[${lootBoxDistribution.join(',')}]`,
+        'scheduled for:',
+        event.from,
+      );
       const records = lootBoxDistribution.map((item) => {
         return {
           campaignId: config.activeCampaignId,
