@@ -10,7 +10,7 @@ export interface IValidateMethod {
 
 export type TLocation = 'body' | 'query' | 'params' | 'any';
 
-export type TType = 'string' | 'integer' |'float' | 'array' | 'boolean' | 'object';
+export type TType = 'string' | 'integer' | 'float' | 'array' | 'boolean' | 'object';
 
 export interface IField {
   location: TLocation;
@@ -85,7 +85,7 @@ export class Validator {
   }
 
   private static object(val: any): any {
-    return JSON.parse(val);
+    return typeof val === 'string' ? JSON.parse(val) : val;
   }
 
   private static array(val: any): any[] {
@@ -138,7 +138,7 @@ export class Validator {
       } else if (typeof defaultValue !== 'undefined') {
         // Field is required and have defaultValue
         result[name] = defaultValue;
-      } else if (require && typeof defaultValue !== 'undefined') {
+      } else if (require && typeof defaultValue === 'undefined') {
         // Field is required but don't have value or defaultValue
         throw new Error(`Field ${name} is required`);
       }
