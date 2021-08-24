@@ -16,18 +16,15 @@ import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
 import ModelNftOwnership from '../model/model-nft-ownership';
 
+// Log interface
 interface Log {
   blockNumber: number;
   blockHash: string;
   transactionIndex: number;
-
   removed: boolean;
-
   address: string;
   data: string;
-
   topics: string[];
-
   transactionHash: string;
   logIndex: number;
 }
@@ -49,7 +46,7 @@ export class Blockchain {
   private queue: QueueLoop = new QueueLoop({ paddingTime: 2000 });
 
   // RPC provider
-  private provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
+  private provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
 
   // List of watching token
   private watchingToken: IToken[] = [];
@@ -85,7 +82,7 @@ export class Blockchain {
     if (typeof bcData !== 'undefined') {
       this.blockchain = bcData;
       logger.info('Loading blockchain data:', bcData.name, bcData.chainId);
-      this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
+      this.provider = new ethers.providers.StaticJsonRpcProvider(bcData.url);
       return true;
     }
     logger.error('Unable to load blockchain data of, blockchain id:', id);

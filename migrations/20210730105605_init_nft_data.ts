@@ -14,7 +14,7 @@ import { stringToBytes32 } from '../src/helper/utilities';
 export async function up(knex: Knex): Promise<void> {
   const nftList: Partial<IToken>[] = [];
   const blockchain = <IBlockchain>await knex('blockchain').where({ chainId: config.activeChainId }).first();
-  const provider = new ethers.providers.JsonRpcProvider(blockchain.url);
+  const provider = new ethers.providers.StaticJsonRpcProvider(blockchain.url);
   const registry = <Registry>new ethers.Contract(config.addressRegistry, abiRegistry, provider);
   const cardAddress = await registry.getAddress(stringToBytes32('DKDAO Infrastructure'), stringToBytes32('NFT'));
   const card = <NFT>new ethers.Contract(cardAddress, abiNFT, provider);
@@ -38,13 +38,11 @@ export async function up(knex: Knex): Promise<void> {
     value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Oracle'))),
   });
 
-
   await knex('config').insert(<Partial<IConfig>>{
     key: 'contractRNG',
     type: 'string',
     value: Buffer.from(await registry.getAddress(stringToBytes32('DKDAO Infrastructure'), stringToBytes32('RNG'))),
   });
-
 
   await knex('config').insert(<Partial<IConfig>>{
     key: 'contractDKDAOOracle',

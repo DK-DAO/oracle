@@ -51,7 +51,7 @@ class MainApplication {
     if (config.nodeEnv === 'development') {
       activeBlockchains = blockchains.filter((b) => b.chainId === config.developmentChainId);
       const [localnetwork] = activeBlockchains;
-      const provider = new ethers.providers.JsonRpcProvider(localnetwork.url);
+      const provider = new ethers.providers.StaticJsonRpcProvider(localnetwork.url);
       // Keep node mining
       setInterval(async () => {
         await provider.send('evm_mine', []);

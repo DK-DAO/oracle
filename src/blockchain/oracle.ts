@@ -45,7 +45,7 @@ export class Oracle {
 
   private oracleSelect: number = 0;
 
-  public provider: ethers.providers.JsonRpcProvider = <ethers.providers.JsonRpcProvider>{};
+  public provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
 
   public dkOracleAddress: string = '';
 
@@ -81,7 +81,7 @@ export class Oracle {
   public async connect(bcData: IBlockchain) {
     const imConfig = new ModelConfig();
     this.bcData = bcData;
-    this.provider = new ethers.providers.JsonRpcProvider(bcData.url);
+    this.provider = new ethers.providers.StaticJsonRpcProvider(bcData.url);
     // Connect wallet to provider
     this.dkDaoOracle = this.dkDaoOracle.map((i) => i.connect(this.provider));
     this.dkOracle = this.dkOracle.map((i) => i.connect(this.provider));
