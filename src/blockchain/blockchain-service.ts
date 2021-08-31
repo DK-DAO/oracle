@@ -270,6 +270,17 @@ export class Blockchain {
               }),
             });
           }
+        } else {
+          logger.info(`We ignored event id: ${eventId}`);
+          logger.debug(
+            'Ignored event:',
+            JSON.stringify({
+              eventName: 'Transfer',
+              from: utils.getAddress(from),
+              to: utils.getAddress(to),
+              value,
+            }),
+          );
         }
       }
     }
