@@ -30,7 +30,6 @@ export class ModelBase<T> extends ModelMySQL {
   public async create(data: Partial<T>): Promise<T | undefined> {
     let result;
     try {
-      await this.lock();
       await this.getDefaultKnex().insert(data);
       if (typeof this.basicQuery === 'undefined') {
         throw Error('Basic query was undefined');
@@ -38,8 +37,6 @@ export class ModelBase<T> extends ModelMySQL {
       result = this.basicQuery().whereRaw('`id`=LAST_INSERT_ID()').first();
     } catch (err) {
       logger.error(err);
-    } finally {
-      await this.unlock();
     }
     return result;
   }
@@ -54,13 +51,10 @@ export class ModelBase<T> extends ModelMySQL {
   ): Promise<boolean> {
     let success: boolean = true;
     try {
-      await this.lock();
       await this.attachConditions(this.getDefaultKnex().update(data), conditions);
     } catch (err) {
       success = true;
       logger.error(err);
-    } finally {
-      await this.unlock();
     }
     return success;
   }
