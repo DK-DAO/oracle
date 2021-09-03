@@ -332,7 +332,7 @@ export class Blockchain {
       await this.updateListWatching();
 
       this.queue.on('error', (name: string, err: Error) => {
-        logger.error(`Found error in ${name}:`, err);
+        logger.error(`Found error in "${name}":`, err);
       });
 
       this.queue

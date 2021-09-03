@@ -5,8 +5,8 @@ import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
-import ModelOpenResult, { IOpenResult } from './model-open-result';
-import ModelOpenSchedule, { EOpenScheduleStatus } from './model-open-schedule';
+import { IOpenResult } from './model-open-result';
+import { EOpenScheduleStatus } from './model-open-schedule';
 
 export interface INftOwnership {
   id: number;
@@ -72,8 +72,6 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
   // Perform batch buy based on recorded event
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
-    const imOpenResult = new ModelOpenResult();
-    const imOpenSchedule = new ModelOpenSchedule();
     const issuanceIdMap = new Map<string, number>();
     const txHashes: string[] = [];
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
@@ -89,13 +87,6 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
 
       // We will end the process if event is undefined
       try {
-        const [ownership] = await this.get([
-          {
-            field: 'nftTokenId',
-            value: event.value,
-          },
-        ]);
-
         const record = <INftOwnership>{
           blockchainId: event.blockchainId,
           tokenId: event.tokenId,
@@ -108,12 +99,9 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         if (event.from === '0x0000000000000000000000000000000000000000') {
           // Push tx hash to stack
           if (!txHashes.includes(event.transactionHash)) {
-            const [currentSchedule] = await imOpenSchedule.get([
-              {
-                field: 'transactionHash',
-                value: event.transactionHash,
-              },
-            ]);
+            const [currentSchedule] = await tx('open_schedule').select('*').where({
+              transactionHash: event.transactionHash,
+            });
             if (typeof currentSchedule !== 'undefined') {
               issuanceIdMap.set(event.transactionHash, currentSchedule.issuanceId || 0);
             } else {
@@ -124,7 +112,9 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
 
           const card = Card.from(event.value);
           // Insert if not existed otherwise update
-          if (await imOpenResult.isNotExist('nftTokenId', event.value)) {
+
+          const [id] = await tx('open_result').select('id').where({ nftTokenId: event.value });
+          if (typeof id === 'undefined') {
             await tx('open_result').insert(<IOpenResult>{
               ...record,
               applicationId: Number(card.getApplicationId()),
@@ -144,6 +134,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         }
 
         // If record didn't exist insert one otherwise update existing record
+        const [ownership] = await tx(this.tableName).select('*').where({ nftTokenId: event.value });
         if (typeof ownership === 'undefined') {
           await tx(this.tableName).insert(record);
         } else {
@@ -151,6 +142,30 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
             .update({ owner: event.to, transactionHash: event.transactionHash })
             .where({ id: ownership.id });
         }
+
+        // Add DK Card hook, we will move it to another table later
+        // @todo: It's a technical penalty, it hurt like hell I know
+        const [dkCard] = await tx('dk_card').select('*').where({ nftTokenId: event.value });
+        // If record didn't exist insert one otherwise update existing record
+        if (typeof dkCard === 'undefined') {
+          const card = Card.from(event.value);
+          await tx('dk_card').insert(<IOpenResult>{
+            ...record,
+            applicationId: Number(card.getApplicationId()),
+            issuanceId: issuanceIdMap.get(event.transactionHash) || 0,
+            itemEdition: card.getEdition(),
+            itemGeneration: card.getGeneration(),
+            itemRareness: card.getRareness(),
+            itemType: card.getType(),
+            itemId: Number(card.getId()),
+            itemSerial: Number(card.getSerial()),
+          });
+        } else {
+          await tx('dk_card')
+            .update({ owner: event.to, transactionHash: event.transactionHash })
+            .where({ id: dkCard.id });
+        }
+
         // Update open schedule status
         await tx('open_schedule')
           .update({

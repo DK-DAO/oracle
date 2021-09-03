@@ -20,7 +20,6 @@ interface ApplicationConfig {
   apiSecret: string;
 }
 
-
 const config = ((conf) => {
   const converted: any = {};
   const kvs = <[string, string][]>Object.entries(conf);
