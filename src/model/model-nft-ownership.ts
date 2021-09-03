@@ -134,11 +134,11 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         }
 
         // If record didn't exist insert one otherwise update existing record
-        const [ownership] = await tx(this.tableName).select('*').where({ nftTokenId: event.value });
+        const [ownership] = await tx('nft_ownership').select('*').where({ nftTokenId: event.value });
         if (typeof ownership === 'undefined') {
-          await tx(this.tableName).insert(record);
+          await tx('nft_ownership').insert(record);
         } else {
-          await tx(this.tableName)
+          await tx('nft_ownership')
             .update({ owner: event.to, transactionHash: event.transactionHash })
             .where({ id: ownership.id });
         }
@@ -152,7 +152,6 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
           await tx('dk_card').insert(<IOpenResult>{
             ...record,
             applicationId: Number(card.getApplicationId()),
-            issuanceId: issuanceIdMap.get(event.transactionHash) || 0,
             itemEdition: card.getEdition(),
             itemGeneration: card.getGeneration(),
             itemRareness: card.getRareness(),
