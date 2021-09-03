@@ -22,6 +22,23 @@ interface ApplicationConfig {
 
 const config = ((conf) => {
   const converted: any = {};
+  const keys = [
+    'nodeEnv',
+    'mariadbConnectUrl',
+    'walletMnemonic',
+    'rpcEthereum',
+    'rpcBinance',
+    'rpcPolygon',
+    'activeChainId',
+    'developmentChainId',
+    'activeCampaignId',
+    'saleScheduleSale',
+    'addressRegistry',
+    'serviceHost',
+    'servicePort',
+    'apiUser',
+    'apiSecret',
+  ];
   const kvs = <[string, string][]>Object.entries(conf);
   for (let i = 0; i < kvs.length; i += 1) {
     const [k, v]: [string, string] = kvs[i];
@@ -39,6 +56,11 @@ const config = ((conf) => {
       default:
         converted[k] = v.trim();
     }
+  }
+  // Default value is empty
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    converted[key] = typeof converted[key] === 'undefined' ? '' : converted[key];
   }
   return converted;
 })(objToCamelCase(parse(fs.readFileSync(`${__dirname}/../../.env`))));

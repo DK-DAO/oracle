@@ -45,7 +45,7 @@ class MainApplication {
     }
 
     const imBlockchain = new ModelBlockchain();
-    const blockchains = await imBlockchain.get();
+    const blockchains = await imBlockchain.getAllPossibleBlockchain();
     const knex = Connector.getInstance();
     let activeBlockchains;
     if (config.nodeEnv === 'development') {
@@ -91,51 +91,17 @@ class MainApplication {
     } else {
       // Now we active ethereum and bsc
       activeBlockchains = blockchains.filter((b) => b.chainId !== config.developmentChainId);
-      /*
-      await knex('nft_ownership').delete();
-      await knex('sync').delete();
-      await knex('open_schedule').delete();
-      await knex('event').delete();
-      await knex('watching').delete();
-      await knex('sync').delete();
-      const watchingDonation = await knex('watching')
-        .select('*')
-        .where({ address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db' });
-      if (watchingDonation.length <= 0) {
-        for (let i = 0; i < activeBlockchains.length; i += 1) {
-          const blockchain = activeBlockchains[i];
-          if (blockchain.chainId === 1) {
-            await knex('sync').insert(<ISync>{
-              blockchainId: blockchain.id,
-              startBlock: 12710065,
-              syncedBlock: 12710065,
-              targetBlock: 12710065,
-            });
-          }
-          if (blockchain.chainId === 56) {
-            await knex('sync').insert(<ISync>{
-              blockchainId: blockchain.id,
-              startBlock: 8789740,
-              syncedBlock: 8789740,
-              targetBlock: 8789740,
-            });
-          }
-          await knex('watching').insert(<IWatching>{
-            address: '0x7ED1908819cc4E8382D3fdf145b7e2555A9fb6db',
-            type: 1,
-            blockchainId: blockchain.id,
-            name: 'Gitcoin account',
-          });
-        }
-      }
-      */
     }
 
-    // API worker
-    startWorker({
-      id: -1,
-      name: 'api',
-    });
+    if (config.apiUser.length > 0) {
+      // API worker
+      startWorker({
+        id: -1,
+        name: 'api',
+      });
+    } else {
+      logger.warning('We will skip starting API server since apiUser is empty');
+    }
 
     for (let i = 0; i < activeBlockchains.length; i += 1) {
       startWorker({

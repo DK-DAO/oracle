@@ -356,37 +356,42 @@ export class Blockchain {
 
       // Current watching blockchain is active chain of DKDAO
       if (this.blockchain.chainId === config.activeChainId) {
-        if (typeof this.oracleInstance === 'undefined') {
-          // Init oracle if not exist
-          this.oracleInstance = await Oracle.getInstance(this.blockchain);
-        }
-        const oracle = this.oracleInstance;
-        // Start doing oracle job by sequence
-        this.queue
-          .add('oracle schedule loot boxes opening', async () => {
-            const imOpenSchedule = new ModelOpenSchedule();
-            await imOpenSchedule.batchBuy();
-          })
-          .add('oracle rng observer', async () => {
-            if (Date.now() - this.lastReveal >= revealDuration) {
-              const imSecret = new ModelSecret();
-              if ((await imSecret.countDigest()) <= 10) {
-                await oracle.commit(numberOfDigests);
+        if (config.walletMnemonic.length > 0) {
+          if (typeof this.oracleInstance === 'undefined') {
+            // Init oracle if not exist
+            this.oracleInstance = await Oracle.getInstance(this.blockchain);
+          }
+          const oracle = this.oracleInstance;
+          // Start doing oracle job by sequence
+          this.queue
+            .add('oracle schedule loot boxes opening', async () => {
+              const imOpenSchedule = new ModelOpenSchedule();
+              await imOpenSchedule.batchBuy();
+            })
+            .add('oracle rng observer', async () => {
+              if (Date.now() - this.lastReveal >= revealDuration) {
+                const imSecret = new ModelSecret();
+                if ((await imSecret.countDigest()) <= 10) {
+                  await oracle.commit(numberOfDigests);
+                } else {
+                  await oracle.reveal();
+                  this.lastReveal = Date.now();
+                }
               } else {
-                await oracle.reveal();
-                this.lastReveal = Date.now();
+                logger.debug('Skip reveal and commit');
               }
-            } else {
-              logger.debug('Skip reveal and commit');
-            }
-          })
-          .add('oracle open loot boxes', async () => {
-            await oracle.openBox();
-          })
-          .add('oracle monitoring nft ownership', async () => {
-            const nftOwnership = new ModelNftOwnership();
-            await nftOwnership.syncOwnership();
-          });
+            })
+            .add('oracle open loot boxes', async () => {
+              await oracle.openBox();
+            });
+        } else {
+          logger.warning('Due to empty mnemonic we will skip oracle operation');
+        }
+
+        this.queue.add('oracle monitoring nft ownership', async () => {
+          const nftOwnership = new ModelNftOwnership();
+          await nftOwnership.syncOwnership();
+        });
       }
 
       this.queue.start();

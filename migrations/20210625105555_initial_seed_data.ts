@@ -141,4 +141,3 @@ export async function down(knex: Knex): Promise<void> {
   await knex('token').delete();
   await knex('blockchain').delete().whereIn('chainId', [1, 56, 137]);
 }
-

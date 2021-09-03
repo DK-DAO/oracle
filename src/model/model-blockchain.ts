@@ -22,6 +22,10 @@ export class ModelBlockchain extends ModelBase<IBlockchain> {
   public basicQuery(): Knex.QueryBuilder {
     return this.getDefaultKnex().select('*');
   }
+
+  public async getAllPossibleBlockchain(): Promise<IBlockchain[]> {
+    return this.basicQuery().whereNot({ url: '' });
+  }
 }
 
 export default ModelBlockchain;
