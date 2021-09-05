@@ -105,3 +105,4 @@ dist
 build
 src/data/
 .DS_Store
+.env*

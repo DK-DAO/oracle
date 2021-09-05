@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { ModelBase } from './model-base';
 
 export enum EToken {
+  DePayFiRouter = 0,
   ERC20 = 20,
   ERC721 = 721,
 }

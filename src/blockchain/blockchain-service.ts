@@ -7,7 +7,7 @@ import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
 import { EWatching, IWatching, ModelWatching } from '../model/model-watching';
-import { parseEvent, BigNum } from '../helper/utilities';
+import { parseEvent, BigNum, hexStringToFixedHexString, getLowCaseAddress } from '../helper/utilities';
 import ModelEvent, { EProcessingStatus } from '../model/model-event';
 import Oracle from './oracle';
 import ModelOpenSchedule from '../model/model-open-schedule';
@@ -28,6 +28,12 @@ interface Log {
   transactionHash: string;
   logIndex: number;
 }
+
+// Transfer event
+const eventTransfer = utils.id('Transfer(address,address,uint256)');
+
+// Payment event
+const eventPayment = utils.id('Payment(address,address,uint256,address)');
 
 // Reveal duration 30 mins
 const revealDuration = 3600000;
@@ -66,6 +72,10 @@ export class Blockchain {
   private oracleInstance?: Oracle;
 
   private stage: TStage = 'genesis';
+
+  private topics: any = [];
+
+  private isActiveChain: boolean = false;
 
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
@@ -119,6 +129,14 @@ export class Blockchain {
         value: this.blockchain.id,
       },
     ]);
+
+    // We going to watching for event look like this
+    // Event name: Transfer or Payment
+    // Topic 1: any
+    // Topic 2: watching address
+    this.topics = [[eventTransfer, eventPayment], null];
+    const watchingTopic = [];
+
     for (let i = 0; i < this.watchingWallet.length; i += 1) {
       logger.info(
         'Start watching',
@@ -126,8 +144,10 @@ export class Blockchain {
         `(${this.watchingWallet[i].address}) address on`,
         this.blockchain.name,
       );
+      watchingTopic.push(hexStringToFixedHexString(this.watchingWallet[i].address));
       this.watchingWalletAddresses.set(this.watchingWallet[i].address.toLowerCase(), this.watchingWallet[i]);
     }
+    this.topics.push(watchingTopic.length > 0 && !this.isActiveChain ? watchingTopic : null);
   }
 
   // Update sync
@@ -194,19 +214,38 @@ export class Blockchain {
   // Event sync will split works and pass to event worker
   private async eventWorker(id: number, fromBlock: number, toBlock: number) {
     // Get logs for given address
-    const logs = await Utilities.TillSuccess<Log[]>(
+    /** @todo: Warning we might need to split payment and issuance later */
+    const rawLogs = await Utilities.TillSuccess<Log[]>(
       async () => {
         return this.provider.getLogs({
           fromBlock,
           toBlock,
-          topics: [utils.id('Transfer(address,address,uint256)')],
+          topics: this.topics,
         });
       },
       2000,
       5,
     );
 
-    logger.info(`${this.blockchain.name} > Found ${logs.length} events in range ${fromBlock} -> ${toBlock}`);
+    // We filter necessary logs from raw log
+    let logs = rawLogs.filter((i) => this.watchingTokenAddresses.has(i.address.toLowerCase()));
+    // Filter all payments that belong to us
+    const payments = logs.filter((i) => {
+      return i.topics[0] === eventPayment;
+    });
+    // Get transaction hash list
+    const txHashPayments = payments.map((i) => i.transactionHash);
+    // Filter
+    logs = logs.filter((i) => {
+      return i.topics[0] === eventPayment || !txHashPayments.includes(i.transactionHash);
+    });
+
+    logger.info(
+      `${this.blockchain.name}> Found ${logs.length}/${rawLogs.length} events, ${fromBlock} - ${toBlock} (${(
+        (100 * toBlock) /
+        this.synced.targetBlock
+      ).toFixed(6)} %)`,
+    );
 
     const imEvent = new ModelEvent();
     // Get log and push the events outside
@@ -222,7 +261,11 @@ export class Blockchain {
             const watchingAddress = this.watchingWalletAddresses.get(to);
             const status =
               watchingAddress?.type === EWatching.Donate ? EProcessingStatus.NewDonate : EProcessingStatus.NewPayment;
-            logger.info(`New event, ERC20 transfer ${from} -> ${to} ${value}`);
+            logger.info(
+              `New event, ERC20 transfer ${from} -> ${to} ${BigNum.from(value)
+                .div(10 ** (token?.decimal || 18))
+                .toString()} ${token?.symbol}`,
+            );
             await imEvent.create({
               status,
               from,
@@ -246,7 +289,9 @@ export class Blockchain {
               }),
             });
           } else if (token.type === EToken.ERC721) {
-            logger.info(`New event, ERC721 transfer ${from} -> ${to} ${BigNum.toHexString(BigNum.from(value))}`);
+            logger.info(
+              `New event, ERC721 transfer ${from} -> ${to} ${BigNum.toHexString(BigNum.from(value))} ${token.symbol}`,
+            );
             await imEvent.create({
               status: EProcessingStatus.NftTransfer,
               from,
@@ -269,6 +314,40 @@ export class Blockchain {
                 value,
               }),
             });
+          } else if (token.type === EToken.DePayFiRouter) {
+            const realTokenAddress = getLowCaseAddress(log.data);
+            if (this.watchingTokenAddresses.has(realTokenAddress)) {
+              const realToken = this.watchingTokenAddresses.get(realTokenAddress);
+              logger.info(
+                `New event, DePay payment ${from} -> ${to} ${BigNum.from(value)
+                  .div(10 ** (realToken?.decimal || 18))
+                  .toString()} ${realToken?.symbol}`,
+              );
+              await imEvent.create({
+                status: EProcessingStatus.NewPayment,
+                from,
+                to,
+                value: BigNum.toHexString(BigNum.from(value)),
+                blockHash,
+                eventId,
+                blockNumber,
+                transactionHash,
+                contractAddress,
+                tokenId: realToken?.id,
+                topics: JSON.stringify(log.topics),
+                rawData: Buffer.from(log.data.replace(/^0x/gi, ''), 'hex'),
+                blockchainId: this.blockchain.id,
+                eventName: 'Payment',
+                jsonData: JSON.stringify({
+                  eventName: 'Transfer',
+                  from: utils.getAddress(from),
+                  to: utils.getAddress(to),
+                  value,
+                }),
+              });
+            } else {
+              logger.error(`Can't find the related token ${realTokenAddress}`);
+            }
           }
         } else {
           logger.info(`We ignored event id: ${eventId}`);
@@ -328,6 +407,8 @@ export class Blockchain {
   // Star observer
   public async start() {
     if (await this.getBlockchainInfo()) {
+      this.isActiveChain = this.blockchain.chainId === config.activeChainId;
+
       await this.updateListToken();
       await this.updateListWatching();
 
@@ -353,9 +434,8 @@ export class Blockchain {
             }
           }
         });
-
       // Current watching blockchain is active chain of DKDAO
-      if (this.blockchain.chainId === config.activeChainId) {
+      if (this.isActiveChain) {
         if (config.walletMnemonic.length > 0) {
           if (typeof this.oracleInstance === 'undefined') {
             // Init oracle if not exist

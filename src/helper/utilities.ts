@@ -216,6 +216,10 @@ export function objectToCondition<T>(val: T, ...selectFields: string[]): { field
   return condition;
 }
 
+export function hexStringToFixedHexString(inputHexString: string, size: number = 64):string{
+  return `0x${inputHexString.toLowerCase().replace(/^0x/g, '').padStart(size, '0')}`;
+}
+
 export default {
   toCamelCase,
   toSnakeCase,
