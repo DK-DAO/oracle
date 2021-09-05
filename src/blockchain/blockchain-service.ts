@@ -339,10 +339,11 @@ export class Blockchain {
                 blockchainId: this.blockchain.id,
                 eventName: 'Payment',
                 jsonData: JSON.stringify({
-                  eventName: 'Transfer',
-                  from: utils.getAddress(from),
-                  to: utils.getAddress(to),
-                  value,
+                  eventName: 'Payment',
+                  sender: utils.getAddress(from),
+                  receiver: utils.getAddress(to),
+                  amount: value,
+                  token: realTokenAddress,
                 }),
               });
             } else {
