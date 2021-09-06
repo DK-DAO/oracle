@@ -386,21 +386,21 @@ export class Blockchain {
       // Try to sync each 100 blocks at once
       const toBlock =
         targetBlock - syncedBlock > numberOfBlocksToSync ? syncedBlock + numberOfBlocksToSync : targetBlock;
-      if (fromBlock >= toBlock) {
+      if (fromBlock + 1 >= toBlock) {
         logger.info('Skip syncing blocks due to no diff');
         return;
       }
       while (fromBlock < toBlock) {
-        // We skip if there diff is too small
-        if (fromBlock + 1 === toBlock) {
-          break;
+        try {
+          if (fromBlock + numberOfBlocksToWorker <= toBlock) {
+            await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlocksToWorker);
+          } else {
+            await this.eventWorker(id, fromBlock + 1, toBlock);
+          }
+          fromBlock += numberOfBlocksToWorker;
+        } catch (error) {
+          logger.error(`${this.blockchain.name}> Event sync error:`, error);
         }
-        if (fromBlock + numberOfBlocksToWorker <= toBlock) {
-          await this.eventWorker(id, fromBlock + 1, fromBlock + numberOfBlocksToWorker);
-        } else {
-          await this.eventWorker(id, fromBlock + 1, toBlock);
-        }
-        fromBlock += numberOfBlocksToWorker;
       }
     }
   }
