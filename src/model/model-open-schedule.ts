@@ -2,6 +2,7 @@
 import { ethers } from 'ethers';
 import crypto from 'crypto';
 import { Knex } from 'knex';
+import { Utilities } from 'noqueue';
 import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
@@ -72,7 +73,9 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       const tx = await this.getKnex().transaction();
       try {
         logger.info(`Trying to issue: ${opening.numberOfBox} loot boxes for ${opening.owner}, id: ${opening.id}`);
-        const txResult = await contractCallback(opening.campaignId, opening.owner, opening.numberOfBox);
+        const txResult = await Utilities.TillSuccess<ethers.ContractTransaction>(async () => {
+          return contractCallback(opening.campaignId, opening.owner, opening.numberOfBox);
+        });
         // Update status and update transaction hash
         await tx(this.tableName)
           .update(<Partial<IOpenSchedule>>{ status: EOpenScheduleStatus.Opened, transactionHash: txResult.hash })
@@ -138,7 +141,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
       // Calculate distribution of loot boxes
 
       const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
-      logger.debug(
+      logger.info(
         `Total number of loot boxes: ${numberOfLootBoxes} (${lootBoxDistribution}) for: ${event.from} discount: ${
           discount * 100
         }%`,

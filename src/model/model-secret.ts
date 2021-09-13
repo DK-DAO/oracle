@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
+import { Utilities } from 'noqueue';
 import { ModelBase } from './model-base';
 
 export enum ESecretStatus {
@@ -43,7 +44,9 @@ export class ModelSecret extends ModelBase<ISecret> {
         await tx(this.tableName).insert(records[i]);
         // const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
       }
-      await contractCallback();
+      await Utilities.TillSuccess(async () => {
+        return contractCallback();
+      });
       await tx.commit();
     } catch (err) {
       await tx.rollback();

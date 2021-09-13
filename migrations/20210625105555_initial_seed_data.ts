@@ -13,14 +13,14 @@ export async function up(knex: Knex): Promise<void> {
       url: config.rpcEthereum,
       name: 'Ethereum Mainnet',
       chainId: 1,
-      explorerUrl: 'https://bscscan.com',
+      explorerUrl: 'https://etherscan.io',
       nativeToken: 'ETH',
     },
     {
       url: config.rpcBinance,
       name: 'Binance Smart Chain',
       chainId: 56,
-      explorerUrl: 'https://etherscan.io',
+      explorerUrl: 'https://bscscan.com',
       nativeToken: 'BNB',
     },
     {
