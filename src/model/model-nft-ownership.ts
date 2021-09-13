@@ -5,7 +5,7 @@ import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
-import { IOpenResult } from './model-open-result';
+import { IDkCard, IOpenResult } from './model-open-result';
 import { EOpenScheduleStatus } from './model-open-schedule';
 
 export interface INftOwnership {
@@ -149,8 +149,9 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
         // If record didn't exist insert one otherwise update existing record
         if (typeof dkCard === 'undefined') {
           const card = Card.from(event.value);
-          await tx('dk_card').insert(<IOpenResult>{
+          await tx('dk_card').insert(<IDkCard>{
             ...record,
+            synced: false,
             applicationId: Number(card.getApplicationId()),
             itemEdition: card.getEdition(),
             itemGeneration: card.getGeneration(),
@@ -161,7 +162,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
           });
         } else {
           await tx('dk_card')
-            .update({ owner: event.to, transactionHash: event.transactionHash })
+            .update({ owner: event.to, synced: false, transactionHash: event.transactionHash })
             .where({ id: dkCard.id });
         }
 
