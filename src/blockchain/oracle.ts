@@ -70,7 +70,7 @@ export class Oracle {
     const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
 
     for (let i = 0; i < this.dkOracle.length; i += 1) {
-      const oracleAddress = await this.dkDaoOracle[i].getAddress();
+      const oracleAddress = this.dkOracle[i].address;
       this.cachedNonce.set(oracleAddress, {
         nonce: await this.provider.getTransactionCount(oracleAddress),
         timestamp: Date.now(),
@@ -143,7 +143,7 @@ export class Oracle {
               gasLimit: estimatedGas.add(200000),
             },
           );
-        logger.info(`Cached next nonce is ${currentNonce + 1}`);
+        logger.info(`Cached next nonce for ${currentOracle.address} is ${currentNonce + 1}`);
         this.cachedNonce.set(currentOracle.address, {
           nonce: currentNonce + 1,
           timestamp: Date.now(),
