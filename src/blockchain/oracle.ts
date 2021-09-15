@@ -132,17 +132,37 @@ export class Oracle {
           } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
         );
 
-        const result = this.contracts.dkOracleProxy
-          .connect(currentOracle)
-          .safeCall(
-            this.contracts.distributor.address,
-            0,
-            this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
-            {
-              nonce: currentNonce,
-              gasLimit: estimatedGas.add(200000),
-            },
-          );
+        let result;
+        try {
+          result = await this.contracts.dkOracleProxy
+            .connect(currentOracle)
+            .safeCall(
+              this.contracts.distributor.address,
+              0,
+              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+              {
+                gasPrice: await this.provider.getGasPrice(),
+                nonce: currentNonce,
+                gasLimit: estimatedGas.add(200000),
+              },
+            );
+        } catch (e) {
+          logger.error('Use the tripple gas price since', e);
+          result = await this.contracts.dkOracleProxy
+            .connect(currentOracle)
+            .safeCall(
+              this.contracts.distributor.address,
+              0,
+              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+              {
+                // Use x3 gas price
+                gasPrice: (await this.provider.getGasPrice()).mul(3),
+                nonce: currentNonce,
+                gasLimit: estimatedGas.add(200000),
+              },
+            );
+        }
+
         logger.info(`Cached next nonce for ${currentOracle.address} is ${currentNonce + 1}`);
         this.cachedNonce.set(currentOracle.address, {
           nonce: currentNonce + 1,
