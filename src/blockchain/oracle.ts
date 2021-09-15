@@ -29,7 +29,7 @@ export interface IContractList {
 }
 
 // Safe duration
-const safeDuration = 60000;
+// const safeDuration = 120000;
 
 export class Oracle {
   private dkOracle: ethers.Wallet[] = [];
@@ -56,28 +56,6 @@ export class Oracle {
     this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
   }
 
-  private async checkNonce(address: string): Promise<boolean> {
-    if (this.cachedNonce.has(address)) {
-      const latestNonce = await this.provider.getTransactionCount(address);
-      const { nonce, timestamp } = this.cachedNonce.get(address) || { nonce: 0, timestamp: 0 };
-      logger.info(`Cached nonce: ${nonce} of ${address}, cached at: ${timestamp}`);
-      if (latestNonce > nonce || Date.now() - timestamp > safeDuration) {
-        // Store back nonce to cache
-        this.cachedNonce.set(address, {
-          nonce: latestNonce,
-          timestamp: Date.now(),
-        });
-        return true;
-      }
-    } else {
-      this.cachedNonce.set(address, {
-        nonce: await this.provider.getTransactionCount(address),
-        timestamp: Date.now(),
-      });
-    }
-    return false;
-  }
-
   public async connect(bcData: IBlockchain) {
     const imConfig = new ModelConfig();
     this.bcData = bcData;
@@ -90,6 +68,14 @@ export class Oracle {
     const contractDistributorAddress = await imConfig.getConfig('contractDistributor');
     const contractDuelistKingOracleProxyAddress = await imConfig.getConfig('contractDuelistKingOracleProxy');
     const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
+
+    for (let i = 0; i < this.dkOracle.length; i += 1) {
+      const oracleAddress = this.dkDaoOracle[i].address;
+      this.cachedNonce.set(oracleAddress, {
+        nonce: await this.provider.getTransactionCount(oracleAddress),
+        timestamp: Date.now(),
+      });
+    }
 
     if (
       typeof contractDistributorAddress === 'string' &&
@@ -127,35 +113,44 @@ export class Oracle {
       this.oracleSelect = 0;
     }
     const currentOracle = this.dkOracle[this.oracleSelect];
-    if ((await this.checkNonce(currentOracle.address)) === true) {
-      const imOpenSchedule = new ModelOpenSchedule();
-      await imOpenSchedule.openLootBox(
-        async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
-          const estimatedGas = await this.contracts.dkOracleProxy
-            .connect(currentOracle)
-            .estimateGas.safeCall(
-              this.contracts.distributor.address,
-              0,
-              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
-            );
-          logger.info(
-            `Forwarding call from ${
-              currentOracle.address
-            } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas`,
+    const imOpenSchedule = new ModelOpenSchedule();
+    await imOpenSchedule.openLootBox(
+      async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
+        const estimatedGas = await this.contracts.dkOracleProxy
+          .connect(currentOracle)
+          .estimateGas.safeCall(
+            this.contracts.distributor.address,
+            0,
+            this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
           );
-          return this.contracts.dkOracleProxy
-            .connect(currentOracle)
-            .safeCall(
-              this.contracts.distributor.address,
-              0,
-              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
-              {
-                gasLimit: estimatedGas.add(200000),
-              },
-            );
-        },
-      );
-    }
+        const currentNonce =
+          this.cachedNonce.get(currentOracle.address)?.nonce ||
+          (await this.provider.getTransactionCount(currentOracle.address));
+        logger.info(
+          `Forwarding call from ${
+            currentOracle.address
+          } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
+        );
+
+        const result = this.contracts.dkOracleProxy
+          .connect(currentOracle)
+          .safeCall(
+            this.contracts.distributor.address,
+            0,
+            this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+            {
+              nonce: currentNonce,
+              gasLimit: estimatedGas.add(200000),
+            },
+          );
+        logger.info(`Cached next nonce is ${currentNonce + 1}`);
+        this.cachedNonce.set(currentOracle.address, {
+          nonce: currentNonce + 1,
+          timestamp: Date.now(),
+        });
+        return result;
+      },
+    );
     this.oracleSelect += 1;
   }
 
