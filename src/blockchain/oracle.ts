@@ -55,8 +55,11 @@ export class Oracle {
     // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`));
     // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
 
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/4`));
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/5`));
+    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/4`));
+    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/5`));
+
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/6`));
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/7`));
   }
 
   public async connect(bcData: IBlockchain) {
@@ -137,7 +140,7 @@ export class Oracle {
 
         let result;
         const estimatedGasPrice = await this.provider.getGasPrice();
-        const calculatedGasPrice = estimatedGas.add(estimatedGasPrice.div(3));
+        const calculatedGasPrice = estimatedGasPrice.add(estimatedGasPrice.div(2));
         try {
           result = await this.contracts.dkOracleProxy
             .connect(currentOracle)
