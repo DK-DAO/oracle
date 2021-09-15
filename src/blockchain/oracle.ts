@@ -51,9 +51,12 @@ export class Oracle {
 
   constructor() {
     this.dkDaoOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/0`));
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`));
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`));
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
+    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`));
+    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`));
+    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
+
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/4`));
+    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/5`));
   }
 
   public async connect(bcData: IBlockchain) {
@@ -133,6 +136,8 @@ export class Oracle {
         );
 
         let result;
+        const estimatedGasPrice = await this.provider.getGasPrice();
+        const calculatedGasPrice = estimatedGas.add(estimatedGasPrice.div(3));
         try {
           result = await this.contracts.dkOracleProxy
             .connect(currentOracle)
@@ -141,13 +146,13 @@ export class Oracle {
               0,
               this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
               {
-                gasPrice: await this.provider.getGasPrice(),
+                gasPrice: calculatedGasPrice,
                 nonce: currentNonce,
                 gasLimit: estimatedGas.add(200000),
               },
             );
         } catch (e) {
-          logger.error('Use the tripple gas price since', e);
+          logger.error('Use the double gas price since', e);
           result = await this.contracts.dkOracleProxy
             .connect(currentOracle)
             .safeCall(
@@ -155,8 +160,8 @@ export class Oracle {
               0,
               this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
               {
-                // Use x3 gas price
-                gasPrice: (await this.provider.getGasPrice()).mul(3),
+                // Use x2 gas price
+                gasPrice: calculatedGasPrice.mul(2),
                 nonce: currentNonce,
                 gasLimit: estimatedGas.add(200000),
               },
