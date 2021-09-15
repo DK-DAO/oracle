@@ -70,7 +70,7 @@ export class Oracle {
     const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
 
     for (let i = 0; i < this.dkOracle.length; i += 1) {
-      const oracleAddress = this.dkDaoOracle[i].address;
+      const oracleAddress = await this.dkDaoOracle[i].getAddress();
       this.cachedNonce.set(oracleAddress, {
         nonce: await this.provider.getTransactionCount(oracleAddress),
         timestamp: Date.now(),
