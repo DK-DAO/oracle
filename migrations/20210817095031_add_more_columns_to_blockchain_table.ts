@@ -20,7 +20,7 @@ export async function up(knex: Knex): Promise<void> {
   // Just 20, i think it's enough for BSC
   await knex('blockchain')
     .update({
-      safeConfirmations: 20,
+      safeConfirmations: 12,
       numberOfBlocksToSync: 100,
       numberOfBlocksToWorker: 20,
     })
@@ -29,7 +29,7 @@ export async function up(knex: Knex): Promise<void> {
   // Chain reorganization issue on Polygon that's why we increase from 6 to 30
   await knex('blockchain')
     .update({
-      safeConfirmations: 30,
+      safeConfirmations: 15,
       numberOfBlocksToSync: 100,
       numberOfBlocksToWorker: 20,
     })

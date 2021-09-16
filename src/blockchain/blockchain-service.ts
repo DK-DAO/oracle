@@ -49,7 +49,7 @@ export class Blockchain {
   private synced: ISync = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 100 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 1000 });
 
   // RPC provider
   private provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
