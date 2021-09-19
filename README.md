@@ -11,13 +11,13 @@ NODE_ENV=staging
 
 MARIADB_CONNECT_URL=mysql://<username>:<password>@<host or IP>:<port>/<database name>
 
-RPC_BINANCE=<binance_rpc_url>
+RPC_POLYGON=<polygon_rpc_url>
 
 ADDRESS_REGISTRY=<address_registry>
 
 SALE_SCHEDULE_SALE=2021/08/20
 
-ACTIVE_CHAIN_ID=56
+ACTIVE_CHAIN_ID=137
 
 DEVELOPMENT_CHAIN_ID=911
 
@@ -27,7 +27,7 @@ ACTIVE_CAMPAIGN_ID=1
 You will need these information:
 
 - `MARIADB_CONNECT_URL`: Database URL to your MariaDB, E.g: `mysql://root:password@localhost:3306/test_db`
-- `RPC_BINANCE`: We will give you this information
+- `RPC_POLYGON`: We will give you this information
 - `ADDRESS_REGISTRY`: We will give you this information
 
 ## Installation
