@@ -26,6 +26,7 @@ export interface IOpenSchedule {
   issuanceId: number;
   numberOfBox: number;
   totalBoxes: number;
+  eventId: number | null;
   transactionHash: string | null;
   owner: string;
   memo: string;
@@ -152,6 +153,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
         return {
           campaignId: config.activeCampaignId,
           issuanceId,
+          eventId: event.id,
           totalBoxes: numberOfLootBoxes,
           owner: event.from,
           memo: `${crypto.randomBytes(20).toString('hex')} buy ${numberOfLootBoxes} boxes with ${floatVal.toFixed(2)} ${
