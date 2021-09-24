@@ -13,13 +13,9 @@ import ModelSecret, { ESecretStatus } from '../model/model-secret';
 import { BytesBuffer } from '../helper/bytes-buffer';
 import ModelOpenSchedule from '../model/model-open-schedule';
 import ModelConfig from '../model/model-config';
+import ModelNonceManagement from '../model/model-nonce-management';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
-
-interface ICachedNonce {
-  nonce: number;
-  timestamp: number;
-}
 
 export interface IContractList {
   dkOracleProxy: OracleProxy;
@@ -39,9 +35,6 @@ export class Oracle {
   private bcData: IBlockchain = <IBlockchain>{};
 
   private contracts: IContractList = <IContractList>{};
-
-  // Recent cached nonce
-  private cachedNonce: Map<string, ICachedNonce> = new Map();
 
   private oracleSelect: number = 0;
 
@@ -64,6 +57,7 @@ export class Oracle {
 
   public async connect(bcData: IBlockchain) {
     const imConfig = new ModelConfig();
+    const imNonceManagement = new ModelNonceManagement();
     this.bcData = bcData;
     this.provider = new ethers.providers.StaticJsonRpcProvider(bcData.url);
     // Connect wallet to provider
@@ -77,10 +71,10 @@ export class Oracle {
 
     for (let i = 0; i < this.dkOracle.length; i += 1) {
       const oracleAddress = this.dkOracle[i].address;
-      this.cachedNonce.set(oracleAddress, {
-        nonce: await this.provider.getTransactionCount(oracleAddress),
-        timestamp: Date.now(),
-      });
+      const cachedNonce = await imNonceManagement.getNonce(oracleAddress);
+      const blockchainNonce = await this.provider.getTransactionCount(oracleAddress);
+      // Set max nonce to blockchain
+      await imNonceManagement.setNonce(oracleAddress, Math.max(cachedNonce, blockchainNonce));
     }
 
     if (
@@ -119,19 +113,18 @@ export class Oracle {
       this.oracleSelect = 0;
     }
     const currentOracle = this.dkOracle[this.oracleSelect];
+    const imNonceManagement = new ModelNonceManagement();
     const imOpenSchedule = new ModelOpenSchedule();
     await imOpenSchedule.openLootBox(
       async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
-        const estimatedGas = await this.contracts.dkOracleProxy
+        let estimatedGas = await this.contracts.dkOracleProxy
           .connect(currentOracle)
           .estimateGas.safeCall(
             this.contracts.distributor.address,
             0,
             this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
           );
-        const currentNonce =
-          this.cachedNonce.get(currentOracle.address)?.nonce ||
-          (await this.provider.getTransactionCount(currentOracle.address));
+        const currentNonce = await imNonceManagement.getNonce(currentOracle.address);
         logger.info(
           `Forwarding call from ${
             currentOracle.address
@@ -139,6 +132,8 @@ export class Oracle {
         );
 
         let result;
+        // Add more than 10% gas to estimated gas
+        estimatedGas = estimatedGas.add(estimatedGas.div(9));
         const estimatedGasPrice = await this.provider.getGasPrice();
         const calculatedGasPrice = estimatedGasPrice.add(estimatedGasPrice.div(2));
         try {
@@ -151,7 +146,7 @@ export class Oracle {
               {
                 gasPrice: calculatedGasPrice,
                 nonce: currentNonce,
-                gasLimit: estimatedGas.add(200000),
+                gasLimit: estimatedGas,
               },
             );
         } catch (e) {
@@ -166,16 +161,13 @@ export class Oracle {
                 // Use x2 gas price
                 gasPrice: calculatedGasPrice.mul(2),
                 nonce: currentNonce,
-                gasLimit: estimatedGas.add(200000),
+                gasLimit: estimatedGas,
               },
             );
         }
 
         logger.info(`Cached next nonce for ${currentOracle.address} is ${currentNonce + 1}`);
-        this.cachedNonce.set(currentOracle.address, {
-          nonce: currentNonce + 1,
-          timestamp: Date.now(),
-        });
+        await imNonceManagement.setNonce(currentOracle.address, currentNonce + 1);
         return result;
       },
     );
