@@ -7,6 +7,7 @@ import logger from './helper/logger';
 import { IWorker, loadWorker } from './helper/utilities';
 import { ModelBlockchain } from './model/model-blockchain';
 import BlockchainService from './blockchain/blockchain-service';
+import Minter from './blockchain/minter';
 import { IToken } from './model/model-token';
 import { IWatching } from './model/model-watching';
 import { ISync } from './model/model-sync';
@@ -59,6 +60,7 @@ class MainApplication {
 
       // Clean test data
       await knex('open_result').delete();
+      await knex('nonce_management').delete();
       await knex('nft_ownership').delete();
       await knex('airdrop').delete();
       await knex('sync').delete();
@@ -68,7 +70,7 @@ class MainApplication {
       const testToken = await knex('token').select('*').where({ symbol: 'TEST' }).first();
       if (typeof testToken === 'undefined') {
         await knex('token').insert(<IToken>{
-          address: '0xd3E30bfCc3a49DB790Bc918d080c91A285FbdC98',
+          address: '0x1959B7e4B844957d3b2D6F7c7F2e4A53DBB188Aa',
           blockchainId: activeBlockchains[0].id,
           type: 20,
           decimal: 18,
@@ -92,6 +94,11 @@ class MainApplication {
       // Now we active ethereum and bsc
       activeBlockchains = blockchains.filter((b) => b.chainId !== config.developmentChainId);
     }
+
+    startWorker({
+      id: -1,
+      name: 'minter',
+    });
 
     if (config.apiUser.length > 0) {
       // API worker
@@ -143,6 +150,10 @@ class MainApplication {
     BlockchainService.start();
   }
 
+  private static startMinter() {
+    Minter.start();
+  }
+
   /**
    * Application entry point
    * @static
@@ -156,6 +167,10 @@ class MainApplication {
       // Start API
       if (id && name && name === 'api') {
         MainApplication.startAPI();
+        return;
+      }
+      if (id && name && name === 'minter') {
+        MainApplication.startMinter();
         return;
       }
       // Start blockchain observer

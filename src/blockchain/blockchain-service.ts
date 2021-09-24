@@ -461,10 +461,12 @@ export class Blockchain {
               } else {
                 logger.debug('Skip reveal and commit');
               }
-            })
+            });
+          /*
             .add('oracle open loot boxes', async () => {
               await oracle.openBox();
             });
+            */
         } else {
           logger.warning('Due to empty mnemonic we will skip oracle operation');
         }

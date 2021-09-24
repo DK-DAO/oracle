@@ -2684,9 +2684,9 @@ nopt@~1.0.10:
     abbrev "1"
 
 noqueue@^3.0.11:
-  version "3.0.11"
-  resolved "https://registry.yarnpkg.com/noqueue/-/noqueue-3.0.11.tgz#33ca26d8d7d69709be952b39619ab160cb831ed3"
-  integrity sha512-jJjqNm8i4EZJSFKEJhrOYeENatI0CjkpdMZvR6zPOsYkTdmX2wSJVP12X6nnJPb1Bn71fEJrmHTja9y1GPEMIQ==
+  version "3.0.13"
+  resolved "https://registry.yarnpkg.com/noqueue/-/noqueue-3.0.13.tgz#0621ef428e456cd3841bc9fc8e8a1e05a92973a5"
+  integrity sha512-J6cG7e6ApJWbSpCK6ROyNuw/CoVnYRKtFazmzWu7R6D5QijY4azAJOJ7sr4aknlHuATHDtxlienmZTWh1G2phA==
 
 normalize-package-data@^2.3.2:
   version "2.5.0"

@@ -68,7 +68,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
     contractCallback: (campaignId: number, owner: string, numberOfBox: number) => Promise<ethers.ContractTransaction>,
   ): Promise<void> {
     const opening = <IOpenSchedule | undefined>(
-      await this.basicQuery().where({ status: EOpenScheduleStatus.New }).orderBy('id', 'asc').limit(0).first()
+      await this.basicQuery().where({ status: EOpenScheduleStatus.New }).orderBy('id', 'asc').limit(1).first()
     );
     if (opening) {
       const tx = await this.getKnex().transaction();
@@ -92,7 +92,7 @@ export class ModelOpenSchedule extends ModelBase<IOpenSchedule> {
         throw err;
       }
     } else {
-      logger.info('We run out of schedule to open loot boxes');
+      logger.debug('We run out of schedule to open loot boxes');
     }
   }
 
