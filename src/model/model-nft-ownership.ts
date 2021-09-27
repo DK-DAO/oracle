@@ -5,8 +5,9 @@ import { IResponseList, IPagination } from '../framework';
 import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
-import { IDkCard, IOpenResult } from './model-open-result';
+import { IOpenResult } from './model-open-result';
 import { EOpenScheduleStatus } from './model-open-schedule';
+import ModelDkCard from './model-dk-card';
 
 export interface INftOwnership {
   id: number;
@@ -72,6 +73,7 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
   // Perform batch buy based on recorded event
   public async syncOwnership(): Promise<void> {
     const imEvent = new ModelEvent();
+    const imDkCard = new ModelDkCard();
     const issuanceIdMap = new Map<string, number>();
     const txHashes: string[] = [];
     const events = await imEvent.getAllEventDetail(EProcessingStatus.NftTransfer);
@@ -143,28 +145,8 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
             .where({ id: ownership.id });
         }
 
-        // Add DK Card hook, we will move it to another table later
-        // @todo: It's a technical penalty, it hurt like hell I know
-        const [dkCard] = await tx('dk_card').select('*').where({ nftTokenId: event.value });
-        // If record didn't exist insert one otherwise update existing record
-        if (typeof dkCard === 'undefined') {
-          const card = Card.from(event.value);
-          await tx('dk_card').insert(<IDkCard>{
-            ...record,
-            synced: false,
-            applicationId: Number(card.getApplicationId()),
-            itemEdition: card.getEdition(),
-            itemGeneration: card.getGeneration(),
-            itemRareness: card.getRareness(),
-            itemType: card.getType(),
-            itemId: Number(card.getId()),
-            itemSerial: Number(card.getSerial()),
-          });
-        } else {
-          await tx('dk_card')
-            .update({ owner: event.to, synced: false, transactionHash: event.transactionHash })
-            .where({ id: dkCard.id });
-        }
+        // DK Card hook
+        await imDkCard.updateAnyways(event);
 
         // Update open schedule status
         await tx('open_schedule')

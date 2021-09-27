@@ -21,26 +21,6 @@ export interface IOpenResult {
   createdDate: string;
 }
 
-// It will be here temporary
-export interface IDkCard {
-  id: number;
-  blockchainId: number;
-  tokenId: number;
-  synced: boolean;
-  issuanceId: number;
-  owner: string;
-  nftTokenId: string;
-  applicationId: number;
-  itemEdition: number;
-  itemGeneration: number;
-  itemRareness: number;
-  itemType: number;
-  itemId: number;
-  itemSerial: number;
-  transactionHash: string;
-  createdDate: string;
-}
-
 export interface IOpenResultDetail extends IOpenResult {
   chainId: number;
   blockchainName: string;

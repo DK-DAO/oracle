@@ -5,6 +5,7 @@ import { objToCamelCase } from './utilities';
 interface ApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
+  mariadbGameUrl: string;
   walletMnemonic: string;
   rpcEthereum: string;
   rpcBinance: string;
@@ -25,6 +26,7 @@ const config = ((conf) => {
   const keys = [
     'nodeEnv',
     'mariadbConnectUrl',
+    'mariadbGameUrl',
     'walletMnemonic',
     'rpcEthereum',
     'rpcBinance',

@@ -15,6 +15,7 @@ import { getStage, TStage } from '../helper/calculate-loot-boxes';
 import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
 import ModelNftOwnership from '../model/model-nft-ownership';
+import { Connector } from '../framework';
 
 // Log interface
 interface Log {
@@ -437,6 +438,10 @@ export class Blockchain {
         });
       // Current watching blockchain is active chain of DKDAO
       if (this.isActiveChain) {
+        //  Connect to game db config is set
+        if (config.mariadbGameUrl !== '') {
+          Connector.connectByUrl(config.mariadbGameUrl, 'mariadb/game');
+        }
         if (config.walletMnemonic.length > 0) {
           if (typeof this.oracleInstance === 'undefined') {
             // Init oracle if not exist
@@ -462,11 +467,6 @@ export class Blockchain {
                 logger.debug('Skip reveal and commit');
               }
             });
-          /*
-            .add('oracle open loot boxes', async () => {
-              await oracle.openBox();
-            });
-            */
         } else {
           logger.warning('Due to empty mnemonic we will skip oracle operation');
         }
