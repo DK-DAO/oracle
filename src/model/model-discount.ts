@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
-import { objectToCondition } from '../helper/utilities';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic } from '@dkdao/framework';
 
 export interface IDiscount {
   id: number;
@@ -14,7 +13,7 @@ export interface IDiscount {
 
 export type TKeyOfConfig = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistributor';
 
-export class ModelDiscount extends ModelBase<IDiscount> {
+export class ModelDiscount extends ModelMysqlBasic<IDiscount> {
   constructor() {
     super('discount');
   }
@@ -29,21 +28,6 @@ export class ModelDiscount extends ModelBase<IDiscount> {
       return result.discount;
     }
     return 0;
-  }
-
-  public async insertIfNotExist(record: Partial<IDiscount>): Promise<IDiscount> {
-    const [dbRecord] = await this.get(objectToCondition(record, 'address', 'campaignId'));
-    if (typeof dbRecord === 'undefined') {
-      const result = await this.create(record);
-      if (typeof result !== 'undefined') {
-        return result;
-      }
-      throw new Error('We can not insert new discount record');
-    }
-    if (await this.update(record, objectToCondition(record, 'address', 'campaignId'))) {
-      return { ...dbRecord, ...record };
-    }
-    throw new Error('We can not update the discount record');
   }
 }
 

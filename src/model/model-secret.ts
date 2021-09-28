@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
 import { Utilities } from 'noqueue';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic, Transaction } from '@dkdao/framework';
+import logger from '../helper/logger';
 
 export enum ESecretStatus {
   New = 0,
@@ -20,13 +21,13 @@ export interface ISecret {
   updatedDate: string;
 }
 
-export class ModelSecret extends ModelBase<ISecret> {
+export class ModelSecret extends ModelMysqlBasic<ISecret> {
   constructor() {
     super('secret');
   }
 
   public basicQuery(): Knex.QueryBuilder {
-    return this.getDefaultKnex().select('id', 'blockchainId', 'secret', 'digest', 'createdDate', 'updatedDate');
+    return this.getDefaultKnex().select('*');
   }
 
   public async updateAll(updateData: Partial<ISecret>, idList: number[]) {
@@ -38,20 +39,20 @@ export class ModelSecret extends ModelBase<ISecret> {
     records: Pick<ISecret, 'secret' | 'digest'>[],
     contractCallback: () => Promise<void>,
   ): Promise<void> {
-    const tx = await this.getKnex().transaction();
-    try {
-      for (let i = 0; i < records.length; i += 1) {
-        await tx(this.tableName).insert(records[i]);
-        // const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
-      }
-      await Utilities.TillSuccess(async () => {
-        return contractCallback();
-      });
-      await tx.commit();
-    } catch (err) {
-      await tx.rollback();
-      throw err;
-    }
+    await Transaction.getInstance()
+      .process(async (tx: Knex.Transaction) => {
+        for (let i = 0; i < records.length; i += 1) {
+          await tx(this.tableName).insert(records[i]);
+          // const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
+        }
+        await Utilities.TillSuccess(async () => {
+          return contractCallback();
+        });
+      })
+      .catch(async (error: Error) => {
+        logger.error('Can not open loot boxes', error);
+      })
+      .exec();
   }
 
   public async getDigest(): Promise<ISecret | undefined> {

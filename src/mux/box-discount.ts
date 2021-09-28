@@ -1,5 +1,4 @@
-import { IRequestData, IResponseRecord } from '../framework/interfaces';
-import { Mux, Validator } from '../framework';
+import { Mux, Validator, IRequestData, IResponse } from '@dkdao/framework';
 import ModelDiscount, { IDiscount } from '../model/model-discount';
 import config from '../helper/config';
 
@@ -32,20 +31,30 @@ Mux.get(
       message: 'Discount code will be applied',
     },
   ),
-  async (req: IRequestData): Promise<IResponseRecord<IDiscount>> => {
+  async (req: IRequestData): Promise<IResponse<IDiscount>> => {
     const {
       query: { address, discount, code },
     } = req;
     const imDiscount = new ModelDiscount();
-    return {
-      success: true,
-      result: await imDiscount.insertIfNotExist({
-        address,
-        discount,
-        code,
-        campaignId: config.activeCampaignId,
-        memo: 'Input from web server',
-      }),
-    };
+    await imDiscount.forceUpdate({
+      address,
+      discount,
+      code,
+      campaignId: config.activeCampaignId,
+      memo: 'Input from web server',
+    });
+
+    const [result] = await imDiscount.get([
+      {
+        field: 'address',
+        value: address,
+      },
+      {
+        field: 'campaignId',
+        value: config.activeCampaignId,
+      },
+    ]);
+
+    return { success: true, result };
   },
 );

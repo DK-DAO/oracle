@@ -1,9 +1,7 @@
-import { IRequestData } from '../framework/interfaces';
-import { Mux } from '../framework';
-import { ValidatorPagination } from '../validators';
+import { Mux, IRequestData, Pagination } from '@dkdao/framework';
 import ModelEvent from '../model/model-event';
 
-Mux.get('/api/v1/donateTransaction', ValidatorPagination, async (req: IRequestData) => {
+Mux.get('/api/v1/donateTransaction', Pagination.getPaginationValidator(0, 500), async (req: IRequestData) => {
   const imEvent = new ModelEvent();
   return imEvent.getDonateList(req.query);
 });

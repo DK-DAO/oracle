@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop, Utilities } from 'noqueue';
+import { Connector } from '@dkdao/framework';
 import { ethers, utils } from 'ethers';
 import config from '../helper/config';
 import logger from '../helper/logger';
@@ -15,7 +16,6 @@ import { getStage, TStage } from '../helper/calculate-loot-boxes';
 import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
 import ModelNftOwnership from '../model/model-nft-ownership';
-import { Connector } from '../framework';
 
 // Log interface
 interface Log {

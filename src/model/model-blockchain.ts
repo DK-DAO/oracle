@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic } from '@dkdao/framework';
 
 export interface IBlockchain {
   id: number;
@@ -14,7 +14,7 @@ export interface IBlockchain {
   createdDate: string;
 }
 
-export class ModelBlockchain extends ModelBase<IBlockchain> {
+export class ModelBlockchain extends ModelMysqlBasic<IBlockchain> {
   constructor() {
     super('blockchain');
   }

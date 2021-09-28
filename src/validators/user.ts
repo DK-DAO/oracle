@@ -1,5 +1,5 @@
 import ValidatorJs from 'validator';
-import { Validator } from '../framework';
+import { Validator } from '@dkdao/framework';
 import { TitleLength } from './constant';
 
 export const ValidatorEmail = new Validator({

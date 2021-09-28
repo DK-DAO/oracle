@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import { Mux } from '@dkdao/framework';
 import logger from './helper/logger';
 import { verifyProof } from './helper/utilities';
-import { Mux } from './framework';
 import config from './helper/config';
 
 // Use JSON parse in all possible request

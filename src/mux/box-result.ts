@@ -1,6 +1,4 @@
-import { IRequestData, IResponseList } from '../framework/interfaces';
-import { Mux, Validator } from '../framework';
-import { ValidatorPagination } from '../validators';
+import { Mux, Validator, IRequestData, IResponse, Pagination } from '@dkdao/framework';
 import ModelOpenResult, { IOpenResultDetail } from '../model/model-open-result';
 import ModelOpenSchedule, { EOpenScheduleStatus } from '../model/model-open-schedule';
 
@@ -13,8 +11,8 @@ Mux.get(
     location: 'query',
     validator: (v) => Number.isFinite(v) && Number.isInteger(v),
     message: 'Id of open schedule',
-  }).merge(ValidatorPagination),
-  async (req: IRequestData): Promise<IResponseList<IOpenResultDetail>> => {
+  }).merge(Pagination.getPaginationValidator(0, 500)),
+  async (req: IRequestData): Promise<IResponse<IOpenResultDetail>> => {
     const {
       query: { openScheduleId },
     } = req;

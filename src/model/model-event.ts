@@ -1,6 +1,5 @@
 import { Knex } from 'knex';
-import { ModelBase } from './model-base';
-import { IPagination, IResponseList } from '../framework';
+import { ModelMysqlBasic, IPagination, IResponse, IRecordList } from '@dkdao/framework';
 import { BigNum } from '../helper/utilities';
 
 export enum EProcessingStatus {
@@ -55,7 +54,7 @@ export interface IDonateTransaction {
   transactionHash: string;
 }
 
-export class ModelEvent extends ModelBase<IEvent> {
+export class ModelEvent extends ModelMysqlBasic<IEvent> {
   constructor() {
     super('event');
   }
@@ -128,7 +127,7 @@ export class ModelEvent extends ModelBase<IEvent> {
 
   public async getDonateList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
-  ): Promise<IResponseList<IDonateTransaction>> {
+  ): Promise<IResponse<IDonateTransaction>> {
     const { success, result } = await this.getListByCondition<IDonateTransaction>(
       this.attachConditions(this.getDonate(), [
         {
@@ -138,9 +137,11 @@ export class ModelEvent extends ModelBase<IEvent> {
       ]),
       pagination,
     );
-    result.records = result.records.map((i) => {
-      return { ...i, value: BigNum.fromHexString(i.value).div(BigNum.from(10).pow(i.tokenDecimal)).toFixed(2) };
-    });
+    (result as IRecordList<IDonateTransaction>).records = (result as IRecordList<IDonateTransaction>).records.map(
+      (i) => {
+        return { ...i, value: BigNum.fromHexString(i.value).div(BigNum.from(10).pow(i.tokenDecimal)).toFixed(2) };
+      },
+    );
     return { success, result };
   }
 

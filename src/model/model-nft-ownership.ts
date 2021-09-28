@@ -1,8 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
+import { ModelMysqlBasic, IPagination, IResponse, IModelCondition, Transaction } from '@dkdao/framework';
 import logger from '../helper/logger';
-import { IResponseList, IPagination } from '../framework';
-import { ModelBase } from './model-base';
 import ModelEvent, { EProcessingStatus } from './model-event';
 import Card from '../helper/card';
 import { IOpenResult } from './model-open-result';
@@ -27,7 +26,7 @@ export interface INftOwnershipDetail extends INftOwnership {
   tokenAddress: string;
 }
 
-export class ModelNftOwnership extends ModelBase<INftOwnership> {
+export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
   constructor() {
     super('nft_ownership');
   }
@@ -58,12 +57,8 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
 
   public async getNftList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
-    conditions?: {
-      field: keyof INftOwnership;
-      operator?: '=' | '>' | '<' | '>=' | '<=';
-      value: string | number;
-    }[],
-  ): Promise<IResponseList<INftOwnershipDetail>> {
+    conditions?: IModelCondition<INftOwnership>[],
+  ): Promise<IResponse<INftOwnershipDetail>> {
     return this.getListByCondition<INftOwnershipDetail>(
       this.attachConditions(this.detailQuery(), conditions),
       pagination,
@@ -84,85 +79,105 @@ export class ModelNftOwnership extends ModelBase<INftOwnership> {
     logger.info(`Processing ${events.length} card issuance events`);
     for (let i = 0; i < events.length; i += 1) {
       const event = events[i];
-      // Start transaction
-      const tx = await this.getKnex().transaction();
 
-      // We will end the process if event is undefined
-      try {
-        const record = <INftOwnership>{
-          blockchainId: event.blockchainId,
-          tokenId: event.tokenId,
-          nftTokenId: event.value,
-          transactionHash: event.transactionHash,
-          owner: event.to,
-        };
-
-        // Issue a new nft please aware of max_safe_int 2^53 issue
-        if (event.from === '0x0000000000000000000000000000000000000000') {
-          // Push tx hash to stack
-          if (!txHashes.includes(event.transactionHash)) {
-            const [currentSchedule] = await tx('open_schedule').select('*').where({
-              transactionHash: event.transactionHash,
-            });
-            if (typeof currentSchedule !== 'undefined') {
-              issuanceIdMap.set(event.transactionHash, currentSchedule.issuanceId || 0);
-            } else {
-              logger.error(`Transaction ${event.transactionHash} was not existed.`);
-            }
-            txHashes.push(event.transactionHash);
-          }
+      // Start transaction processing
+      await Transaction.getInstance()
+        .process(async (tx: Knex.Transaction) => {
+          const record = <INftOwnership>{
+            blockchainId: event.blockchainId,
+            tokenId: event.tokenId,
+            nftTokenId: event.value,
+            transactionHash: event.transactionHash,
+            owner: event.to,
+          };
 
           const card = Card.from(event.value);
-          // Insert if not existed otherwise update
 
-          const [id] = await tx('open_result').select('id').where({ nftTokenId: event.value });
-          if (typeof id === 'undefined') {
-            await tx('open_result').insert(<IOpenResult>{
-              ...record,
+          // Issue a new nft please aware of max_safe_int 2^53 issue
+          if (event.from === '0x0000000000000000000000000000000000000000') {
+            // Push tx hash to stack
+            if (!txHashes.includes(event.transactionHash)) {
+              const [currentSchedule] = await tx('open_schedule').select('*').where({
+                transactionHash: event.transactionHash,
+              });
+              if (typeof currentSchedule !== 'undefined') {
+                issuanceIdMap.set(event.transactionHash, currentSchedule.issuanceId || 0);
+              } else {
+                logger.error(`Transaction ${event.transactionHash} was not existed.`);
+              }
+              txHashes.push(event.transactionHash);
+            }
+
+            // Insert if not existed otherwise update
+
+            const [id] = await tx('open_result').select('id').where({ nftTokenId: event.value });
+            if (typeof id === 'undefined') {
+              await tx('open_result').insert(<IOpenResult>{
+                ...record,
+                applicationId: Number(card.getApplicationId()),
+                issuanceId: issuanceIdMap.get(event.transactionHash) || 0,
+                itemEdition: card.getEdition(),
+                itemGeneration: card.getGeneration(),
+                itemRareness: card.getRareness(),
+                itemType: card.getType(),
+                itemId: Number(card.getId()),
+                itemSerial: Number(card.getSerial()),
+              });
+            } else {
+              await tx('open_result')
+                .update({ owner: event.to, issuanceId: issuanceIdMap.get(event.transactionHash) || 0 })
+                .where({ nftTokenId: event.value });
+            }
+          }
+
+          // If record didn't exist insert one otherwise update existing record
+          const [ownership] = await tx('nft_ownership').select('*').where({ nftTokenId: event.value });
+          if (typeof ownership === 'undefined') {
+            await tx('nft_ownership').insert(record);
+          } else {
+            await tx('nft_ownership')
+              .update({ owner: event.to, transactionHash: event.transactionHash })
+              .where({ id: ownership.id });
+          }
+
+          // DK Card hook
+          await imDkCard.forceUpdate(
+            {
+              nftTokenId: event.value,
+              transactionHash: event.transactionHash,
+              owner: event.to,
+              synced: false,
               applicationId: Number(card.getApplicationId()),
-              issuanceId: issuanceIdMap.get(event.transactionHash) || 0,
               itemEdition: card.getEdition(),
               itemGeneration: card.getGeneration(),
               itemRareness: card.getRareness(),
               itemType: card.getType(),
               itemId: Number(card.getId()),
               itemSerial: Number(card.getSerial()),
-            });
-          } else {
-            await tx('open_result')
-              .update({ owner: event.to, issuanceId: issuanceIdMap.get(event.transactionHash) || 0 })
-              .where({ nftTokenId: event.value });
-          }
-        }
+            },
+            [
+              {
+                field: 'nftTokenId',
+                value: event.value,
+              },
+            ],
+          );
 
-        // If record didn't exist insert one otherwise update existing record
-        const [ownership] = await tx('nft_ownership').select('*').where({ nftTokenId: event.value });
-        if (typeof ownership === 'undefined') {
-          await tx('nft_ownership').insert(record);
-        } else {
-          await tx('nft_ownership')
-            .update({ owner: event.to, transactionHash: event.transactionHash })
-            .where({ id: ownership.id });
-        }
+          // Update open schedule status
+          await tx('open_schedule')
+            .update({
+              status: EOpenScheduleStatus.ResultArrived,
+            })
+            .whereIn('transactionHash', txHashes);
 
-        // DK Card hook
-        await imDkCard.updateAnyways(event);
-
-        // Update open schedule status
-        await tx('open_schedule')
-          .update({
-            status: EOpenScheduleStatus.ResultArrived,
-          })
-          .whereIn('transactionHash', txHashes);
-
-        // Update status to succeed
-        await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
-        await tx.commit();
-      } catch (err) {
-        await tx.rollback();
-        await this.getKnex()('event').update({ status: EProcessingStatus.Error }).where({ id: event.id });
-        throw err;
-      }
+          // Update status to succeed
+          await tx('event').update({ status: EProcessingStatus.Success }).where({ id: event.id });
+        })
+        .catch(async (error: Error) => {
+          await this.getKnex()('event').update({ status: EProcessingStatus.Error }).where({ id: event.id });
+          logger.error('Can not sync nft ownership', error);
+        })
+        .exec();
     }
   }
 }

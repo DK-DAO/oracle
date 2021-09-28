@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic } from '@dkdao/framework';
 
 export interface INonceManagement {
   id: number;
@@ -8,7 +8,7 @@ export interface INonceManagement {
   createdDate: string;
 }
 
-export class ModelNonceManagement extends ModelBase<INonceManagement> {
+export class ModelNonceManagement extends ModelMysqlBasic<INonceManagement> {
   constructor() {
     super('nonce_management');
   }

@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic } from '@dkdao/framework';
 
 export interface ISync {
   id: number;
@@ -11,7 +11,7 @@ export interface ISync {
   createdDate: string;
 }
 
-export class ModelSync extends ModelBase<ISync> {
+export class ModelSync extends ModelMysqlBasic<ISync> {
   constructor() {
     super('sync');
   }

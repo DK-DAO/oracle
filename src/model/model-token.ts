@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic } from '@dkdao/framework';
 
 export enum EToken {
   DePayFiRouter = 0,
@@ -18,22 +18,13 @@ export interface IToken {
   createdDate: string;
 }
 
-export class ModelToken extends ModelBase<IToken> {
+export class ModelToken extends ModelMysqlBasic<IToken> {
   constructor() {
     super('token');
   }
 
   public basicQuery(): Knex.QueryBuilder {
-    return this.getDefaultKnex().select(
-      'id',
-      'blockchainId',
-      'type',
-      'name',
-      'symbol',
-      'decimal',
-      'address',
-      'createdDate',
-    );
+    return this.getDefaultKnex().select('*');
   }
 
   public getNft() {

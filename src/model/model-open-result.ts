@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
-import { IResponseList, IPagination } from '../framework';
-import { ModelBase } from './model-base';
+import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao/framework';
 
 export interface IOpenResult {
   id: number;
@@ -29,7 +28,7 @@ export interface IOpenResultDetail extends IOpenResult {
   tokenAddress: string;
 }
 
-export class ModelOpenResult extends ModelBase<IOpenResult> {
+export class ModelOpenResult extends ModelMysqlBasic<IOpenResult> {
   constructor() {
     super('open_result');
   }
@@ -68,12 +67,8 @@ export class ModelOpenResult extends ModelBase<IOpenResult> {
 
   public async getOpenResultList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
-    conditions?: {
-      field: keyof IOpenResult;
-      operator?: '=' | '>' | '<' | '>=' | '<=';
-      value: string | number;
-    }[],
-  ): Promise<IResponseList<IOpenResultDetail>> {
+    conditions?: IModelCondition<IOpenResult>[],
+  ): Promise<IResponse<IOpenResultDetail>> {
     return this.getListByCondition<IOpenResultDetail>(
       this.attachConditions(this.detailQuery(), conditions),
       pagination,

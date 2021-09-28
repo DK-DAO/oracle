@@ -1,6 +1,6 @@
 import moment from 'moment';
-import { IRequestData, IResponseRecord } from '../framework/interfaces';
-import { Mux, Validator } from '../framework';
+import { Mux, Validator, IRequestData, IResponse } from '@dkdao/framework';
+
 import {
   getStage,
   basedBoxPrice,
@@ -43,7 +43,7 @@ Mux.get(
       message: 'Number of boxes, it must be an integer',
     },
   ),
-  async (req: IRequestData): Promise<IResponseRecord<IBoxPrice>> => {
+  async (req: IRequestData): Promise<IResponse<IBoxPrice>> => {
     const {
       query: { noBoxes, discount },
     } = req;

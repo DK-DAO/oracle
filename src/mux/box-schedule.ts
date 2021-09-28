@@ -1,6 +1,4 @@
-import { IRequestData } from '../framework/interfaces';
-import { Mux, Validator } from '../framework';
-import { ValidatorPagination } from '../validators';
+import { Mux, Validator, IRequestData, Pagination } from '@dkdao/framework';
 import ModelOpenSchedule from '../model/model-open-schedule';
 
 Mux.get(
@@ -17,7 +15,7 @@ Mux.get(
       validator: (e): boolean => /^0x[0-9a-f]{40,40}$/gi.test(e),
       location: 'query',
     },
-  ).merge(ValidatorPagination),
+  ).merge(Pagination.getPaginationValidator(0, 500)),
   async (req: IRequestData) => {
     const imOpenSchedule = new ModelOpenSchedule();
     const conditions = [];

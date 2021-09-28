@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
+import { Connector, FrameworkEvent, Mux } from '@dkdao/framework';
 import cluster from 'cluster';
-import { Connector, FrameworkEvent, Mux } from './framework';
 import config from './helper/config';
 import logger from './helper/logger';
 import { IWorker, loadWorker } from './helper/utilities';
@@ -137,7 +137,7 @@ class MainApplication {
    */
   private static startAPI() {
     logger.info(`Start API service ${config.serviceHost}:${config.servicePort}`);
-    Mux.init(false, config.servicePort, config.serviceHost);
+    Mux.init(config.servicePort, config.serviceHost, false);
   }
 
   /**
