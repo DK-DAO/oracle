@@ -23,82 +23,86 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface DuelistKingDistributorInterface extends ethers.utils.Interface {
   functions: {
+    "claimCards(address,bytes)": FunctionFragment;
     "compute(bytes)": FunctionFragment;
-    "getCampaign(uint256)": FunctionFragment;
-    "getCampaignIndex()": FunctionFragment;
     "getDomain()": FunctionFragment;
+    "getGenesisEdittion(uint256)": FunctionFragment;
     "getRegistry()": FunctionFragment;
-    "issueGenesisEdittion(address,uint256)": FunctionFragment;
-    "newCampaign(tuple)": FunctionFragment;
-    "openBox(uint256,address,uint256)": FunctionFragment;
+    "getRemainingBox(uint256)": FunctionFragment;
+    "issueGenesisCard(address,uint256)": FunctionFragment;
+    "mintBoxes(address,uint256,uint256)": FunctionFragment;
+    "openBoxes(bytes)": FunctionFragment;
+    "setRemainingBoxes(uint256,uint256)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "compute", values: [BytesLike]): string;
   encodeFunctionData(
-    functionFragment: "getCampaign",
+    functionFragment: "claimCards",
+    values: [string, BytesLike]
+  ): string;
+  encodeFunctionData(functionFragment: "compute", values: [BytesLike]): string;
+  encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getGenesisEdittion",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getCampaignIndex",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
-  encodeFunctionData(
     functionFragment: "getRegistry",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "issueGenesisEdittion",
+    functionFragment: "getRemainingBox",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "issueGenesisCard",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "newCampaign",
-    values: [
-      {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      }
-    ]
+    functionFragment: "mintBoxes",
+    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "openBox",
-    values: [BigNumberish, string, BigNumberish]
+    functionFragment: "openBoxes",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setRemainingBoxes",
+    values: [BigNumberish, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "claimCards", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "compute", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getCampaign",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getCampaignIndex",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getGenesisEdittion",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "issueGenesisEdittion",
+    functionFragment: "getRemainingBox",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "newCampaign",
+    functionFragment: "issueGenesisCard",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "openBox", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mintBoxes", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "openBoxes", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setRemainingBoxes",
+    data: BytesLike
+  ): Result;
 
   events: {
-    "NewCampaign(uint256,uint256,uint64)": EventFragment;
+    "NewGenesisCard(address,uint256,uint256)": EventFragment;
+    "SetRemainingBoxes(uint256,uint256)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "NewCampaign"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NewGenesisCard"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SetRemainingBoxes"): EventFragment;
 }
 
 export class DuelistKingDistributor extends Contract {
@@ -143,6 +147,18 @@ export class DuelistKingDistributor extends Contract {
   interface: DuelistKingDistributorInterface;
 
   functions: {
+    claimCards(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "claimCards(address,bytes)"(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
     compute(
       data: BytesLike,
       overrides?: Overrides
@@ -153,120 +169,94 @@ export class DuelistKingDistributor extends Contract {
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    getCampaign(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        [
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber[]
-        ] & {
-          opened: BigNumber;
-          softCap: BigNumber;
-          deadline: BigNumber;
-          generation: BigNumber;
-          start: BigNumber;
-          end: BigNumber;
-          distribution: BigNumber[];
-        }
-      ]
-    >;
-
-    "getCampaign(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        [
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber,
-          BigNumber[]
-        ] & {
-          opened: BigNumber;
-          softCap: BigNumber;
-          deadline: BigNumber;
-          generation: BigNumber;
-          start: BigNumber;
-          end: BigNumber;
-          distribution: BigNumber[];
-        }
-      ]
-    >;
-
-    getCampaignIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    "getCampaignIndex()"(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     getDomain(overrides?: CallOverrides): Promise<[string]>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
+
+    getGenesisEdittion(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    "getGenesisEdittion(uint256)"(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     getRegistry(overrides?: CallOverrides): Promise<[string]>;
 
     "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
 
-    issueGenesisEdittion(
+    getRemainingBox(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    "getRemainingBox(uint256)"(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    issueGenesisCard(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "issueGenesisEdittion(address,uint256)"(
+    "issueGenesisCard(address,uint256)"(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    newCampaign(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    openBox(
-      campaignId: BigNumberish,
+    mintBoxes(
       owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "mintBoxes(address,uint256,uint256)"(
+      owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    openBoxes(
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "openBoxes(bytes)"(
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    setRemainingBoxes(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "openBox(uint256,address,uint256)"(
-      campaignId: BigNumberish,
-      owner: string,
+    "setRemainingBoxes(uint256,uint256)"(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
   };
+
+  claimCards(
+    owner: string,
+    nftIds: BytesLike,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "claimCards(address,bytes)"(
+    owner: string,
+    nftIds: BytesLike,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
 
   compute(data: BytesLike, overrides?: Overrides): Promise<ContractTransaction>;
 
@@ -275,117 +265,95 @@ export class DuelistKingDistributor extends Contract {
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  getCampaign(
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber[]
-    ] & {
-      opened: BigNumber;
-      softCap: BigNumber;
-      deadline: BigNumber;
-      generation: BigNumber;
-      start: BigNumber;
-      end: BigNumber;
-      distribution: BigNumber[];
-    }
-  >;
-
-  "getCampaign(uint256)"(
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber[]
-    ] & {
-      opened: BigNumber;
-      softCap: BigNumber;
-      deadline: BigNumber;
-      generation: BigNumber;
-      start: BigNumber;
-      end: BigNumber;
-      distribution: BigNumber[];
-    }
-  >;
-
-  getCampaignIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-  "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
   getDomain(overrides?: CallOverrides): Promise<string>;
 
   "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+  getGenesisEdittion(
+    cardId: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  "getGenesisEdittion(uint256)"(
+    cardId: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   getRegistry(overrides?: CallOverrides): Promise<string>;
 
   "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
-  issueGenesisEdittion(
+  getRemainingBox(
+    phaseId: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  "getRemainingBox(uint256)"(
+    phaseId: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  issueGenesisCard(
     owner: string,
     id: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "issueGenesisEdittion(address,uint256)"(
+  "issueGenesisCard(address,uint256)"(
     owner: string,
     id: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  newCampaign(
-    campaign: {
-      opened: BigNumberish;
-      softCap: BigNumberish;
-      deadline: BigNumberish;
-      generation: BigNumberish;
-      start: BigNumberish;
-      end: BigNumberish;
-      distribution: BigNumberish[];
-    },
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
-    campaign: {
-      opened: BigNumberish;
-      softCap: BigNumberish;
-      deadline: BigNumberish;
-      generation: BigNumberish;
-      start: BigNumberish;
-      end: BigNumberish;
-      distribution: BigNumberish[];
-    },
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  openBox(
-    campaignId: BigNumberish,
+  mintBoxes(
     owner: string,
+    numberOfBoxes: BigNumberish,
+    phaseId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "mintBoxes(address,uint256,uint256)"(
+    owner: string,
+    numberOfBoxes: BigNumberish,
+    phaseId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  openBoxes(
+    nftIds: BytesLike,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "openBoxes(bytes)"(
+    nftIds: BytesLike,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  setRemainingBoxes(
+    phaseId: BigNumberish,
     numberOfBoxes: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "openBox(uint256,address,uint256)"(
-    campaignId: BigNumberish,
-    owner: string,
+  "setRemainingBoxes(uint256,uint256)"(
+    phaseId: BigNumberish,
     numberOfBoxes: BigNumberish,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    claimCards(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "claimCards(address,bytes)"(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     compute(data: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     "compute(bytes)"(
@@ -393,129 +361,112 @@ export class DuelistKingDistributor extends Contract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    getCampaign(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber[]
-      ] & {
-        opened: BigNumber;
-        softCap: BigNumber;
-        deadline: BigNumber;
-        generation: BigNumber;
-        start: BigNumber;
-        end: BigNumber;
-        distribution: BigNumber[];
-      }
-    >;
-
-    "getCampaign(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber[]
-      ] & {
-        opened: BigNumber;
-        softCap: BigNumber;
-        deadline: BigNumber;
-        generation: BigNumber;
-        start: BigNumber;
-        end: BigNumber;
-        distribution: BigNumber[];
-      }
-    >;
-
-    getCampaignIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
     getDomain(overrides?: CallOverrides): Promise<string>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+    getGenesisEdittion(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getGenesisEdittion(uint256)"(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getRegistry(overrides?: CallOverrides): Promise<string>;
 
     "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
-    issueGenesisEdittion(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    "issueGenesisEdittion(address,uint256)"(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    newCampaign(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
+    getRemainingBox(
+      phaseId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
+    "getRemainingBox(uint256)"(
+      phaseId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    openBox(
-      campaignId: BigNumberish,
+    issueGenesisCard(
       owner: string,
+      id: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "issueGenesisCard(address,uint256)"(
+      owner: string,
+      id: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    mintBoxes(
+      owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "mintBoxes(address,uint256,uint256)"(
+      owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    openBoxes(nftIds: BytesLike, overrides?: CallOverrides): Promise<void>;
+
+    "openBoxes(bytes)"(
+      nftIds: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setRemainingBoxes(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    "openBox(uint256,address,uint256)"(
-      campaignId: BigNumberish,
-      owner: string,
+    "setRemainingBoxes(uint256,uint256)"(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
   };
 
   filters: {
-    NewCampaign(
-      campaginId: BigNumberish | null,
-      generation: BigNumberish | null,
-      softcap: BigNumberish | null
+    NewGenesisCard(
+      owner: string | null,
+      carId: BigNumberish | null,
+      nftTokenId: BigNumberish | null
     ): TypedEventFilter<
-      [BigNumber, BigNumber, BigNumber],
-      { campaginId: BigNumber; generation: BigNumber; softcap: BigNumber }
+      [string, BigNumber, BigNumber],
+      { owner: string; carId: BigNumber; nftTokenId: BigNumber }
+    >;
+
+    SetRemainingBoxes(
+      phaseId: BigNumberish | null,
+      remainingBoxes: BigNumberish | null
+    ): TypedEventFilter<
+      [BigNumber, BigNumber],
+      { phaseId: BigNumber; remainingBoxes: BigNumber }
     >;
   };
 
   estimateGas: {
+    claimCards(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "claimCards(address,bytes)"(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     compute(data: BytesLike, overrides?: Overrides): Promise<BigNumber>;
 
     "compute(bytes)"(
@@ -523,82 +474,93 @@ export class DuelistKingDistributor extends Contract {
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    getCampaign(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    "getCampaign(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getCampaignIndex(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "getCampaignIndex()"(overrides?: CallOverrides): Promise<BigNumber>;
-
     getDomain(overrides?: CallOverrides): Promise<BigNumber>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getGenesisEdittion(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getGenesisEdittion(uint256)"(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
 
     "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    issueGenesisEdittion(
+    getRemainingBox(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getRemainingBox(uint256)"(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    issueGenesisCard(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "issueGenesisEdittion(address,uint256)"(
+    "issueGenesisCard(address,uint256)"(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    newCampaign(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    openBox(
-      campaignId: BigNumberish,
+    mintBoxes(
       owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "mintBoxes(address,uint256,uint256)"(
+      owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    openBoxes(nftIds: BytesLike, overrides?: Overrides): Promise<BigNumber>;
+
+    "openBoxes(bytes)"(
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    setRemainingBoxes(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "openBox(uint256,address,uint256)"(
-      campaignId: BigNumberish,
-      owner: string,
+    "setRemainingBoxes(uint256,uint256)"(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    claimCards(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "claimCards(address,bytes)"(
+      owner: string,
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
     compute(
       data: BytesLike,
       overrides?: Overrides
@@ -609,78 +571,78 @@ export class DuelistKingDistributor extends Contract {
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    getCampaign(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    "getCampaign(uint256)"(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getCampaignIndex(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    "getCampaignIndex()"(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getDomain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getGenesisEdittion(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "getGenesisEdittion(uint256)"(
+      cardId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    issueGenesisEdittion(
+    getRemainingBox(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "getRemainingBox(uint256)"(
+      phaseId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    issueGenesisCard(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "issueGenesisEdittion(address,uint256)"(
+    "issueGenesisCard(address,uint256)"(
       owner: string,
       id: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    newCampaign(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "newCampaign((uint64,uint64,uint64,uint64,uint64,uint64,uint256[]))"(
-      campaign: {
-        opened: BigNumberish;
-        softCap: BigNumberish;
-        deadline: BigNumberish;
-        generation: BigNumberish;
-        start: BigNumberish;
-        end: BigNumberish;
-        distribution: BigNumberish[];
-      },
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    openBox(
-      campaignId: BigNumberish,
+    mintBoxes(
       owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "mintBoxes(address,uint256,uint256)"(
+      owner: string,
+      numberOfBoxes: BigNumberish,
+      phaseId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    openBoxes(
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "openBoxes(bytes)"(
+      nftIds: BytesLike,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    setRemainingBoxes(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "openBox(uint256,address,uint256)"(
-      campaignId: BigNumberish,
-      owner: string,
+    "setRemainingBoxes(uint256,uint256)"(
+      phaseId: BigNumberish,
       numberOfBoxes: BigNumberish,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;

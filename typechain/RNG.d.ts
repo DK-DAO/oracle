@@ -28,7 +28,7 @@ interface RNGInterface extends ethers.utils.Interface {
     "getDataByDigest(bytes32)": FunctionFragment;
     "getDataByIndex(uint256)": FunctionFragment;
     "getDomain()": FunctionFragment;
-    "getProgess()": FunctionFragment;
+    "getProgress()": FunctionFragment;
     "getRegistry()": FunctionFragment;
     "reveal(bytes)": FunctionFragment;
   };
@@ -48,7 +48,7 @@ interface RNGInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getProgess",
+    functionFragment: "getProgress",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -71,7 +71,10 @@ interface RNGInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getProgess", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getProgress",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getRegistry",
     data: BytesLike
@@ -205,13 +208,13 @@ export class RNG extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
 
-    getProgess(
+    getProgress(
       overrides?: CallOverrides
     ): Promise<
       [[BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }]
     >;
 
-    "getProgess()"(
+    "getProgress()"(
       overrides?: CallOverrides
     ): Promise<
       [[BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }]
@@ -300,13 +303,13 @@ export class RNG extends Contract {
 
   "getDomain()"(overrides?: CallOverrides): Promise<string>;
 
-  getProgess(
+  getProgress(
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }
   >;
 
-  "getProgess()"(
+  "getProgress()"(
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }
@@ -386,13 +389,13 @@ export class RNG extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<string>;
 
-    getProgess(
+    getProgress(
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }
     >;
 
-    "getProgess()"(
+    "getProgress()"(
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & { remaining: BigNumber; total: BigNumber }
@@ -468,9 +471,9 @@ export class RNG extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getProgess(overrides?: CallOverrides): Promise<BigNumber>;
+    getProgress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    "getProgess()"(overrides?: CallOverrides): Promise<BigNumber>;
+    "getProgress()"(overrides?: CallOverrides): Promise<BigNumber>;
 
     getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -526,9 +529,9 @@ export class RNG extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getProgess(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getProgress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    "getProgess()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    "getProgress()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

@@ -25,17 +25,16 @@ interface NFTInterface extends ethers.utils.Interface {
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "burn(uint256)": FunctionFragment;
     "changeBaseURI(string)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "getDomain()": FunctionFragment;
     "getRegistry()": FunctionFragment;
+    "init(address,bytes32,string,string,string)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "migrate(uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
-    "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
     "safeTransfer(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -44,7 +43,6 @@ interface NFTInterface extends ethers.utils.Interface {
     "tokenURI(uint256)": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -52,6 +50,7 @@ interface NFTInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "changeBaseURI",
     values: [string]
@@ -66,26 +65,21 @@ interface NFTInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "isApprovedForAll",
-    values: [string, string]
+    functionFragment: "init",
+    values: [string, BytesLike, string, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "migrate",
-    values: [BigNumberish]
+    functionFragment: "isApprovedForAll",
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "mint",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "ownerOf",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransfer",
@@ -116,13 +110,10 @@ interface NFTInterface extends ethers.utils.Interface {
     functionFragment: "transferFrom",
     values: [string, string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
 
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "changeBaseURI",
     data: BytesLike
@@ -136,19 +127,14 @@ interface NFTInterface extends ethers.utils.Interface {
     functionFragment: "getRegistry",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "init", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "safeTransfer",
     data: BytesLike
@@ -175,21 +161,15 @@ interface NFTInterface extends ethers.utils.Interface {
     functionFragment: "transferFrom",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
@@ -254,6 +234,16 @@ export class NFT extends Contract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    burn(
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "burn(uint256)"(
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
     changeBaseURI(
       uri_: string,
       overrides?: Overrides
@@ -282,6 +272,24 @@ export class NFT extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
 
+    init(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "init(address,bytes32,string,string,string)"(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -293,16 +301,6 @@ export class NFT extends Contract {
       operator: string,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
-
-    migrate(
-      tokenId: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "migrate(uint256)"(
-      tokenId: BigNumberish,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
 
     mint(
       to: string,
@@ -320,10 +318,6 @@ export class NFT extends Contract {
 
     "name()"(overrides?: CallOverrides): Promise<[string]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    "owner()"(overrides?: CallOverrides): Promise<[string]>;
-
     ownerOf(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -333,10 +327,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[string]>;
-
-    renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
 
     safeTransfer(
       from: string,
@@ -420,16 +410,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
   };
 
   approve(
@@ -450,6 +430,16 @@ export class NFT extends Contract {
     owner: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  burn(
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "burn(uint256)"(
+    tokenId: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
 
   changeBaseURI(
     uri_: string,
@@ -479,6 +469,24 @@ export class NFT extends Contract {
 
   "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
+  init(
+    registry_: string,
+    domain_: BytesLike,
+    name_: string,
+    symbol_: string,
+    uri_: string,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "init(address,bytes32,string,string,string)"(
+    registry_: string,
+    domain_: BytesLike,
+    name_: string,
+    symbol_: string,
+    uri_: string,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
   isApprovedForAll(
     owner: string,
     operator: string,
@@ -490,16 +498,6 @@ export class NFT extends Contract {
     operator: string,
     overrides?: CallOverrides
   ): Promise<boolean>;
-
-  migrate(
-    tokenId: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "migrate(uint256)"(
-    tokenId: BigNumberish,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
 
   mint(
     to: string,
@@ -517,20 +515,12 @@ export class NFT extends Contract {
 
   "name()"(overrides?: CallOverrides): Promise<string>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  "owner()"(overrides?: CallOverrides): Promise<string>;
-
   ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
   "ownerOf(uint256)"(
     tokenId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<string>;
-
-  renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-  "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
 
   safeTransfer(
     from: string,
@@ -612,16 +602,6 @@ export class NFT extends Contract {
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "transferOwnership(address)"(
-    newOwner: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
   callStatic: {
     approve(
       to: string,
@@ -641,6 +621,13 @@ export class NFT extends Contract {
       owner: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    burn(tokenId: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+
+    "burn(uint256)"(
+      tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     changeBaseURI(uri_: string, overrides?: CallOverrides): Promise<boolean>;
 
@@ -667,6 +654,24 @@ export class NFT extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
+    init(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "init(address,bytes32,string,string,string)"(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -676,13 +681,6 @@ export class NFT extends Contract {
     "isApprovedForAll(address,address)"(
       owner: string,
       operator: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    migrate(tokenId: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-
-    "migrate(uint256)"(
-      tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -702,20 +700,12 @@ export class NFT extends Contract {
 
     "name()"(overrides?: CallOverrides): Promise<string>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    "owner()"(overrides?: CallOverrides): Promise<string>;
-
     ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
     "ownerOf(uint256)"(
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<string>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    "renounceOwnership()"(overrides?: CallOverrides): Promise<void>;
 
     safeTransfer(
       from: string,
@@ -796,16 +786,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
@@ -825,14 +805,6 @@ export class NFT extends Contract {
     ): TypedEventFilter<
       [string, string, boolean],
       { owner: string; operator: string; approved: boolean }
-    >;
-
-    OwnershipTransferred(
-      previousOwner: string | null,
-      newOwner: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
     >;
 
     Transfer(
@@ -865,6 +837,13 @@ export class NFT extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    burn(tokenId: BigNumberish, overrides?: Overrides): Promise<BigNumber>;
+
+    "burn(uint256)"(
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     changeBaseURI(uri_: string, overrides?: Overrides): Promise<BigNumber>;
 
     "changeBaseURI(string)"(
@@ -890,6 +869,24 @@ export class NFT extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
 
+    init(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "init(address,bytes32,string,string,string)"(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -900,13 +897,6 @@ export class NFT extends Contract {
       owner: string,
       operator: string,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    migrate(tokenId: BigNumberish, overrides?: Overrides): Promise<BigNumber>;
-
-    "migrate(uint256)"(
-      tokenId: BigNumberish,
-      overrides?: Overrides
     ): Promise<BigNumber>;
 
     mint(
@@ -925,10 +915,6 @@ export class NFT extends Contract {
 
     "name()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "owner()"(overrides?: CallOverrides): Promise<BigNumber>;
-
     ownerOf(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -938,10 +924,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    renounceOwnership(overrides?: Overrides): Promise<BigNumber>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<BigNumber>;
 
     safeTransfer(
       from: string,
@@ -1025,16 +1007,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: Overrides
     ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -1058,6 +1030,16 @@ export class NFT extends Contract {
     "balanceOf(address)"(
       owner: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    burn(
+      tokenId: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "burn(uint256)"(
+      tokenId: BigNumberish,
+      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     changeBaseURI(
@@ -1088,6 +1070,24 @@ export class NFT extends Contract {
 
     "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    init(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "init(address,bytes32,string,string,string)"(
+      registry_: string,
+      domain_: BytesLike,
+      name_: string,
+      symbol_: string,
+      uri_: string,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -1098,16 +1098,6 @@ export class NFT extends Contract {
       owner: string,
       operator: string,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    migrate(
-      tokenId: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "migrate(uint256)"(
-      tokenId: BigNumberish,
-      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     mint(
@@ -1126,10 +1116,6 @@ export class NFT extends Contract {
 
     "name()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    "owner()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     ownerOf(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -1139,10 +1125,6 @@ export class NFT extends Contract {
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(overrides?: Overrides): Promise<PopulatedTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<PopulatedTransaction>;
 
     safeTransfer(
       from: string,
@@ -1224,16 +1206,6 @@ export class NFT extends Contract {
       from: string,
       to: string,
       tokenId: BigNumberish,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
   };

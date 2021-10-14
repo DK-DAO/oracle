@@ -25,12 +25,11 @@ interface RegistryInterface extends ethers.utils.Interface {
   functions: {
     "batchSet(bytes32[],bytes32[],address[])": FunctionFragment;
     "getAddress(bytes32,bytes32)": FunctionFragment;
+    "getDomain()": FunctionFragment;
     "getDomainAndName(address)": FunctionFragment;
+    "getRegistry()": FunctionFragment;
     "isExistRecord(bytes32,bytes32)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
     "set(bytes32,bytes32,address)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -41,56 +40,48 @@ interface RegistryInterface extends ethers.utils.Interface {
     functionFragment: "getAddress",
     values: [BytesLike, BytesLike]
   ): string;
+  encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getDomainAndName",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRegistry",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isExistRecord",
     values: [BytesLike, BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "set",
     values: [BytesLike, BytesLike, string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
 
   decodeFunctionResult(functionFragment: "batchSet", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getAddress", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getDomainAndName",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "isExistRecord",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "set", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
 
   events: {
-    "OwnershipTransferred(address,address)": EventFragment;
     "RecordSet(bytes32,bytes32,address)": EventFragment;
+    "Registered(bytes32,bytes32,address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RecordSet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Registered"): EventFragment;
 }
 
 export class Registry extends Contract {
@@ -161,6 +152,10 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    getDomain(overrides?: CallOverrides): Promise<[string]>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
+
     getDomainAndName(
       addr: string,
       overrides?: CallOverrides
@@ -170,6 +165,10 @@ export class Registry extends Contract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<[string, string]>;
+
+    getRegistry(overrides?: CallOverrides): Promise<[string]>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
 
     isExistRecord(
       domain: BytesLike,
@@ -183,14 +182,6 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    "owner()"(overrides?: CallOverrides): Promise<[string]>;
-
-    renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
-
     set(
       domain: BytesLike,
       name: BytesLike,
@@ -202,16 +193,6 @@ export class Registry extends Contract {
       domain: BytesLike,
       name: BytesLike,
       addr: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
   };
@@ -242,6 +223,10 @@ export class Registry extends Contract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  getDomain(overrides?: CallOverrides): Promise<string>;
+
+  "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
   getDomainAndName(
     addr: string,
     overrides?: CallOverrides
@@ -251,6 +236,10 @@ export class Registry extends Contract {
     addr: string,
     overrides?: CallOverrides
   ): Promise<[string, string]>;
+
+  getRegistry(overrides?: CallOverrides): Promise<string>;
+
+  "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
   isExistRecord(
     domain: BytesLike,
@@ -264,14 +253,6 @@ export class Registry extends Contract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  "owner()"(overrides?: CallOverrides): Promise<string>;
-
-  renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-  "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
-
   set(
     domain: BytesLike,
     name: BytesLike,
@@ -283,16 +264,6 @@ export class Registry extends Contract {
     domain: BytesLike,
     name: BytesLike,
     addr: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "transferOwnership(address)"(
-    newOwner: string,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
@@ -323,6 +294,10 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    getDomain(overrides?: CallOverrides): Promise<string>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
     getDomainAndName(
       addr: string,
       overrides?: CallOverrides
@@ -332,6 +307,10 @@ export class Registry extends Contract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<[string, string]>;
+
+    getRegistry(overrides?: CallOverrides): Promise<string>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<string>;
 
     isExistRecord(
       domain: BytesLike,
@@ -344,14 +323,6 @@ export class Registry extends Contract {
       name: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    "owner()"(overrides?: CallOverrides): Promise<string>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    "renounceOwnership()"(overrides?: CallOverrides): Promise<void>;
 
     set(
       domain: BytesLike,
@@ -366,28 +337,19 @@ export class Registry extends Contract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
-    OwnershipTransferred(
-      previousOwner: string | null,
-      newOwner: string | null
+    RecordSet(
+      domain: null,
+      name: BytesLike | null,
+      addr: string | null
     ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
+      [string, string, string],
+      { domain: string; name: string; addr: string }
     >;
 
-    RecordSet(
+    Registered(
       domain: null,
       name: BytesLike | null,
       addr: string | null
@@ -424,6 +386,10 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getDomain(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
+
     getDomainAndName(
       addr: string,
       overrides?: CallOverrides
@@ -433,6 +399,10 @@ export class Registry extends Contract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
 
     isExistRecord(
       domain: BytesLike,
@@ -446,14 +416,6 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    "owner()"(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceOwnership(overrides?: Overrides): Promise<BigNumber>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<BigNumber>;
-
     set(
       domain: BytesLike,
       name: BytesLike,
@@ -465,16 +427,6 @@ export class Registry extends Contract {
       domain: BytesLike,
       name: BytesLike,
       addr: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<BigNumber>;
   };
@@ -506,6 +458,10 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getDomain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getDomainAndName(
       addr: string,
       overrides?: CallOverrides
@@ -515,6 +471,10 @@ export class Registry extends Contract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isExistRecord(
       domain: BytesLike,
@@ -528,14 +488,6 @@ export class Registry extends Contract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    "owner()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceOwnership(overrides?: Overrides): Promise<PopulatedTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<PopulatedTransaction>;
-
     set(
       domain: BytesLike,
       name: BytesLike,
@@ -547,16 +499,6 @@ export class Registry extends Contract {
       domain: BytesLike,
       name: BytesLike,
       addr: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
   };

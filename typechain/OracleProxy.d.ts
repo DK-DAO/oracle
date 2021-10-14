@@ -24,51 +24,64 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 interface OracleProxyInterface extends ethers.utils.Interface {
   functions: {
     "addController(address)": FunctionFragment;
-    "owner()": FunctionFragment;
+    "getDomain()": FunctionFragment;
+    "getRegistry()": FunctionFragment;
+    "getValidTimeNonce(uint256,uint256)": FunctionFragment;
+    "isController(address)": FunctionFragment;
     "removeController(address)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "safeCall(address,uint256,bytes)": FunctionFragment;
-    "safeDelegateCall(address,bytes)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
+    "safeCall(bytes,address,uint256,bytes)": FunctionFragment;
+    "safeDelegateCall(bytes,address,bytes)": FunctionFragment;
   };
 
   encodeFunctionData(
     functionFragment: "addController",
     values: [string]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getRegistry",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getValidTimeNonce",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isController",
+    values: [string]
+  ): string;
   encodeFunctionData(
     functionFragment: "removeController",
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "safeCall",
-    values: [string, BigNumberish, BytesLike]
+    values: [BytesLike, string, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "safeDelegateCall",
-    values: [string, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
+    values: [BytesLike, string, BytesLike]
   ): string;
 
   decodeFunctionResult(
     functionFragment: "addController",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "removeController",
+    functionFragment: "getRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renounceOwnership",
+    functionFragment: "getValidTimeNonce",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isController",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removeController",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "safeCall", data: BytesLike): Result;
@@ -76,20 +89,14 @@ interface OracleProxyInterface extends ethers.utils.Interface {
     functionFragment: "safeDelegateCall",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
 
   events: {
     "DelistAddress(address)": EventFragment;
     "ListAddress(address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "DelistAddress"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ListAddress"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
 export class OracleProxy extends Contract {
@@ -144,9 +151,35 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+    getDomain(overrides?: CallOverrides): Promise<[string]>;
 
-    "owner()"(overrides?: CallOverrides): Promise<[string]>;
+    "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
+
+    getRegistry(overrides?: CallOverrides): Promise<[string]>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<[string]>;
+
+    getValidTimeNonce(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    "getValidTimeNonce(uint256,uint256)"(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    isController(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    "isController(address)"(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
 
     removeController(
       controllerAddr: string,
@@ -158,18 +191,16 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
-
     safeCall(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "safeCall(address,uint256,bytes)"(
+    "safeCall(bytes,address,uint256,bytes)"(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
@@ -177,24 +208,16 @@ export class OracleProxy extends Contract {
     ): Promise<ContractTransaction>;
 
     safeDelegateCall(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "safeDelegateCall(address,bytes)"(
+    "safeDelegateCall(bytes,address,bytes)"(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<ContractTransaction>;
   };
@@ -209,9 +232,35 @@ export class OracleProxy extends Contract {
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
+  getDomain(overrides?: CallOverrides): Promise<string>;
 
-  "owner()"(overrides?: CallOverrides): Promise<string>;
+  "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+  getRegistry(overrides?: CallOverrides): Promise<string>;
+
+  "getRegistry()"(overrides?: CallOverrides): Promise<string>;
+
+  getValidTimeNonce(
+    timeout: BigNumberish,
+    randomNonce: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  "getValidTimeNonce(uint256,uint256)"(
+    timeout: BigNumberish,
+    randomNonce: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  isController(
+    inputAddress: string,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
+  "isController(address)"(
+    inputAddress: string,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
 
   removeController(
     controllerAddr: string,
@@ -223,18 +272,16 @@ export class OracleProxy extends Contract {
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  renounceOwnership(overrides?: Overrides): Promise<ContractTransaction>;
-
-  "renounceOwnership()"(overrides?: Overrides): Promise<ContractTransaction>;
-
   safeCall(
+    proof: BytesLike,
     target: string,
     value: BigNumberish,
     data: BytesLike,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "safeCall(address,uint256,bytes)"(
+  "safeCall(bytes,address,uint256,bytes)"(
+    proof: BytesLike,
     target: string,
     value: BigNumberish,
     data: BytesLike,
@@ -242,24 +289,16 @@ export class OracleProxy extends Contract {
   ): Promise<ContractTransaction>;
 
   safeDelegateCall(
+    proof: BytesLike,
     target: string,
     data: BytesLike,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "safeDelegateCall(address,bytes)"(
+  "safeDelegateCall(bytes,address,bytes)"(
+    proof: BytesLike,
     target: string,
     data: BytesLike,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "transferOwnership(address)"(
-    newOwner: string,
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
@@ -274,9 +313,35 @@ export class OracleProxy extends Contract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+    getDomain(overrides?: CallOverrides): Promise<string>;
 
-    "owner()"(overrides?: CallOverrides): Promise<string>;
+    "getDomain()"(overrides?: CallOverrides): Promise<string>;
+
+    getRegistry(overrides?: CallOverrides): Promise<string>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<string>;
+
+    getValidTimeNonce(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getValidTimeNonce(uint256,uint256)"(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    isController(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "isController(address)"(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     removeController(
       controllerAddr: string,
@@ -288,18 +353,16 @@ export class OracleProxy extends Contract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    "renounceOwnership()"(overrides?: CallOverrides): Promise<void>;
-
     safeCall(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    "safeCall(address,uint256,bytes)"(
+    "safeCall(bytes,address,uint256,bytes)"(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
@@ -307,26 +370,18 @@ export class OracleProxy extends Contract {
     ): Promise<boolean>;
 
     safeDelegateCall(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    "safeDelegateCall(address,bytes)"(
+    "safeDelegateCall(bytes,address,bytes)"(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
@@ -337,14 +392,6 @@ export class OracleProxy extends Contract {
     ListAddress(
       addr: string | null
     ): TypedEventFilter<[string], { addr: string }>;
-
-    OwnershipTransferred(
-      previousOwner: string | null,
-      newOwner: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
-    >;
   };
 
   estimateGas: {
@@ -358,9 +405,35 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
+    getDomain(overrides?: CallOverrides): Promise<BigNumber>;
 
-    "owner()"(overrides?: CallOverrides): Promise<BigNumber>;
+    "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getValidTimeNonce(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getValidTimeNonce(uint256,uint256)"(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    isController(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "isController(address)"(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     removeController(
       controllerAddr: string,
@@ -372,18 +445,16 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    renounceOwnership(overrides?: Overrides): Promise<BigNumber>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<BigNumber>;
-
     safeCall(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "safeCall(address,uint256,bytes)"(
+    "safeCall(bytes,address,uint256,bytes)"(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
@@ -391,24 +462,16 @@ export class OracleProxy extends Contract {
     ): Promise<BigNumber>;
 
     safeDelegateCall(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "safeDelegateCall(address,bytes)"(
+    "safeDelegateCall(bytes,address,bytes)"(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<BigNumber>;
   };
@@ -424,9 +487,35 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getDomain(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    "owner()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "getRegistry()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getValidTimeNonce(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "getValidTimeNonce(uint256,uint256)"(
+      timeout: BigNumberish,
+      randomNonce: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    isController(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "isController(address)"(
+      inputAddress: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     removeController(
       controllerAddr: string,
@@ -438,18 +527,16 @@ export class OracleProxy extends Contract {
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    renounceOwnership(overrides?: Overrides): Promise<PopulatedTransaction>;
-
-    "renounceOwnership()"(overrides?: Overrides): Promise<PopulatedTransaction>;
-
     safeCall(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "safeCall(address,uint256,bytes)"(
+    "safeCall(bytes,address,uint256,bytes)"(
+      proof: BytesLike,
       target: string,
       value: BigNumberish,
       data: BytesLike,
@@ -457,24 +544,16 @@ export class OracleProxy extends Contract {
     ): Promise<PopulatedTransaction>;
 
     safeDelegateCall(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "safeDelegateCall(address,bytes)"(
+    "safeDelegateCall(bytes,address,bytes)"(
+      proof: BytesLike,
       target: string,
       data: BytesLike,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "transferOwnership(address)"(
-      newOwner: string,
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
   };
