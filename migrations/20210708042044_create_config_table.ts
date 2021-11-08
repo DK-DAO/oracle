@@ -1,8 +1,10 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('config', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.config, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
     table.string('key', 255).unique().notNullable().comment('Key of data');
 
@@ -10,14 +12,12 @@ export async function up(knex: Knex): Promise<void> {
 
     table.binary('value').notNullable().comment('Value of data');
 
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+    addCreatedAndUpdated(knex, table);
 
-    table.timestamp('updatedDate').defaultTo(knex.fn.now()).index().comment('Updated date');
-
-    table.index(['key', 'createdDate', 'updatedDate']);
+    table.index(['key', 'type'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('config');
+  return knex.schema.dropTable(config.table.config);
 }

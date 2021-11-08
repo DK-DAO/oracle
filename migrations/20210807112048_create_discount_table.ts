@@ -1,12 +1,14 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('discount', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.discount, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
-    table.integer('campaignId').notNullable().comment('Campaign Id of cad sale');
+    table.integer('phase').notNullable().comment('Phase of cad sale');
 
-    table.string('address', 42).notNullable().comment('Address that receive the discount');
+    table.string('address', 256).notNullable().comment('Address that receive the discount');
 
     table.float('discount').comment('Discount amount');
 
@@ -14,12 +16,12 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('memo', 255).notNullable().comment('Memo of this discount');
 
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+    addCreatedAndUpdated(knex, table);
 
-    table.index(['campaignId', 'address', 'discount', 'code', 'memo', 'createdDate'], 'indexed_fields');
+    table.index(['phase', 'address', 'discount', 'code', 'memo'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('discount');
+  return knex.schema.dropTable(config.table.discount);
 }

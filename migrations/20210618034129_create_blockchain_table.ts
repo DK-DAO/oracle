@@ -1,25 +1,37 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('blockchain', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.blockchain, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
     table.integer('chainId').unsigned().notNullable().comment('Chain id of current network');
 
-    table.string('nativeToken', 32).notNullable().comment('Token symbol');
+    table.string('nativeToken', 32).notNullable().comment('Native token symbol');
 
     table.string('explorerUrl', 256).notNullable().comment('Block explorer URL');
 
     table.string('name', 32).notNullable().comment('Blockchain name');
 
+    table.integer('safeConfirmations').unsigned().notNullable().comment('Number of confirmations need to be safe');
+
+    table.integer('numberOfBlocksToSync').unsigned().notNullable().comment('Number of block to be synced');
+
+    table
+      .integer('numberOfBlocksToProcess')
+      .unsigned()
+      .notNullable()
+      .comment('Number of block to be split and process by workers');
+
     table.string('url', 1024).notNullable().comment('JSON RPC URL');
 
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+    addCreatedAndUpdated(knex, table);
 
-    table.index(['name', 'chainId', 'nativeToken'], 'indexed_fields');
+    table.index(['name', 'chainId', 'nativeToken'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('blockchain');
+  return knex.schema.dropTable(config.table.blockchain);
 }

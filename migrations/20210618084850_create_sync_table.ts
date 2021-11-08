@@ -1,25 +1,27 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('sync', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.sync, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
-    table.integer('blockchainId').unsigned().references('blockchain.id').comment('Foreign key to blockchain.id');
+    table
+      .bigInteger('blockchainId')
+      .unsigned()
+      .references(`${config.table.blockchain}.id`)
+      .comment('Foreign key to blockchain.id');
 
-    table.integer('startBlock').unsigned().notNullable().comment('Start of syncing');
+    table.bigInteger('startBlock').unsigned().notNullable().comment('Start of syncing');
 
-    table.integer('syncedBlock').unsigned().notNullable().comment('Synced blocks');
+    table.bigInteger('syncedBlock').unsigned().notNullable().comment('Synced blocks');
 
-    table.integer('targetBlock').unsigned().notNullable().comment('End of syncing');
+    table.bigInteger('targetBlock').unsigned().notNullable().comment('Target of syncing');
 
-    table.timestamp('lastUpdate').comment('Last update');
-
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
-
-    table.index(['startBlock', 'syncedBlock', 'targetBlock'], 'indexed_fields');
+    addCreatedAndUpdated(knex, table);
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('sync');
+  return knex.schema.dropTable(config.table.sync);
 }

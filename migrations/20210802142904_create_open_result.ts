@@ -1,12 +1,18 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('open_result', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.openResult, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
-    table.integer('blockchainId').unsigned().references('blockchain.id').comment('Foreign key to blockchain.id');
+    table
+      .bigInteger('blockchainId')
+      .unsigned()
+      .references(`${config.table.blockchain}.id`)
+      .comment('Foreign key to blockchain.id');
 
-    table.integer('tokenId').unsigned().references('token.id').comment('Foreign key to token.id');
+    table.string('issuanceUuid', 36).notNullable().comment('Issuance uuid to link issued cards and boxes');
 
     table.string('owner', 42).notNullable().comment('Owner of NFT token');
 
@@ -28,12 +34,12 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('transactionHash', 66).notNullable().comment('Transaction of the issuance');
 
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+    addCreatedAndUpdated(knex, table);
 
-    table.index(['blockchainId', 'transactionHash', 'tokenId', 'owner', 'nftTokenId', 'createdDate'], 'indexed_fields');
+    table.index(['blockchainId', 'transactionHash', 'owner', 'nftTokenId', 'issuanceUuid'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('open_result');
+  return knex.schema.dropTable(config.table.openResult);
 }

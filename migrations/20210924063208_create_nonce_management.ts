@@ -1,19 +1,23 @@
 import { Knex } from 'knex';
+import config from '../src/helper/config';
+import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('nonce_management', (table: Knex.CreateTableBuilder) => {
-    table.increments('id').unsigned().notNullable().primary();
+  return knex.schema.createTable(config.table.nonceManagement, (table: Knex.CreateTableBuilder) => {
+    table.bigIncrements('id').unsigned().primary();
 
-    table.string('address', 42).notNullable().comment('Address that receive the discount');
+    table.integer('chainId').unsigned().notNullable().comment('Chain id of current network');
 
-    table.integer('nonce').unsigned().comment('Nonce number');
+    table.string('address', 42).notNullable().comment('Cached nonce address');
 
-    table.timestamp('createdDate').defaultTo(knex.fn.now()).index().comment('Created date');
+    table.bigInteger('nonce').unsigned().comment('Nonce number');
 
-    table.index(['address', 'nonce', 'createdDate'], 'indexed_fields');
+    addCreatedAndUpdated(knex, table);
+
+    table.index(['address', 'nonce', 'chainId'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('nonce_management');
+  return knex.schema.dropTable(config.table.nonceManagement);
 }
