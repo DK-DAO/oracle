@@ -7,7 +7,10 @@ function lookup<T extends any>(data: T[], field: keyof T, value: any): T {
   return data.filter((i) => i[field] === value)[0];
 }
 
-export async function up(knex: Knex): Promise<void> {
+export async function seed(knex: Knex): Promise<void> {
+  // Deletes ALL existing entries
+  await knex('blockchain').del();
+
   await knex.batchInsert('blockchain', <IBlockchain[]>[
     {
       url: config.rpcEthereum,
@@ -15,6 +18,9 @@ export async function up(knex: Knex): Promise<void> {
       chainId: 1,
       explorerUrl: 'https://etherscan.io',
       nativeToken: 'ETH',
+      safeConfirmation: 12,
+      numberOfSyncBlock: 100,
+      numberOfProcessBlock: 25,
     },
     {
       url: config.rpcBinance,
@@ -22,6 +28,9 @@ export async function up(knex: Knex): Promise<void> {
       chainId: 56,
       explorerUrl: 'https://bscscan.com',
       nativeToken: 'BNB',
+      safeConfirmation: 12,
+      numberOfSyncBlock: 100,
+      numberOfProcessBlock: 20,
     },
     {
       url: config.rpcPolygon,
@@ -29,6 +38,19 @@ export async function up(knex: Knex): Promise<void> {
       name: 'Polygon',
       nativeToken: 'MATIC',
       explorerUrl: 'https://polygonscan.com',
+      safeConfirmation: 15,
+      numberOfSyncBlock: 100,
+      numberOfProcessBlock: 20,
+    },
+    {
+      url: config.rpcFantom,
+      chainId: 250,
+      name: 'Fantom',
+      nativeToken: 'FTM',
+      explorerUrl: 'https://ftmscan.com',
+      safeConfirmation: 12,
+      numberOfSyncBlock: 100,
+      numberOfProcessBlock: 25,
     },
     {
       url: 'http://localhost:8545',
@@ -36,6 +58,9 @@ export async function up(knex: Knex): Promise<void> {
       name: 'Local Network',
       nativeToken: 'ETH',
       explorerUrl: '',
+      safeConfirmation: 6,
+      numberOfSyncBlock: 100,
+      numberOfProcessBlock: 25,
     },
   ]);
 
@@ -136,8 +161,4 @@ export async function up(knex: Knex): Promise<void> {
   ]);
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex('event').delete();
-  await knex('token').delete();
-  await knex('blockchain').delete().whereIn('chainId', [1, 56, 137]);
-}
+export default seed;
