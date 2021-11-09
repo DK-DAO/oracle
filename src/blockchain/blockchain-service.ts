@@ -9,9 +9,9 @@ import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
 import { EWatching, IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum, hexStringToFixedHexString, getLowCaseAddress } from '../helper/utilities';
-import ModelEvent, { EProcessingStatus } from '../model/model-event';
+import ModelEvent, { EProcessingStatus } from '../model/model-nft-transfer';
 import Oracle from './oracle';
-import ModelOpenSchedule from '../model/model-open-schedule';
+import ModelNftIssuance from '../model/model-nft-issuance';
 import { getStage, TStage } from '../helper/calculate-loot-boxes';
 import ModelSecret from '../model/model-secret';
 import ModelAirdrop from '../model/model-airdrop';
@@ -451,8 +451,8 @@ export class Blockchain {
           // Start doing oracle job by sequence
           this.queue
             .add('oracle schedule loot boxes opening', async () => {
-              const imOpenSchedule = new ModelOpenSchedule();
-              await imOpenSchedule.batchBuy();
+              const imNftIssuance = new ModelNftIssuance();
+              await imNftIssuance.batchBuy();
             })
             .add('oracle rng observer', async () => {
               if (Date.now() - this.lastReveal >= revealDuration) {

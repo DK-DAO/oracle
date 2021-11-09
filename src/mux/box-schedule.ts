@@ -1,5 +1,5 @@
 import { Mux, Validator, IRequestData, Pagination } from '@dkdao/framework';
-import ModelOpenSchedule from '../model/model-open-schedule';
+import ModelNftIssuance from '../model/model-nft-issuance';
 
 Mux.get(
   '/api/v1/boxSchedule',
@@ -17,7 +17,7 @@ Mux.get(
     },
   ).merge(Pagination.getPaginationValidator(0, 500)),
   async (req: IRequestData) => {
-    const imOpenSchedule = new ModelOpenSchedule();
+    const imNftIssuance = new ModelNftIssuance();
     const conditions = [];
     const {
       query: { status, owner },
@@ -34,6 +34,6 @@ Mux.get(
         value: owner,
       });
     }
-    return imOpenSchedule.getScheduling(req.query, <any>conditions);
+    return imNftIssuance.getScheduling(req.query, <any>conditions);
   },
 );

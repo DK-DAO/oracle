@@ -1,8 +1,26 @@
+import { Utilities } from '@dkdao/framework';
 import { parse } from 'dotenv';
 import fs from 'fs';
 import { objToCamelCase } from './utilities';
 
-interface ApplicationConfig {
+export interface ITableName {
+  blockchain: string;
+  airdrop: string;
+  config: string;
+  discount: string;
+  payment: string;
+  nftTransfer: string;
+  nftOwnership: string;
+  nftResult: string;
+  nftIssuance: string;
+  secret: string;
+  sync: string;
+  token: string;
+  watching: string;
+  nonceManagement: string;
+}
+
+export interface IApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
   mariadbGameUrl: string;
@@ -10,6 +28,8 @@ interface ApplicationConfig {
   rpcEthereum: string;
   rpcBinance: string;
   rpcPolygon: string;
+  rpcFantom: string;
+  mariadbTablePrefix: string;
   activeChainId: number;
   developmentChainId: number;
   activeCampaignId: number;
@@ -21,16 +41,21 @@ interface ApplicationConfig {
   apiSecret: string;
 }
 
-const config = ((conf) => {
+export interface IExtendApplicationConfig extends IApplicationConfig {
+  table: ITableName;
+}
+const config: IApplicationConfig = ((conf) => {
   const converted: any = {};
   const keys = [
     'nodeEnv',
     'mariadbConnectUrl',
     'mariadbGameUrl',
     'walletMnemonic',
+    'mariadbTablePrefix',
     'rpcEthereum',
     'rpcBinance',
     'rpcPolygon',
+    'rpcFantom',
     'activeChainId',
     'developmentChainId',
     'activeCampaignId',
@@ -65,6 +90,24 @@ const config = ((conf) => {
     converted[key] = typeof converted[key] === 'undefined' ? '' : converted[key];
   }
   return converted;
-})(objToCamelCase(parse(fs.readFileSync(`${__dirname}/../../.env`))));
+})(objToCamelCase(parse(fs.readFileSync(Utilities.File.filePathAtRoot('.env')))));
 
-export default <ApplicationConfig>config;
+export default <IExtendApplicationConfig>{
+  ...config,
+  table: {
+    airdrop: `${config.mariadbTablePrefix}airdrop`,
+    blockchain: `${config.mariadbTablePrefix}blockchain`,
+    config: `${config.mariadbTablePrefix}config`,
+    discount: `${config.mariadbTablePrefix}discount`,
+    payment: `${config.mariadbTablePrefix}payment`,
+    nftTransfer: `${config.mariadbTablePrefix}nft_transfer`,
+    nftOwnership: `${config.mariadbTablePrefix}nft_ownership`,
+    nftIssuance: `${config.mariadbTablePrefix}ntf_issuance`,
+    nftResult: `${config.mariadbTablePrefix}nft_result`,
+    secret: `${config.mariadbTablePrefix}secret`,
+    sync: `${config.mariadbTablePrefix}sync`,
+    token: `${config.mariadbTablePrefix}token`,
+    watching: `${config.mariadbTablePrefix}watching`,
+    nonceManagement: `${config.mariadbTablePrefix}nonce_management`,
+  },
+};

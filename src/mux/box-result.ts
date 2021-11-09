@@ -1,31 +1,31 @@
 import { Mux, Validator, IRequestData, IResponse, Pagination } from '@dkdao/framework';
-import ModelOpenResult, { IOpenResultDetail } from '../model/model-open-result';
-import ModelOpenSchedule, { EOpenScheduleStatus } from '../model/model-open-schedule';
+import ModelNftResult, { INftResultDetail } from '../model/model-nft-result';
+import ModelNftIssuance, { ENftIssuanceStatus } from '../model/model-nft-issuance';
 
 Mux.get(
   '/api/v1/boxResult',
   new Validator({
-    name: 'openScheduleId',
+    name: 'NftIssuanceId',
     type: 'integer',
     require: true,
     location: 'query',
     validator: (v) => Number.isFinite(v) && Number.isInteger(v),
     message: 'Id of open schedule',
   }).merge(Pagination.getPaginationValidator(0, 500)),
-  async (req: IRequestData): Promise<IResponse<IOpenResultDetail>> => {
+  async (req: IRequestData): Promise<IResponse<INftResultDetail>> => {
     const {
-      query: { openScheduleId },
+      query: { NftIssuanceId },
     } = req;
-    const imOpenSchedule = new ModelOpenSchedule();
-    const imOpenResult = new ModelOpenResult();
-    const [openSchedule] = await imOpenSchedule.get([{ field: 'id', value: openScheduleId }]);
-    if (typeof openSchedule === 'undefined' || openSchedule.status !== EOpenScheduleStatus.ResultArrived) {
+    const imNftIssuance = new ModelNftIssuance();
+    const imNftResult = new ModelNftResult();
+    const [NftIssuance] = await imNftIssuance.get([{ field: 'id', value: NftIssuanceId }]);
+    if (typeof NftIssuance === 'undefined' || NftIssuance.status !== ENftIssuanceStatus.ResultArrived) {
       throw new Error("This schedule is unavailable or wasn't opened yet");
     }
-    return imOpenResult.getOpenResultList(req.query, [
+    return imNftResult.getNftResultList(req.query, [
       {
         field: 'transactionHash',
-        value: openSchedule.transactionHash || '',
+        value: NftIssuance.transactionHash || '',
       },
     ]);
   },

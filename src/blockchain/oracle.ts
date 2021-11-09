@@ -11,7 +11,7 @@ import { abi as abiOracleProxy } from '../../artifacts/OracleProxy.json';
 import { abi as abiDistributor } from '../../artifacts/DuelistKingDistributor.json';
 import ModelSecret, { ESecretStatus } from '../model/model-secret';
 import { BytesBuffer } from '../helper/bytes-buffer';
-import ModelOpenSchedule from '../model/model-open-schedule';
+import ModelNftIssuance from '../model/model-nft-issuance';
 import ModelConfig from '../model/model-config';
 import ModelNonceManagement from '../model/model-nonce-management';
 
@@ -114,15 +114,19 @@ export class Oracle {
     }
     const currentOracle = this.dkOracle[this.oracleSelect];
     const imNonceManagement = new ModelNonceManagement();
-    const imOpenSchedule = new ModelOpenSchedule();
-    await imOpenSchedule.openLootBox(
+    const imNftIssuance = new ModelNftIssuance();
+    await imNftIssuance.openLootBox(
       async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
         let estimatedGas = await this.contracts.dkOracleProxy
           .connect(currentOracle)
           .estimateGas.safeCall(
             this.contracts.distributor.address,
             0,
-            this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+            this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [
+              owner,
+              numberOfBox,
+              config.activeCampaignId,
+            ]),
           );
         const currentNonce = await imNonceManagement.getNonce(currentOracle.address);
         logger.info(

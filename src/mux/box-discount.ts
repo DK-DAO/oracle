@@ -40,7 +40,7 @@ Mux.get(
       address,
       discount,
       code,
-      campaignId: config.activeCampaignId,
+      phase: config.activeCampaignId,
       memo: 'Input from web server',
     });
 
@@ -50,7 +50,7 @@ Mux.get(
         value: address,
       },
       {
-        field: 'campaignId',
+        field: 'phase',
         value: config.activeCampaignId,
       },
     ]);
