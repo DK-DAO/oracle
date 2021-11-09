@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface INonceManagement {
   id: number;
@@ -10,7 +11,7 @@ export interface INonceManagement {
 
 export class ModelNonceManagement extends ModelMysqlBasic<INonceManagement> {
   constructor() {
-    super('nonce_management');
+    super(config.table.nonceManagement);
   }
 
   public basicQuery(): Knex.QueryBuilder {

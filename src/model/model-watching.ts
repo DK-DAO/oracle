@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export enum EWatching {
   Payment = 0,
@@ -13,11 +14,12 @@ export interface IWatching {
   name: string;
   address: string;
   createdDate: string;
+  updatedDate: string;
 }
 
 export class ModelWatching extends ModelMysqlBasic<IWatching> {
   constructor() {
-    super('watching');
+    super(config.table.watching);
   }
 
   public basicQuery(): Knex.QueryBuilder {

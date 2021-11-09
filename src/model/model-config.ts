@@ -1,6 +1,7 @@
 import { BigNumber } from 'ethers';
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface IConfig {
   id: number;
@@ -11,11 +12,11 @@ export interface IConfig {
   updatedDate: string;
 }
 
-export type TKeyOfConfig = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistributor';
+export type TKeyOfConfig = 'activeChainId' | 'dkDaoRng' | 'dkDistributor';
 
 export class ModelConfig extends ModelMysqlBasic<IConfig> {
   constructor() {
-    super('config');
+    super(config.table.config);
   }
 
   public basicQuery(): Knex.QueryBuilder {

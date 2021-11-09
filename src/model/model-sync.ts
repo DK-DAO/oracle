@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface ISync {
   id: number;
@@ -13,19 +14,11 @@ export interface ISync {
 
 export class ModelSync extends ModelMysqlBasic<ISync> {
   constructor() {
-    super('sync');
+    super(config.table.sync);
   }
 
   public basicQuery(): Knex.QueryBuilder {
-    return this.getDefaultKnex().select(
-      'id',
-      'blockchainId',
-      'startBlock',
-      'syncedBlock',
-      'targetBlock',
-      'lastUpdate',
-      'createdDate',
-    );
+    return this.getDefaultKnex().select('*');
   }
 }
 

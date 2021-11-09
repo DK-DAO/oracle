@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { Utilities } from 'noqueue';
 import { ModelMysqlBasic, Transaction } from '@dkdao/framework';
 import logger from '../helper/logger';
+import config from '../helper/config';
 
 export enum ESecretStatus {
   New = 0,
@@ -23,7 +24,7 @@ export interface ISecret {
 
 export class ModelSecret extends ModelMysqlBasic<ISecret> {
   constructor() {
-    super('secret');
+    super(config.table.secret);
   }
 
   public basicQuery(): Knex.QueryBuilder {

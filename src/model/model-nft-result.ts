@@ -2,7 +2,7 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao/framework';
 
-export interface IOpenResult {
+export interface INftResult {
   id: number;
   blockchainId: number;
   tokenId: number;
@@ -20,7 +20,7 @@ export interface IOpenResult {
   createdDate: string;
 }
 
-export interface IOpenResultDetail extends IOpenResult {
+export interface INftResultDetail extends INftResult {
   chainId: number;
   blockchainName: string;
   tokenSymbol: string;
@@ -28,7 +28,7 @@ export interface IOpenResultDetail extends IOpenResult {
   tokenAddress: string;
 }
 
-export class ModelOpenResult extends ModelMysqlBasic<IOpenResult> {
+export class ModelNftResult extends ModelMysqlBasic<INftResult> {
   constructor() {
     super('open_result');
   }
@@ -65,15 +65,12 @@ export class ModelOpenResult extends ModelMysqlBasic<IOpenResult> {
       .join('blockchain as b', 'o.blockchainId', 'b.id');
   }
 
-  public async getOpenResultList(
+  public async getNftResultList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
-    conditions?: IModelCondition<IOpenResult>[],
-  ): Promise<IResponse<IOpenResultDetail>> {
-    return this.getListByCondition<IOpenResultDetail>(
-      this.attachConditions(this.detailQuery(), conditions),
-      pagination,
-    );
+    conditions?: IModelCondition<INftResult>[],
+  ): Promise<IResponse<INftResultDetail>> {
+    return this.getListByCondition<INftResultDetail>(this.attachConditions(this.detailQuery(), conditions), pagination);
   }
 }
 
-export default ModelOpenResult;
+export default ModelNftResult;

@@ -1,21 +1,21 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface IDiscount {
   id: number;
-  campaignId: number;
+  phase: number;
   address: string;
   discount: number;
   code: string;
   memo: string;
   createdDate: string;
+  updatedDate: string;
 }
-
-export type TKeyOfConfig = 'activeChainId' | 'earlyBird' | 'dkdaoRng' | 'dkDistributor';
 
 export class ModelDiscount extends ModelMysqlBasic<IDiscount> {
   constructor() {
-    super('discount');
+    super(config.table.discount);
   }
 
   public basicQuery(): Knex.QueryBuilder {

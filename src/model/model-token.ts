@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export enum EToken {
   DePayFiRouter = 0,
@@ -20,7 +21,7 @@ export interface IToken {
 
 export class ModelToken extends ModelMysqlBasic<IToken> {
   constructor() {
-    super('token');
+    super(config.table.token);
   }
 
   public basicQuery(): Knex.QueryBuilder {

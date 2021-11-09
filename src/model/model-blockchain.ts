@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface IBlockchain {
   id: number;
@@ -8,15 +9,16 @@ export interface IBlockchain {
   explorerUrl: string;
   name: string;
   url: string;
-  safeConfirmations: number;
-  numberOfBlocksToSync: number;
-  numberOfBlocksToWorker: number;
+  safeConfirmation: number;
+  numberOfSyncBlock: number;
+  numberOfProcessBlock: number;
   createdDate: string;
+  updatedDate: string;
 }
 
 export class ModelBlockchain extends ModelMysqlBasic<IBlockchain> {
   constructor() {
-    super('blockchain');
+    super(config.table.blockchain);
   }
 
   public basicQuery(): Knex.QueryBuilder {
