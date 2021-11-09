@@ -14,12 +14,12 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('name', 32).notNullable().comment('Blockchain name');
 
-    table.integer('safeConfirmations').unsigned().notNullable().comment('Number of confirmations need to be safe');
+    table.integer('safeConfirmation').unsigned().notNullable().comment('Number of confirmations need to be safe');
 
-    table.integer('numberOfBlocksToSync').unsigned().notNullable().comment('Number of block to be synced');
+    table.integer('numberOfSyncBlock').unsigned().notNullable().comment('Number of block to be synced');
 
     table
-      .integer('numberOfBlocksToProcess')
+      .integer('numberOfProcessBlock')
       .unsigned()
       .notNullable()
       .comment('Number of block to be split and process by workers');

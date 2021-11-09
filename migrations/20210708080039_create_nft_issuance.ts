@@ -1,9 +1,10 @@
 import { Knex } from 'knex';
 import config from '../src/helper/config';
 import { addCreatedAndUpdated } from '../src/helper/table';
+import { ENftIssuanceStatus } from '../src/model/model-nft-issuance';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable(config.table.openSchedule, (table: Knex.CreateTableBuilder) => {
+  return knex.schema.createTable(config.table.nftIssuance, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
     table.integer('phase').unsigned().notNullable().comment('Phase of cad sale');
@@ -18,14 +19,14 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('owner', 42).notNullable().comment('Address of owner');
 
-    table.integer('status').defaultTo(0).comment('Processing status of loot boxes opening');
+    table.integer('status').defaultTo(ENftIssuanceStatus.New).comment('Processing status of loot boxes opening');
 
     addCreatedAndUpdated(knex, table);
 
-    table.index(['phase', 'numberOfBox', 'totalBoxes', 'transactionHash', 'owner'], 'common_indexed');
+    table.index(['phase', 'numberOfBox', 'totalBoxes', 'transactionHash', 'owner', 'issuanceUuid'], 'common_indexed');
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable(config.table.openSchedule);
+  return knex.schema.dropTable(config.table.nftIssuance);
 }

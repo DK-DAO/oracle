@@ -3,7 +3,7 @@ import config from '../src/helper/config';
 import { addCreatedAndUpdated } from '../src/helper/table';
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable(config.table.openResult, (table: Knex.CreateTableBuilder) => {
+  return knex.schema.createTable(config.table.nftResult, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
     table
@@ -12,7 +12,7 @@ export async function up(knex: Knex): Promise<void> {
       .references(`${config.table.blockchain}.id`)
       .comment('Foreign key to blockchain.id');
 
-    table.string('issuanceUuid', 36).notNullable().comment('Issuance uuid to link issued cards and boxes');
+    table.string('issuanceUuid', 36).notNullable().comment('Issuance uuid to link payment and boxes');
 
     table.string('owner', 42).notNullable().comment('Owner of NFT token');
 
@@ -36,10 +36,26 @@ export async function up(knex: Knex): Promise<void> {
 
     addCreatedAndUpdated(knex, table);
 
-    table.index(['blockchainId', 'transactionHash', 'owner', 'nftTokenId', 'issuanceUuid'], 'common_indexed');
+    table.index(
+      [
+        'blockchainId',
+        'transactionHash',
+        'owner',
+        'nftTokenId',
+        'applicationId',
+        'issuanceUuid',
+        'itemSerial',
+        'itemId',
+        'itemType',
+        'itemRareness',
+        'itemGeneration',
+        'itemEdition',
+      ],
+      'common_indexed',
+    );
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable(config.table.openResult);
+  return knex.schema.dropTable(config.table.nftResult);
 }

@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import config from '../src/helper/config';
 import { addCreatedAndUpdated } from '../src/helper/table';
+import { EWatching } from '../src/model/model-watching';
 
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(config.table.watching, (table: Knex.CreateTableBuilder) => {
@@ -12,7 +13,7 @@ export async function up(knex: Knex): Promise<void> {
       .references(`${config.table.blockchain}.id`)
       .comment('Foreign key to blockchain.id');
 
-    table.integer('type').unsigned().notNullable().defaultTo(0).comment('Type of watching account');
+    table.integer('type').unsigned().notNullable().defaultTo(EWatching.Payment).comment('Type of watching account');
 
     table.string('name', 32).notNullable().comment('Name of receiver address');
 
