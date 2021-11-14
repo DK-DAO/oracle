@@ -25,6 +25,8 @@ interface NFTInterface extends ethers.utils.Interface {
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "batchBurn(address,uint256[])": FunctionFragment;
+    "batchMint(address,uint256[])": FunctionFragment;
     "burn(uint256)": FunctionFragment;
     "changeBaseURI(string)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
@@ -50,6 +52,14 @@ interface NFTInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "batchBurn",
+    values: [string, BigNumberish[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "batchMint",
+    values: [string, BigNumberish[]]
+  ): string;
   encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "changeBaseURI",
@@ -113,6 +123,8 @@ interface NFTInterface extends ethers.utils.Interface {
 
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "batchBurn", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "batchMint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "changeBaseURI",
@@ -233,6 +245,30 @@ export class NFT extends Contract {
       owner: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    batchBurn(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "batchBurn(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    batchMint(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
+
+    "batchMint(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
 
     burn(
       tokenId: BigNumberish,
@@ -431,6 +467,30 @@ export class NFT extends Contract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  batchBurn(
+    to: string,
+    tokenIds: BigNumberish[],
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "batchBurn(address,uint256[])"(
+    to: string,
+    tokenIds: BigNumberish[],
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  batchMint(
+    to: string,
+    tokenIds: BigNumberish[],
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
+  "batchMint(address,uint256[])"(
+    to: string,
+    tokenIds: BigNumberish[],
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
+
   burn(
     tokenId: BigNumberish,
     overrides?: Overrides
@@ -621,6 +681,30 @@ export class NFT extends Contract {
       owner: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    batchBurn(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "batchBurn(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    batchMint(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    "batchMint(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     burn(tokenId: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
@@ -837,6 +921,30 @@ export class NFT extends Contract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    batchBurn(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "batchBurn(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    batchMint(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
+    "batchMint(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<BigNumber>;
+
     burn(tokenId: BigNumberish, overrides?: Overrides): Promise<BigNumber>;
 
     "burn(uint256)"(
@@ -1030,6 +1138,30 @@ export class NFT extends Contract {
     "balanceOf(address)"(
       owner: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    batchBurn(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "batchBurn(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    batchMint(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    "batchMint(address,uint256[])"(
+      to: string,
+      tokenIds: BigNumberish[],
+      overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
     burn(

@@ -16,7 +16,7 @@ export async function up(knex: Knex): Promise<void> {
     table
       .integer('status')
       .notNullable()
-      .defaultTo(ENftTransferStatus.NewArrive)
+      .defaultTo(ENftTransferStatus.NewNftTransfer)
       .comment('Status of the processing of nft transfer');
 
     table.string('issuanceUuid', 36).index().comment('Issuance uuid to link payment transaction and boxes, cards');

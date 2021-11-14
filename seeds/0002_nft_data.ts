@@ -1,21 +1,18 @@
-/* eslint-disable max-len */
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
 import { Knex } from 'knex';
-import { IToken } from '../src/model/model-token';
 import config from '../src/helper/config';
 import { IBlockchain } from '../src/model/model-blockchain';
 import { abi as abiNFT } from '../artifacts/NFT.json';
 import { abi as abiRegistry } from '../artifacts/Registry.json';
 import { NFT, Registry } from '../typechain';
-import { IConfig } from '../src/model/model-config';
 import { stringToBytes32 } from '../src/helper/utilities';
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
   await knex(config.table.config).del();
 
-  const activeChains = config.networkRpc.filter((e) => ethers.utils.isAddress(e.registryAddress));
+  const activeChains = config.networkRpc.filter((e) => ethers.utils.isAddress(e.registry));
 
   for (let i = 0; i < activeChains.length; i += 1) {
     const chain = activeChains[i];
@@ -24,7 +21,7 @@ export async function seed(knex: Knex): Promise<void> {
     const blockchain = <IBlockchain>await knex(config.table.blockchain).where({ chainId: chain.chainId }).first();
     const provider = new ethers.providers.StaticJsonRpcProvider(blockchain.url);
 
-    const registry = <Registry>new ethers.Contract(chain.registryAddress, abiRegistry, provider);
+    const registry = <Registry>new ethers.Contract(chain.registry, abiRegistry, provider);
     const cardAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Card'));
     const itemAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Item'));
     const card = <NFT>new ethers.Contract(cardAddress, abiNFT, provider);

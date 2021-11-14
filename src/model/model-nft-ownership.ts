@@ -69,7 +69,7 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
     const imNftTransfer = new ModelNftTransfer();
     const issuanceIdMap = new Map<string, number>();
     const txHashes: string[] = [];
-    const nftTransfers = await imNftTransfer.getAllTransferDetail(ENftTransferStatus.NewArrive);
+    const nftTransfers = await imNftTransfer.getAllTransferDetail(ENftTransferStatus.NewNftTransfer);
     // We will end the process if event is undefined
     if (typeof nftTransfers === 'undefined' || nftTransfers.length === 0) {
       return;

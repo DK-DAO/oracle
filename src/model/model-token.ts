@@ -3,7 +3,7 @@ import { ModelMysqlBasic } from '@dkdao/framework';
 import config from '../helper/config';
 
 export enum EToken {
-  DePayFiRouter = 0,
+  DePayRouter = 0,
   ERC20 = 20,
   ERC721 = 721,
 }
@@ -44,6 +44,14 @@ export class ModelToken extends ModelMysqlBasic<IToken> {
         value: EToken.ERC20,
       },
     ]);
+  }
+
+  public getPayable(blockchainId?: number) {
+    const query = this.basicQuery().whereIn('type', [EToken.DePayRouter, EToken.ERC20]);
+    if (typeof blockchainId === 'number') {
+      query.where({ blockchainId });
+    }
+    return query;
   }
 }
 

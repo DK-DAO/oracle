@@ -3,7 +3,7 @@ import { ModelMysqlBasic } from '@dkdao/framework';
 import config from '../helper/config';
 
 export enum ENftTransferStatus {
-  NewArrive = 1,
+  NewNftTransfer = 1,
   Success = 254,
   Error = 255,
 }

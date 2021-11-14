@@ -83,7 +83,7 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
     const imDiscount = new ModelDiscount();
     const imPayment = new ModelPayment();
     const issuanceUuid = uuidV4();
-    const payment = await imPayment.getPaymentEventDetail();
+    const payment = await imPayment.getPaymentDetail(EPaymentStatus.NewPayment);
     // We will end the process if event is undefined
     if (typeof payment === 'undefined') {
       return;

@@ -1,21 +1,14 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop, Utilities } from 'noqueue';
-import { Connector } from '@dkdao/framework';
+import { v4 as uuidV4 } from 'uuid';
 import { ethers, utils } from 'ethers';
-import config from '../helper/config';
 import logger from '../helper/logger';
 import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
-import { EWatching, IWatching, ModelWatching } from '../model/model-watching';
+import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum, hexStringToFixedHexString, getLowCaseAddress } from '../helper/utilities';
-import { ENftTransferStatus, ModelNftTransfer } from '../model/model-nft-transfer';
 import { EPaymentStatus, ModelPayment } from '../model/model-payment';
-import Oracle from '../modules/lib/oracle';
-import ModelNftIssuance from '../model/model-nft-issuance';
-import { getStage, TStage } from '../helper/calculate-loot-boxes';
-import ModelSecret from '../model/model-secret';
-import ModelNftOwnership from '../model/model-nft-ownership';
 
 // Log interface
 interface Log {
@@ -35,12 +28,6 @@ const eventTransfer = utils.id('Transfer(address,address,uint256)');
 
 // Payment event
 const eventPayment = utils.id('Payment(address,address,uint256,address)');
-
-// Reveal duration 30 mins
-const revealDuration = 3600000;
-
-// Const number of digests
-const numberOfDigests = 20;
 
 export class Blockchain {
   // Blockchain information
@@ -67,16 +54,7 @@ export class Blockchain {
   // Watching wallet address
   private watchingWalletAddresses: Map<string, IWatching> = new Map();
 
-  // Last time we do reveal
-  private lastReveal: number = Date.now();
-
-  private oracleInstance?: Oracle;
-
-  private stage: TStage = 'genesis';
-
   private topics: any = [];
-
-  private isActiveChain: boolean = false;
 
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
@@ -103,12 +81,7 @@ export class Blockchain {
   // Update list of token
   private async updateListToken() {
     const imToken = new ModelToken();
-    this.watchingToken = await imToken.get([
-      {
-        field: 'blockchainId',
-        value: this.blockchain.id,
-      },
-    ]);
+    this.watchingToken = await imToken.getPayable(this.blockchain.id);
 
     for (let i = 0; i < this.watchingToken.length; i += 1) {
       logger.info(
@@ -134,9 +107,9 @@ export class Blockchain {
     // We going to watching for event look like this
     // Event name: Transfer or Payment
     // Topic 1: any
-    // Topic 2: watching address
+    // Topic 2: watching addresses
     this.topics = [[eventTransfer, eventPayment], null];
-    const watchingTopic = [];
+    const watchingAddresses = [];
 
     for (let i = 0; i < this.watchingWallet.length; i += 1) {
       logger.info(
@@ -145,16 +118,15 @@ export class Blockchain {
         `(${this.watchingWallet[i].address}) address on`,
         this.blockchain.name,
       );
-      watchingTopic.push(hexStringToFixedHexString(this.watchingWallet[i].address));
+      watchingAddresses.push(hexStringToFixedHexString(this.watchingWallet[i].address));
       this.watchingWalletAddresses.set(this.watchingWallet[i].address.toLowerCase(), this.watchingWallet[i]);
     }
-    this.topics.push(watchingTopic.length > 0 && !this.isActiveChain ? watchingTopic : null);
+    this.topics.push(watchingAddresses.length > 0 ? watchingAddresses : null);
   }
 
   // Update sync
   private async updateSync() {
     let isChanged = false;
-    this.stage = getStage();
     const imSync = new ModelSync();
     // We will try to read synced state from database
     if (typeof this.synced.id === 'undefined') {
@@ -251,21 +223,30 @@ export class Blockchain {
     // Get log and push the events outside
     for (let i = 0; i < logs.length; i += 1) {
       const log = logs[i];
-      const tokenAddress = log.address.toLowerCase();
-      // Watching a given wallet for stable deposit
-      if (this.watchingTokenAddresses.has(tokenAddress)) {
-        const imPayment = new ModelPayment();
-        const token = this.watchingTokenAddresses.get(tokenAddress);
-        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } = parseEvent(log);
-        if (token && (await imPayment.isNotExist('eventId', eventId))) {
-          if (token.type === EToken.ERC20 && this.watchingWalletAddresses.has(to)) {
-            const watchingAddress = this.watchingWalletAddresses.get(to);
+      // Emitter address can be token address or DePayRouter
+      const emitterAddress = log.address.toLowerCase();
+      // Emitter address not in the list
+      if (this.watchingTokenAddresses.has(emitterAddress)) {
+        // By default emitter is token
+        let token = this.watchingTokenAddresses.get(emitterAddress);
+        // Check if emitter is DePayRouter
+        if (token?.type === EToken.DePayRouter) {
+          const realTokenAddress = getLowCaseAddress(log.data);
+          if (this.watchingTokenAddresses.has(realTokenAddress)) {
+            token = this.watchingTokenAddresses.get(realTokenAddress);
+          }
+        }
+        // Watching token wasn't supporter we will skip
+        if (this.watchingTokenAddresses.has(token?.address || '')) {
+          const imPayment = new ModelPayment();
+          const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } =
+            parseEvent(log);
 
-            logger.info(
-              `New event, ERC20 transfer ${from} -> ${to} ${BigNum.from(value)
-                .div(10 ** (token?.decimal || 18))
-                .toString()} ${token?.symbol}`,
-            );
+          const memo = `${BigNum.from(value)
+            .div(10 ** (token?.decimal || 18))
+            .toString()} ${token?.symbol}`;
+          if (await imPayment.isNotExist('eventId', eventId)) {
+            logger.info(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
             await imPayment.create({
               status: EPaymentStatus.NewPayment,
               sender: from,
@@ -278,76 +259,25 @@ export class Blockchain {
               contractAddress,
               tokenId: token?.id,
               blockchainId: this.blockchain.id,
+              issuanceUuid: uuidV4(),
+              memo,
             });
-          } else if (token.type === EToken.ERC721) {
-            logger.info(
-              `New event, ERC721 transfer ${from} -> ${to} ${BigNum.toHexString(BigNum.from(value))} ${token.symbol}`,
+          } else {
+            logger.error(
+              'Ignored event:',
+              JSON.stringify({
+                eventName: 'Transfer',
+                from: utils.getAddress(from),
+                to: utils.getAddress(to),
+                value,
+              }),
             );
-            const imNftTransfer = new ModelNftTransfer();
-            await imNftTransfer.create({
-              status: ENftTransferStatus.NewNftTransfer,
-              sender: from,
-              receiver: to,
-              nftTokenId: BigNum.toHexString(BigNum.from(value)),
-              blockHash,
-              eventId,
-              blockNumber,
-              transactionHash,
-              contractAddress,
-              blockchainId: this.blockchain.id,
-            });
-          } else if (token.type === EToken.DePayRouter) {
-            const realTokenAddress = getLowCaseAddress(log.data);
-            if (this.watchingTokenAddresses.has(realTokenAddress)) {
-              const imPayment = new ModelPayment();
-              const realToken = this.watchingTokenAddresses.get(realTokenAddress);
-              logger.info(
-                `New event, DePay payment ${from} -> ${to} ${BigNum.from(value)
-                  .div(10 ** (realToken?.decimal || 18))
-                  .toString()} ${realToken?.symbol}`,
-              );
-              await imPayment.create({
-                status: EPaymentStatus.NewPayment,
-                from,
-                to,
-                value: BigNum.toHexString(BigNum.from(value)),
-                blockHash,
-                eventId,
-                blockNumber,
-                transactionHash,
-                contractAddress,
-                tokenId: realToken?.id,
-                topics: JSON.stringify(log.topics),
-                rawData: Buffer.from(log.data.replace(/^0x/gi, ''), 'hex'),
-                blockchainId: this.blockchain.id,
-                eventName: 'Payment',
-                jsonData: JSON.stringify({
-                  eventName: 'Payment',
-                  sender: utils.getAddress(from),
-                  receiver: utils.getAddress(to),
-                  amount: value,
-                  token: realTokenAddress,
-                }),
-              });
-            } else {
-              logger.error(`Can't find the related token ${realTokenAddress}`);
-            }
           }
         } else {
-          logger.info(`We ignored event id: ${eventId}`);
-          logger.debug(
-            'Ignored event:',
-            JSON.stringify({
-              eventName: 'Transfer',
-              from: utils.getAddress(from),
-              to: utils.getAddress(to),
-              value,
-            }),
-          );
+          logger.error('Token was not supported', token?.address || 'undefined');
         }
       }
     }
-
     // Update synced block
     const imSync = new ModelSync();
     this.synced.syncedBlock = toBlock;
@@ -390,8 +320,6 @@ export class Blockchain {
   // Star observer
   public async start() {
     if (await this.getBlockchainInfo()) {
-      this.isActiveChain = this.blockchain.chainId === config.activeChainId;
-
       await this.updateListToken();
       await this.updateListWatching();
 
@@ -406,59 +334,7 @@ export class Blockchain {
         .add('syncing event from blockchain', async () => {
           await this.eventSync();
         })
-        .add('oracle processor donate', async () => {
-          if (this.stage === 'genesis') {
-            const imEvent = new ModelEvent();
-            const event = await imEvent.getEventDetail(EProcessingStatus.NewDonate);
-            if (typeof event !== 'undefined') {
-              logger.debug(this.blockchain.name, '> Start processing event (Donate)', event.jsonData);
-              const imAirdrop = new ModelAirdrop();
-              await imAirdrop.batchProcessEvent(event);
-            }
-          }
-        });
-      // Current watching blockchain is active chain of DKDAO
-      if (this.isActiveChain) {
-        //  Connect to game db config is set
-        if (config.mariadbGameUrl !== '') {
-          Connector.connectByUrl(config.mariadbGameUrl, 'mariadb/game');
-        }
-        if (config.walletMnemonic.length > 0) {
-          if (typeof this.oracleInstance === 'undefined') {
-            // Init oracle if not exist
-            this.oracleInstance = await Oracle.getInstance(this.blockchain);
-          }
-          const oracle = this.oracleInstance;
-          // Start doing oracle job by sequence
-          this.queue
-            .add('oracle schedule loot boxes opening', async () => {
-              const imNftIssuance = new ModelNftIssuance();
-              await imNftIssuance.batchBuy();
-            })
-            .add('oracle rng observer', async () => {
-              if (Date.now() - this.lastReveal >= revealDuration) {
-                const imSecret = new ModelSecret();
-                if ((await imSecret.countDigest()) <= 10) {
-                  await oracle.commit(numberOfDigests);
-                } else {
-                  await oracle.reveal();
-                  this.lastReveal = Date.now();
-                }
-              } else {
-                logger.debug('Skip reveal and commit');
-              }
-            });
-        } else {
-          logger.warning('Due to empty mnemonic we will skip oracle operation');
-        }
-
-        this.queue.add('oracle monitoring nft ownership', async () => {
-          const nftOwnership = new ModelNftOwnership();
-          await nftOwnership.syncOwnership();
-        });
-      }
-
-      this.queue.start();
+        .start();
     } else {
       throw new Error("Unexpected error! can't find blockchain data");
     }

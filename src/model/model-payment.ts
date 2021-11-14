@@ -41,15 +41,11 @@ export class ModelPayment extends ModelMysqlBasic<IPayment> {
     super(config.table.payment);
   }
 
-  public getEventDetail(status: EPaymentStatus): Promise<IPaymentDetail | undefined> {
+  public getPaymentDetail(status: EPaymentStatus): Promise<IPaymentDetail | undefined> {
     return this.getDetailQuery().where({ status }).orderBy('id', 'asc').limit(1).first();
   }
 
-  public getPaymentEventDetail(): Promise<IPaymentDetail | undefined> {
-    return this.getDetailQuery().where('status', EPaymentStatus.NewPayment).orderBy('id', 'asc').limit(1).first();
-  }
-
-  public getAllEventDetail(status: EPaymentStatus): Promise<IPaymentDetail[] | undefined> {
+  public getAllPaymentDetail(status: EPaymentStatus): Promise<IPaymentDetail[] | undefined> {
     return this.getDetailQuery().where({ status }).orderBy('id', 'asc');
   }
 

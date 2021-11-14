@@ -23,10 +23,9 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface DuelistKingDistributorInterface extends ethers.utils.Interface {
   functions: {
-    "claimCards(address,bytes)": FunctionFragment;
     "compute(bytes)": FunctionFragment;
     "getDomain()": FunctionFragment;
-    "getGenesisEdittion(uint256)": FunctionFragment;
+    "getGenesisEdition(uint256)": FunctionFragment;
     "getRegistry()": FunctionFragment;
     "getRemainingBox(uint256)": FunctionFragment;
     "issueGenesisCard(address,uint256)": FunctionFragment;
@@ -35,14 +34,10 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
     "setRemainingBoxes(uint256,uint256)": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "claimCards",
-    values: [string, BytesLike]
-  ): string;
   encodeFunctionData(functionFragment: "compute", values: [BytesLike]): string;
   encodeFunctionData(functionFragment: "getDomain", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getGenesisEdittion",
+    functionFragment: "getGenesisEdition",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -70,11 +65,10 @@ interface DuelistKingDistributorInterface extends ethers.utils.Interface {
     values: [BigNumberish, BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "claimCards", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "compute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getDomain", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getGenesisEdittion",
+    functionFragment: "getGenesisEdition",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -147,18 +141,6 @@ export class DuelistKingDistributor extends Contract {
   interface: DuelistKingDistributorInterface;
 
   functions: {
-    claimCards(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
-    "claimCards(address,bytes)"(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<ContractTransaction>;
-
     compute(
       data: BytesLike,
       overrides?: Overrides
@@ -173,12 +155,12 @@ export class DuelistKingDistributor extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<[string]>;
 
-    getGenesisEdittion(
+    getGenesisEdition(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    "getGenesisEdittion(uint256)"(
+    "getGenesisEdition(uint256)"(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -246,18 +228,6 @@ export class DuelistKingDistributor extends Contract {
     ): Promise<ContractTransaction>;
   };
 
-  claimCards(
-    owner: string,
-    nftIds: BytesLike,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
-  "claimCards(address,bytes)"(
-    owner: string,
-    nftIds: BytesLike,
-    overrides?: Overrides
-  ): Promise<ContractTransaction>;
-
   compute(data: BytesLike, overrides?: Overrides): Promise<ContractTransaction>;
 
   "compute(bytes)"(
@@ -269,12 +239,12 @@ export class DuelistKingDistributor extends Contract {
 
   "getDomain()"(overrides?: CallOverrides): Promise<string>;
 
-  getGenesisEdittion(
+  getGenesisEdition(
     cardId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  "getGenesisEdittion(uint256)"(
+  "getGenesisEdition(uint256)"(
     cardId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -342,18 +312,6 @@ export class DuelistKingDistributor extends Contract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    claimCards(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "claimCards(address,bytes)"(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     compute(data: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
     "compute(bytes)"(
@@ -365,12 +323,12 @@ export class DuelistKingDistributor extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<string>;
 
-    getGenesisEdittion(
+    getGenesisEdition(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "getGenesisEdittion(uint256)"(
+    "getGenesisEdition(uint256)"(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -455,18 +413,6 @@ export class DuelistKingDistributor extends Contract {
   };
 
   estimateGas: {
-    claimCards(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
-    "claimCards(address,bytes)"(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<BigNumber>;
-
     compute(data: BytesLike, overrides?: Overrides): Promise<BigNumber>;
 
     "compute(bytes)"(
@@ -478,12 +424,12 @@ export class DuelistKingDistributor extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getGenesisEdittion(
+    getGenesisEdition(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "getGenesisEdittion(uint256)"(
+    "getGenesisEdition(uint256)"(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -549,18 +495,6 @@ export class DuelistKingDistributor extends Contract {
   };
 
   populateTransaction: {
-    claimCards(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
-    "claimCards(address,bytes)"(
-      owner: string,
-      nftIds: BytesLike,
-      overrides?: Overrides
-    ): Promise<PopulatedTransaction>;
-
     compute(
       data: BytesLike,
       overrides?: Overrides
@@ -575,12 +509,12 @@ export class DuelistKingDistributor extends Contract {
 
     "getDomain()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getGenesisEdittion(
+    getGenesisEdition(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    "getGenesisEdittion(uint256)"(
+    "getGenesisEdition(uint256)"(
       cardId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

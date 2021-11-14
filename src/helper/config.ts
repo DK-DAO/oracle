@@ -1,6 +1,7 @@
 import { Utilities } from '@dkdao/framework';
 import { parse } from 'dotenv';
 import fs from 'fs';
+import { getBlockchainInfoFromURL, IBlockchainInfo } from './url-parser';
 import { objToCamelCase } from './utilities';
 
 export interface ITableName {
@@ -23,22 +24,13 @@ export interface ITableName {
 export interface IApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
-  mariadbGameUrl: string;
   walletMnemonic: string;
-  rpcEthereum: string;
-  rpcBinance: string;
-  rpcPolygon: string;
-  rpcFantom: string;
+  networkRpc: IBlockchainInfo[];
   mariadbTablePrefix: string;
   activeChainId: number;
-  developmentChainId: number;
-  activeCampaignId: number;
-  saleScheduleSale: Date;
-  addressRegistry: string;
+  activePhase: number;
   serviceHost: string;
   servicePort: number;
-  apiUser: string;
-  apiSecret: string;
 }
 
 export interface IExtendApplicationConfig extends IApplicationConfig {
@@ -46,37 +38,30 @@ export interface IExtendApplicationConfig extends IApplicationConfig {
 }
 const config: IApplicationConfig = ((conf) => {
   const converted: any = {};
+  const networkRpc: Partial<IBlockchainInfo>[] = [];
   const keys = [
     'nodeEnv',
     'mariadbConnectUrl',
-    'mariadbGameUrl',
     'walletMnemonic',
+    'rpc0',
+    'rpc1',
+    'rpc2',
+    'rpc3',
+    'rpc4',
+    'rpc5',
     'mariadbTablePrefix',
-    'rpcEthereum',
-    'rpcBinance',
-    'rpcPolygon',
-    'rpcFantom',
-    'activeChainId',
-    'developmentChainId',
-    'activeCampaignId',
-    'saleScheduleSale',
-    'addressRegistry',
+    'activePhase',
     'serviceHost',
     'servicePort',
-    'apiUser',
-    'apiSecret',
   ];
   const kvs = <[string, string][]>Object.entries(conf);
   for (let i = 0; i < kvs.length; i += 1) {
     const [k, v]: [string, string] = kvs[i];
     switch (k) {
-      case 'activeChainId':
-      case 'developmentChainId':
-      case 'activeCampaignId':
+      case 'activePhase':
       case 'servicePort':
         converted[k] = parseInt(v, 10);
         break;
-      case 'saleScheduleGenesis':
       case 'saleScheduleSale':
         converted[k] = new Date(v.trim());
         break;
@@ -87,9 +72,18 @@ const config: IApplicationConfig = ((conf) => {
   // Default value is empty
   for (let i = 0; i < keys.length; i += 1) {
     const key = keys[i];
-    converted[key] = typeof converted[key] === 'undefined' ? '' : converted[key];
+    converted[key] = converted[key] || '';
   }
-  return converted;
+  for (let j = 0; j <= 5; j += 1) {
+    if (converted[`rpc${j}`].length > 0) {
+      const blockchain = getBlockchainInfoFromURL(converted[`rpc${j}`]);
+      if (typeof blockchain === 'object') {
+        networkRpc.push(blockchain);
+      }
+    }
+    delete converted[`rpc${j}`];
+  }
+  return { networkRpc, ...converted };
 })(objToCamelCase(parse(fs.readFileSync(Utilities.File.filePathAtRoot('.env')))));
 
 export default <IExtendApplicationConfig>{
