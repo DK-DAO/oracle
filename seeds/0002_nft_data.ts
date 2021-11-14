@@ -13,59 +13,63 @@ import { stringToBytes32 } from '../src/helper/utilities';
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
-  await knex('table_name').del();
+  await knex(config.table.config).del();
 
-  // Inserts seed entries
-  const nftList: Partial<IToken>[] = [];
-  const blockchain = <IBlockchain>await knex('blockchain').where({ chainId: config.activeChainId }).first();
-  const provider = new ethers.providers.StaticJsonRpcProvider(blockchain.url);
-  const registry = <Registry>new ethers.Contract(config.addressRegistry, abiRegistry, provider);
-  const cardAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Card'));
-  const itemAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Item'));
-  const card = <NFT>new ethers.Contract(cardAddress, abiNFT, provider);
-  const item = <NFT>new ethers.Contract(itemAddress, abiNFT, provider);
+  const activeChains = config.networkRpc.filter((e) => ethers.utils.isAddress(e.registryAddress));
 
-  nftList.push({
-    address: cardAddress,
-    type: 721,
-    name: await card.name(),
-    symbol: await card.symbol(),
-    blockchainId: blockchain.id,
-  });
+  for (let i = 0; i < activeChains.length; i += 1) {
+    const chain = activeChains[i];
 
-  nftList.push({
-    address: itemAddress,
-    type: 721,
-    name: await item.name(),
-    symbol: await item.symbol(),
-    blockchainId: blockchain.id,
-  });
+    // Inserts seed entries
+    const blockchain = <IBlockchain>await knex(config.table.blockchain).where({ chainId: chain.chainId }).first();
+    const provider = new ethers.providers.StaticJsonRpcProvider(blockchain.url);
 
-  await knex('config').insert(<Partial<IConfig>>{
-    key: 'contractDistributor',
-    type: 'string',
-    value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Distributor'))),
-  });
+    const registry = <Registry>new ethers.Contract(chain.registryAddress, abiRegistry, provider);
+    const cardAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Card'));
+    const itemAddress = await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('NFT Item'));
+    const card = <NFT>new ethers.Contract(cardAddress, abiNFT, provider);
+    const item = <NFT>new ethers.Contract(itemAddress, abiNFT, provider);
 
-  await knex('config').insert(<Partial<IConfig>>{
-    key: 'contractDuelistKingOracleProxy',
-    type: 'string',
-    value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Oracle'))),
-  });
+    await knex.batchInsert(config.table.config, [
+      {
+        key: 'contractDistributor',
+        type: 'string',
+        value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Distributor'))),
+      },
+      {
+        key: 'contractDuelistKingOracleProxy',
+        type: 'string',
+        value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Oracle'))),
+      },
+      {
+        key: 'contractRNG',
+        type: 'string',
+        value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('RNG'))),
+      },
+      {
+        key: 'contractDKDAOOracle',
+        type: 'string',
+        value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('Oracle'))),
+      },
+    ]);
 
-  await knex('config').insert(<Partial<IConfig>>{
-    key: 'contractRNG',
-    type: 'string',
-    value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('RNG'))),
-  });
-
-  await knex('config').insert(<Partial<IConfig>>{
-    key: 'contractDKDAOOracle',
-    type: 'string',
-    value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('Oracle'))),
-  });
-
-  await knex.batchInsert('token', nftList);
+    await knex.batchInsert(config.table.token, [
+      {
+        address: cardAddress,
+        type: 721,
+        name: await card.name(),
+        symbol: await card.symbol(),
+        blockchainId: blockchain.id,
+      },
+      {
+        address: itemAddress,
+        type: 721,
+        name: await item.name(),
+        symbol: await item.symbol(),
+        blockchainId: blockchain.id,
+      },
+    ]);
+  }
 }
 
 export default seed;
