@@ -40,7 +40,7 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
     return this.getDefaultKnex().select('*');
   }
 
-  public async openLootBox(
+  public async mintBoxes(
     contractCallback: (phase: number, owner: string, numberOfBox: number) => Promise<ethers.ContractTransaction>,
   ): Promise<void> {
     const opening = <INftIssuance | undefined>(

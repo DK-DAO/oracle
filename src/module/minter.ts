@@ -82,6 +82,9 @@ export class ModuleMinter {
               const imNftIssuance = new ModelNftIssuance();
               await imNftIssuance.batchBuy();
             })
+            .add('oracle mint boxes', async () => {
+              await oracle.mintBoxes();
+            })
             .add('oracle rng observer', async () => {
               if (Date.now() - this.lastReveal >= revealDuration) {
                 const imSecret = new ModelSecret();

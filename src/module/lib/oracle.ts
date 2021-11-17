@@ -60,9 +60,17 @@ export class Oracle {
   }
 
   private async setNonce(address: string, nonce: number) {
+    console.log('\t>>>>>>>', address, nonce);
     await this.nonceManagement.setNonce(address, nonce);
     // We put it here to make sure we won't forget
     this.nextExecutor += 1;
+  }
+
+  private getExecutor() {
+    if (this.nextExecutor >= this.executors.length) {
+      this.nextExecutor = 0;
+    }
+    return this.executors[this.nextExecutor];
   }
 
   public async connect(bcData: IBlockchain) {
@@ -118,13 +126,10 @@ export class Oracle {
     return instance;
   }
 
-  public async openBox() {
-    if (this.nextExecutor >= this.executors.length) {
-      this.nextExecutor = 0;
-    }
-    const currentExecutor = this.executors[this.nextExecutor];
+  public async mintBoxes() {
+    const currentExecutor = this.getExecutor();
     const imNftIssuance = new ModelNftIssuance();
-    await imNftIssuance.openLootBox(
+    await imNftIssuance.mintBoxes(
       async (phase: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
         let estimatedGas = await this.contracts.dkOracleProxy
           .connect(currentExecutor)
@@ -138,7 +143,7 @@ export class Oracle {
         logger.info(
           `Forwarding call from ${
             currentExecutor.address
-          } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
+          } -> Distributor::mintBoxes(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
         );
 
         let result;
@@ -186,7 +191,7 @@ export class Oracle {
 
   public async commit(numberOfDigests: number) {
     const digests = buildDigestArray(numberOfDigests);
-    const currentExecutor = this.executors[this.nextExecutor];
+    const currentExecutor = this.getExecutor();
     const currentNonce = await this.getNonce(currentExecutor.address);
     const imSecret = new ModelSecret();
     const newRecords = digests.h.map((item: Buffer, index: number) => ({
@@ -216,7 +221,7 @@ export class Oracle {
 
   public async reveal() {
     const imSecret = new ModelSecret();
-    const currentExecutor = this.executors[this.nextExecutor];
+    const currentExecutor = this.getExecutor();
     const currentNonce = await this.getNonce(currentExecutor.address);
     // Lookup digest from database
     const secretRecord = await imSecret.getDigest();

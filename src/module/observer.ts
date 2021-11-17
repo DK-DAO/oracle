@@ -7,7 +7,7 @@ import { ModelSync, ISync } from '../model/model-sync';
 import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
-import { parseEvent, BigNum, hexStringToFixedHexString, getLowCaseAddress } from '../helper/utilities';
+import { parseEvent, BigNum, getLowCaseAddress } from '../helper/utilities';
 import { EPaymentStatus, ModelPayment } from '../model/model-payment';
 import ModelNftTransfer, { ENftTransferStatus } from '../model/model-nft-transfer';
 import config from '../helper/config';
@@ -88,6 +88,9 @@ export class ModuleObserver {
         const knex = imModelSync.getKnex();
         await knex(config.table.payment).del();
         await knex(config.table.nftIssuance).del();
+        await knex(config.table.secret).del();
+        await knex(config.table.nonceManagement).del();
+        await knex(config.table.nftTransfer).del();
       }
 
       return true;
@@ -130,8 +133,8 @@ export class ModuleObserver {
     // Event name: Transfer or Payment
     // Topic 1: any
     // Topic 2: watching addresses
-    this.topics = [[eventTransfer, eventPayment], null];
-    const watchingAddresses = [];
+    this.topics = [[eventTransfer, eventPayment]];
+    // const watchingAddresses = [];
 
     for (let i = 0; i < this.watchingWallet.length; i += 1) {
       logger.info(
@@ -140,10 +143,10 @@ export class ModuleObserver {
         `(${this.watchingWallet[i].address}) address on`,
         this.blockchain.name,
       );
-      watchingAddresses.push(hexStringToFixedHexString(this.watchingWallet[i].address));
+      // watchingAddresses.push(hexStringToFixedHexString(this.watchingWallet[i].address));
       this.watchingWalletAddresses.set(this.watchingWallet[i].address.toLowerCase(), this.watchingWallet[i]);
     }
-    this.topics.push(watchingAddresses.length > 0 ? watchingAddresses : null);
+    // this.topics.push(watchingAddresses.length > 0 ? watchingAddresses : null);
   }
 
   // Update sync
@@ -226,13 +229,13 @@ export class ModuleObserver {
 
     // We filter necessary logs from raw log
     let logs = rawLogs.filter((i) => this.supportedTokens.has(i.address.toLowerCase()));
-    // Filter all payments that belong to us
-    const payments = logs.filter((i) => {
-      return i.topics[0] === eventPayment;
-    });
     // Get transaction hash list
-    const txHashPayments = payments.map((i) => i.transactionHash);
-    // Filter
+    const txHashPayments = logs
+      .filter((i) => {
+        return i.topics[0] === eventPayment;
+      })
+      .map((i) => i.transactionHash);
+    // Get the real address from Payment event
     logs = logs
       .filter((i) => {
         return i.topics[0] === eventPayment || !txHashPayments.includes(i.transactionHash);
@@ -267,7 +270,7 @@ export class ModuleObserver {
           .div(10 ** (token?.decimal || 18))
           .toString()} ${token?.symbol}`;
         if (await imPayment.isNotExist('eventId', eventId)) {
-          if (token.type !== EToken.ERC721) {
+          if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
             logger.info(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
             await imPayment.create({
               status: EPaymentStatus.NewPayment,
@@ -284,11 +287,11 @@ export class ModuleObserver {
               issuanceUuid: uuidV4(),
               memo,
             });
-          } else {
+          } else if (token.type === EToken.ERC721) {
             const nftTokenId = BigNum.toHexString(BigNum.from(value));
             logger.info(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
             await imNftTransfer.create({
-              status: token.symbol === 'DKC' ? ENftTransferStatus.NewCardTransfer : ENftTransferStatus.NewNftTransfer,
+              status: ENftTransferStatus.NewNftTransfer,
               tokenId: token.id,
               sender: from,
               receiver: to,

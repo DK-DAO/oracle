@@ -5,7 +5,7 @@ import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao
 export interface INftResult {
   id: number;
   tokenId: number;
-  issuanceId: number;
+  issuanceUuid: string;
   owner: string;
   nftTokenId: string;
   applicationId: number;
@@ -41,7 +41,7 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
       .select(
         'o.id as id',
         'tokenId',
-        'issuanceId',
+        'issuanceUuid',
         'owner',
         'nftTokenId',
         'applicationId',
