@@ -25,9 +25,10 @@ export interface IApplicationConfig {
   nodeEnv: string;
   mariadbConnectUrl: string;
   walletMnemonic: string;
+  privOracleDkdao: string;
+  privOracleDuelistKing: string;
   networkRpc: IBlockchainInfo[];
   mariadbTablePrefix: string;
-  activeChainId: number;
   activePhase: number;
   serviceHost: string;
   servicePort: number;
@@ -43,6 +44,8 @@ const config: IApplicationConfig = ((conf) => {
     'nodeEnv',
     'mariadbConnectUrl',
     'walletMnemonic',
+    'privOracleDkdao',
+    'privOracleDuelistKing',
     'rpc0',
     'rpc1',
     'rpc2',

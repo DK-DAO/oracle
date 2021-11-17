@@ -1,10 +1,11 @@
 import { noCase } from 'no-case';
+import { Utilities } from '@dkdao/framework';
 import cluster from 'cluster';
 import crypto, { createHmac, randomBytes } from 'crypto';
 import { keccak256 } from 'js-sha3';
-import { ethers, utils } from 'ethers';
+import { ethers, utils, Signer } from 'ethers';
 import { BigNumber } from 'bignumber.js';
-import BytesBuffer from './bytes-buffer';
+import { OracleProxy } from '../../typechain';
 
 export interface IParsedEvent {
   eventId: string;
@@ -164,9 +165,9 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
     to: getLowCaseAddress(to),
     value: BigNum.from(value).toString(),
   };
-  const buf = new BytesBuffer();
+
   const eventId = utils.sha256(
-    buf
+    Utilities.BytesBuffer.newInstance()
       .writeAddress(from)
       .writeAddress(to)
       .writeAddress(address.toString())
@@ -216,8 +217,19 @@ export function objectToCondition<T>(val: T, ...selectFields: string[]): { field
   return condition;
 }
 
-export function hexStringToFixedHexString(inputHexString: string, size: number = 64):string{
+export function hexStringToFixedHexString(inputHexString: string, size: number = 64): string {
   return `0x${inputHexString.toLowerCase().replace(/^0x/g, '').padStart(size, '0')}`;
+}
+
+export function bigNumberToBytes32(b: ethers.BigNumber): Buffer {
+  return Buffer.from(`${b.toHexString().replace(/^0x/i, '').padStart(64, '0')}`, 'hex');
+}
+
+export async function craftProof(oracleSigner: Signer, oracle: OracleProxy): Promise<Buffer> {
+  const message = bigNumberToBytes32(await oracle.getValidTimeNonce(60000, Utilities.String.randomUint128()));
+  // Make sure that it matched
+  const signedProof = await oracleSigner.signMessage(utils.arrayify(message));
+  return Utilities.BytesBuffer.newInstance().writeBytes(signedProof).writeBytes(message).invoke();
 }
 
 export default {

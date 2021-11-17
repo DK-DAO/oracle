@@ -2,7 +2,6 @@ import moment from 'moment';
 import { Mux, Validator, IRequestData, IResponse } from '@dkdao/framework';
 
 import {
-  getStage,
   basedBoxPrice,
   discountByBoxes,
   calculatePriceAfterDiscount,
@@ -48,7 +47,7 @@ Mux.get(
       query: { noBoxes, discount },
     } = req;
     const toDay = moment(new Date());
-    const stage = getStage();
+    const stage = 'genesis';
     const discountByNumberOfBoxes = prettyValue(discountByBoxes(noBoxes));
     const pricePerBox = prettyValue(calculatePriceAfterDiscount(noBoxes, discount));
     const subtotal = prettyValue(noBoxes * basedBoxPrice);

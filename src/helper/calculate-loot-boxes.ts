@@ -1,10 +1,8 @@
-import moment from 'moment';
-import config from './config';
-
-/* eslint-disable no-bitwise */
 export type TStage = 'genesis' | 'sale';
 
 export const basedBoxPrice = 5;
+
+export const batchIssue = 500;
 
 export interface ICalculateResult {
   numberOfLooBoxes: number;
@@ -24,18 +22,8 @@ export function prettyValue(v: number, p: number = 1000000) {
   return Math.ceil(v * p) / p;
 }
 
-export function getStage(): TStage {
-  let stage: TStage = 'sale';
-  const toDay = moment(new Date());
-  // Genesis =< toDay < earlyBird
-  if (toDay.diff(config.saleScheduleSale, 'days') < 0) {
-    stage = 'genesis';
-  }
-  return stage;
-}
-
 export function discountByBoxes(noBoxes: number) {
-  if(noBoxes < 5){
+  if (noBoxes < 5) {
     return 0;
   }
   return Math.log(noBoxes) / Math.log(100) / basedBoxPrice;
@@ -73,15 +61,14 @@ export function calculateNumberOfLootBoxes(money: number, discount: number = 0):
 }
 
 export function calculateDistribution(noBoxes: number) {
-  if (noBoxes < 10) {
+  if (noBoxes < batchIssue) {
     return [noBoxes];
   }
-  const i = Math.floor(noBoxes / 10);
-  const j = noBoxes - i * 10;
-  const result = repeat(10, i);
+  const i = Math.floor(noBoxes / batchIssue);
+  const j = noBoxes - i * batchIssue;
+  const result = repeat(batchIssue, i);
   if (j > 0) {
     result.push(Math.round(j));
   }
   return result;
 }
-

@@ -1,19 +1,19 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
-import { RNG, DuelistKingDistributor, OracleProxy } from '../../typechain';
-import { IBlockchain } from '../model/model-blockchain';
-import config from '../helper/config';
-import logger from '../helper/logger';
-import { buildDigestArray } from '../helper/utilities';
-import { abi as abiRng } from '../../artifacts/RNG.json';
-import { abi as abiOracleProxy } from '../../artifacts/OracleProxy.json';
+import { RNG, DuelistKingDistributor, OracleProxy } from '../../../typechain';
+import { IBlockchain } from '../../model/model-blockchain';
+import config from '../../helper/config';
+import logger from '../../helper/logger';
+import { buildDigestArray, craftProof } from '../../helper/utilities';
+import { abi as abiRng } from '../../../artifacts/RNG.json';
+import { abi as abiOracleProxy } from '../../../artifacts/OracleProxy.json';
 // eslint-disable-next-line max-len
-import { abi as abiDistributor } from '../../artifacts/DuelistKingDistributor.json';
-import ModelSecret, { ESecretStatus } from '../model/model-secret';
-import { BytesBuffer } from '../helper/bytes-buffer';
-import ModelNftIssuance from '../model/model-nft-issuance';
-import ModelConfig from '../model/model-config';
-import ModelNonceManagement from '../model/model-nonce-management';
+import { abi as abiDistributor } from '../../../artifacts/DuelistKingDistributor.json';
+import ModelSecret, { ESecretStatus } from '../../model/model-secret';
+import { BytesBuffer } from '../../helper/bytes-buffer';
+import ModelNftIssuance from '../../model/model-nft-issuance';
+import ModelConfig from '../../model/model-config';
+import ModelNonceManagement from '../../model/model-nonce-management';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -28,53 +28,62 @@ export interface IContractList {
 // const safeDuration = 120000;
 
 export class Oracle {
-  private dkOracle: ethers.Wallet[] = [];
+  private executors: ethers.Wallet[] = [];
 
-  private dkDaoOracle: ethers.Wallet[] = [];
+  private dkOracle: ethers.Wallet;
+
+  private infraOracle: ethers.Wallet;
 
   private bcData: IBlockchain = <IBlockchain>{};
 
   private contracts: IContractList = <IContractList>{};
 
-  private oracleSelect: number = 0;
+  private nextExecutor: number = 0;
+
+  private nonceManagement: ModelNonceManagement;
 
   public provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
 
   public dkOracleAddress: string = '';
 
-  constructor() {
-    this.dkDaoOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/0`));
-    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/1`));
-    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/2`));
-    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/3`));
+  constructor(blockchainData: IBlockchain) {
+    for (let i = 0; i < 4; i += 1) {
+      this.executors.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/${i}`));
+    }
+    this.infraOracle = new ethers.Wallet(config.privOracleDkdao);
+    this.dkOracle = new ethers.Wallet(config.privOracleDuelistKing);
+    this.nonceManagement = new ModelNonceManagement(blockchainData);
+  }
 
-    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/4`));
-    // this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/5`));
+  private async getNonce(address: string): Promise<number> {
+    return this.nonceManagement.getNonce(address);
+  }
 
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/6`));
-    this.dkOracle.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/7`));
+  private async setNonce(address: string, nonce: number) {
+    await this.nonceManagement.setNonce(address, nonce);
+    // We put it here to make sure we won't forget
+    this.nextExecutor += 1;
   }
 
   public async connect(bcData: IBlockchain) {
     const imConfig = new ModelConfig();
-    const imNonceManagement = new ModelNonceManagement();
     this.bcData = bcData;
     this.provider = new ethers.providers.StaticJsonRpcProvider(bcData.url);
+    this.executors = this.executors.map((e) => e.connect(this.provider));
     // Connect wallet to provider
-    this.dkDaoOracle = this.dkDaoOracle.map((i) => i.connect(this.provider));
-    this.dkOracle = this.dkOracle.map((i) => i.connect(this.provider));
+    this.infraOracle = this.infraOracle.connect(this.provider);
+    this.dkOracle = this.dkOracle.connect(this.provider);
 
     const contractRNGAddress = await imConfig.getConfig('contractRNG');
     const contractDistributorAddress = await imConfig.getConfig('contractDistributor');
     const contractDuelistKingOracleProxyAddress = await imConfig.getConfig('contractDuelistKingOracleProxy');
     const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
-
-    for (let i = 0; i < this.dkOracle.length; i += 1) {
-      const oracleAddress = this.dkOracle[i].address;
-      const cachedNonce = await imNonceManagement.getNonce(oracleAddress);
-      const blockchainNonce = await this.provider.getTransactionCount(oracleAddress);
-      // Set max nonce to blockchain
-      await imNonceManagement.setNonce(oracleAddress, Math.max(cachedNonce, blockchainNonce));
+    for (let i = 0; i < this.executors.length; i += 1) {
+      const executorAddress = this.executors[i].address;
+      const cachedNonce = await this.getNonce(executorAddress);
+      const blockchainNonce = await this.provider.getTransactionCount(executorAddress);
+      // Set max nonce to nonce management
+      await this.setNonce(executorAddress, Math.max(cachedNonce, blockchainNonce));
     }
 
     if (
@@ -97,41 +106,38 @@ export class Oracle {
       this.contracts.dkdaoOracleProxy = <OracleProxy>(
         new ethers.Contract(contractDKDAOOracleAddress, abiOracleProxy, this.provider)
       );
+      logger.info('Connected for given blockchain data');
     } else {
       throw new Error('There are no RNG and Distributor in data');
     }
   }
 
   public static async getInstance(bcData: IBlockchain): Promise<Oracle> {
-    const instance = new Oracle();
+    const instance = new Oracle(bcData);
     await instance.connect(bcData);
     return instance;
   }
 
   public async openBox() {
-    if (this.oracleSelect >= this.dkOracle.length) {
-      this.oracleSelect = 0;
+    if (this.nextExecutor >= this.executors.length) {
+      this.nextExecutor = 0;
     }
-    const currentOracle = this.dkOracle[this.oracleSelect];
-    const imNonceManagement = new ModelNonceManagement();
+    const currentExecutor = this.executors[this.nextExecutor];
     const imNftIssuance = new ModelNftIssuance();
     await imNftIssuance.openLootBox(
-      async (campaignId: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
+      async (phase: number, owner: string, numberOfBox: number): Promise<ethers.ContractTransaction> => {
         let estimatedGas = await this.contracts.dkOracleProxy
-          .connect(currentOracle)
+          .connect(currentExecutor)
           .estimateGas.safeCall(
+            await craftProof(this.dkOracle, this.contracts.dkOracleProxy),
             this.contracts.distributor.address,
             0,
-            this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [
-              owner,
-              numberOfBox,
-              config.activeCampaignId,
-            ]),
+            this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [owner, numberOfBox, phase]),
           );
-        const currentNonce = await imNonceManagement.getNonce(currentOracle.address);
+        const currentNonce = await this.getNonce(currentExecutor.address);
         logger.info(
           `Forwarding call from ${
-            currentOracle.address
+            currentExecutor.address
           } -> Distributor::openLootBox(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
         );
 
@@ -142,11 +148,12 @@ export class Oracle {
         const calculatedGasPrice = estimatedGasPrice.add(estimatedGasPrice.div(2));
         try {
           result = await this.contracts.dkOracleProxy
-            .connect(currentOracle)
+            .connect(currentExecutor)
             .safeCall(
+              await craftProof(this.dkOracle, this.contracts.dkOracleProxy),
               this.contracts.distributor.address,
               0,
-              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+              this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [owner, numberOfBox, phase]),
               {
                 gasPrice: calculatedGasPrice,
                 nonce: currentNonce,
@@ -155,14 +162,14 @@ export class Oracle {
             );
         } catch (e) {
           logger.error('Use the double gas price since', e);
-          result = await this.contracts.dkOracleProxy
-            .connect(currentOracle)
+          result = await await this.contracts.dkOracleProxy
+            .connect(currentExecutor)
             .safeCall(
+              await craftProof(this.dkOracle, this.contracts.dkOracleProxy),
               this.contracts.distributor.address,
               0,
-              this.contracts.distributor.interface.encodeFunctionData('openBox', [campaignId, owner, numberOfBox]),
+              this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [owner, numberOfBox, phase]),
               {
-                // Use x2 gas price
                 gasPrice: calculatedGasPrice.mul(2),
                 nonce: currentNonce,
                 gasLimit: estimatedGas,
@@ -170,16 +177,17 @@ export class Oracle {
             );
         }
 
-        logger.info(`Cached next nonce for ${currentOracle.address} is ${currentNonce + 1}`);
-        await imNonceManagement.setNonce(currentOracle.address, currentNonce + 1);
+        logger.info(`Cached next nonce for ${currentExecutor.address} is ${currentNonce + 1}`);
+        await this.setNonce(currentExecutor.address, currentNonce + 1);
         return result;
       },
     );
-    this.oracleSelect += 1;
   }
 
   public async commit(numberOfDigests: number) {
     const digests = buildDigestArray(numberOfDigests);
+    const currentExecutor = this.executors[this.nextExecutor];
+    const currentNonce = await this.getNonce(currentExecutor.address);
     const imSecret = new ModelSecret();
     const newRecords = digests.h.map((item: Buffer, index: number) => ({
       blockchainId: this.bcData.id,
@@ -190,14 +198,17 @@ export class Oracle {
     try {
       await imSecret.batchCommit(newRecords, async () => {
         await this.contracts.dkdaoOracleProxy
-          .connect(this.dkDaoOracle[0])
+          .connect(currentExecutor)
           .safeCall(
+            await craftProof(this.infraOracle, this.contracts.dkdaoOracleProxy),
             this.contracts.rng.address,
             0,
             this.contracts.rng.interface.encodeFunctionData('batchCommit', [digests.v]),
+            { nonce: currentNonce },
           );
       });
       logger.info('Commit', digests.h.length, 'digests to blockchain');
+      await this.setNonce(currentExecutor.address, currentNonce + 1);
     } catch (err) {
       logger.error(err);
     }
@@ -205,6 +216,8 @@ export class Oracle {
 
   public async reveal() {
     const imSecret = new ModelSecret();
+    const currentExecutor = this.executors[this.nextExecutor];
+    const currentNonce = await this.getNonce(currentExecutor.address);
     // Lookup digest from database
     const secretRecord = await imSecret.getDigest();
     if (secretRecord) {
@@ -235,9 +248,18 @@ export class Oracle {
           .writeUint256(secretRecord.secret)
           .invoke();
         await this.contracts.dkdaoOracleProxy
-          .connect(this.dkDaoOracle[0])
-          .safeCall(this.contracts.rng.address, 0, this.contracts.rng.interface.encodeFunctionData('reveal', [data]));
+          .connect(currentExecutor)
+          .safeCall(
+            await craftProof(this.infraOracle, this.contracts.dkdaoOracleProxy),
+            this.contracts.rng.address,
+            0,
+            this.contracts.rng.interface.encodeFunctionData('reveal', [data]),
+            {
+              nonce: currentNonce,
+            },
+          );
       }
+      await this.setNonce(currentExecutor.address, currentNonce + 1);
       // We're going to to mark it as revealed anyway
       await imSecret.update(
         {
