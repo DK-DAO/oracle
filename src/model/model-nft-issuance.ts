@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
 import { Knex } from 'knex';
-import { v4 as uuidV4 } from 'uuid';
 import { Utilities } from 'noqueue';
 import { ModelMysqlBasic, IPagination, IModelCondition, IResponse, Transaction } from '@dkdao/framework';
 import { EPaymentStatus, ModelPayment } from './model-payment';
@@ -15,7 +14,7 @@ export enum ENftIssuanceStatus {
   New = 0,
   Opening = 1,
   Opened = 2,
-  ResultArrived = 3,
+  ResultArrived = 254,
   Error = 255,
 }
 
@@ -42,7 +41,7 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
   }
 
   public async openLootBox(
-    contractCallback: (campaignId: number, owner: string, numberOfBox: number) => Promise<ethers.ContractTransaction>,
+    contractCallback: (phase: number, owner: string, numberOfBox: number) => Promise<ethers.ContractTransaction>,
   ): Promise<void> {
     const opening = <INftIssuance | undefined>(
       await this.basicQuery().where({ status: ENftIssuanceStatus.New }).orderBy('id', 'asc').limit(1).first()
@@ -82,7 +81,6 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
   public async batchBuy(): Promise<void> {
     const imDiscount = new ModelDiscount();
     const imPayment = new ModelPayment();
-    const issuanceUuid = uuidV4();
     const payment = await imPayment.getPaymentDetail(EPaymentStatus.NewPayment);
     // We will end the process if event is undefined
     if (typeof payment === 'undefined') {
@@ -114,12 +112,12 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
         );
         const records = lootBoxDistribution.map((item) => {
           return <Partial<INftIssuance>>{
-            phase: config.activeCampaignId,
-            issuanceUuid,
-            eventId: payment.id,
+            phase: config.activePhase,
+            issuanceUuid: payment.issuanceUuid,
             totalBoxes: numberOfLootBoxes,
             owner: payment.sender,
             numberOfBox: item,
+            status: ENftIssuanceStatus.New,
           };
         });
         for (let i = 0; i < records.length; i += 1) {

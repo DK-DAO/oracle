@@ -1,17 +1,22 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
 import config from '../helper/config';
+import { IBlockchain } from './model-blockchain';
 
 export interface INonceManagement {
   id: number;
+  blockchainId: number;
   address: string;
   nonce: number;
   createdDate: string;
 }
 
 export class ModelNonceManagement extends ModelMysqlBasic<INonceManagement> {
-  constructor() {
+  private blockchain: IBlockchain;
+
+  constructor(blockchain: IBlockchain) {
     super(config.table.nonceManagement);
+    this.blockchain = blockchain;
   }
 
   public basicQuery(): Knex.QueryBuilder {
@@ -19,8 +24,19 @@ export class ModelNonceManagement extends ModelMysqlBasic<INonceManagement> {
   }
 
   async setNonce(address: string, nonce: number) {
-    if (await this.isNotExist('address', address)) {
+    const nonces = await this.get([
+      {
+        field: 'address',
+        value: address,
+      },
+      {
+        field: 'blockchainId',
+        value: this.blockchain.id,
+      },
+    ]);
+    if (nonces.length === 0) {
       await this.create({
+        blockchainId: this.blockchain.id,
         address,
         nonce,
       });

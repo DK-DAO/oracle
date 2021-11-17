@@ -3,7 +3,9 @@ import { ModelMysqlBasic } from '@dkdao/framework';
 import config from '../helper/config';
 
 export enum ENftTransferStatus {
-  NewNftTransfer = 1,
+  NewNftTransfer = 0,
+  NewBoxTransfer = 1,
+  NewCardTransfer = 2,
   Success = 254,
   Error = 255,
 }
@@ -11,6 +13,7 @@ export enum ENftTransferStatus {
 export interface INftTransfer {
   id: number;
   blockchainId: number;
+  tokenId: number;
   status: number;
   issuanceUuid: string;
   eventId: string;
@@ -52,6 +55,7 @@ export class ModelNftTransfer extends ModelMysqlBasic<INftTransfer> {
       .select(
         'e.id as id',
         'e.blockchainId as blockchainId',
+        'e.tokenId as tokenId',
         'status',
         'issuanceUuid',
         'eventId',

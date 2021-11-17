@@ -4,7 +4,6 @@ import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao
 
 export interface INftResult {
   id: number;
-  blockchainId: number;
   tokenId: number;
   issuanceId: number;
   owner: string;
@@ -21,7 +20,7 @@ export interface INftResult {
 }
 
 export interface INftResultDetail extends INftResult {
-  chainId: number;
+  blockchainId: number;
   blockchainName: string;
   tokenSymbol: string;
   tokenName: string;
@@ -41,7 +40,6 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
     return this.getKnex()('open_result as o')
       .select(
         'o.id as id',
-        'o.blockchainId as blockchainId',
         'tokenId',
         'issuanceId',
         'owner',
@@ -55,14 +53,12 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
         'itemSerial',
         'transactionHash',
         'o.createdDate as createdDate',
-        'b.name as blockchainName',
-        'b.chainId as chainId',
+        't.blockchainId as blockchainId',
         't.name as tokenName',
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
-      .join('token as t', 'o.tokenId', 't.id')
-      .join('blockchain as b', 'o.blockchainId', 'b.id');
+      .join('token as t', 'o.tokenId', 't.id');
   }
 
   public async getNftResultList(

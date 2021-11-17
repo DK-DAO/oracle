@@ -10,7 +10,7 @@ import config from '../helper/config';
 
 export interface INftOwnership {
   id: number;
-  blockchainId: number;
+  tokenId: number;
   owner: string;
   nftTokenId: string;
   transactionHash: string;
@@ -18,8 +18,7 @@ export interface INftOwnership {
 }
 
 export interface INftOwnershipDetail extends INftOwnership {
-  chainId: number;
-  blockchainName: string;
+  blockchainId: number;
   tokenSymbol: string;
   tokenName: string;
   tokenAddress: string;
@@ -38,20 +37,17 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
     return this.getKnex()(`${config.table.nftOwnership} as n`)
       .select(
         'n.id as id',
-        'n.blockchainId as blockchainId',
         'tokenId',
         'owner',
         'nftTokenId',
         'transactionHash',
         'n.createdDate as createdDate',
-        'b.name as blockchainName',
-        'b.chainId as chainId',
+        't.blockchainId as blockchainId',
         't.name as tokenName',
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
-      .join('token as t', 'n.tokenId', 't.id')
-      .join('blockchain as b', 'n.blockchainId', 'b.id');
+      .join('token as t', 'n.tokenId', 't.id');
   }
 
   public async getNftList(
