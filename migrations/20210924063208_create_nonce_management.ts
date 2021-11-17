@@ -6,15 +6,19 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(config.table.nonceManagement, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
-    table.integer('chainId').unsigned().notNullable().comment('Chain id of current network');
+    table
+      .bigInteger('blockchainId')
+      .unsigned()
+      .references(`${config.table.blockchain}.id`)
+      .comment('Foreign key to blockchain.id');
 
-    table.string('address', 42).notNullable().comment('Cached nonce address');
+    table.string('address', 42).notNullable().index().comment('Cached nonce address');
 
     table.bigInteger('nonce').unsigned().comment('Nonce number');
 
     addCreatedAndUpdated(knex, table);
 
-    table.index(['address', 'nonce', 'chainId'], 'common_indexed');
+    table.index(['address', 'blockchainId'], 'common_indexed');
   });
 }
 

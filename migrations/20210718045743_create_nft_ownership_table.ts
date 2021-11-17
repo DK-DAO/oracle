@@ -6,21 +6,17 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(config.table.nftOwnership, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
-    table
-      .bigInteger('blockchainId')
-      .unsigned()
-      .references(`${config.table.blockchain}.id`)
-      .comment('Foreign key to blockchain.id');
+    table.bigInteger('tokenId').unsigned().references(`${config.table.token}.id`).comment('Foreign key to token.id');
 
-    table.string('owner', 42).notNullable().comment('Owner of NFT token');
+    table.string('owner', 42).notNullable().index().comment('Owner of NFT token');
 
-    table.string('nftTokenId', 66).notNullable().unique().comment('Token id of NFT');
+    table.string('nftTokenId', 66).notNullable().unique().index().comment('Token id of NFT');
 
-    table.string('transactionHash', 66).notNullable().comment('Transaction of the issuance');
+    table.string('transactionHash', 66).notNullable().index().comment('Transaction of the issuance');
 
     addCreatedAndUpdated(knex, table);
 
-    table.index(['blockchainId', 'transactionHash', 'owner', 'nftTokenId'], 'common_indexed');
+    table.index(['tokenId', 'transactionHash', 'owner', 'nftTokenId'], 'common_indexed');
   });
 }
 

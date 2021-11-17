@@ -11,13 +11,17 @@ export async function up(knex: Knex): Promise<void> {
 
     table.integer('numberOfBox').notNullable().comment('Number of loot box going to to open');
 
-    table.string('issuanceUuid', 36).notNullable().comment('Issuance uuid to link payment transaction and boxes');
+    table
+      .string('issuanceUuid', 36)
+      .notNullable()
+      .index()
+      .comment('Issuance uuid to link payment transaction and boxes');
 
     table.integer('totalBoxes').unsigned().index().comment('Total number of boxes');
 
-    table.string('transactionHash', 66).comment('Transaction hash of box issuance');
+    table.string('transactionHash', 66).index().comment('Transaction hash of box issuance');
 
-    table.string('owner', 42).notNullable().comment('Address of owner');
+    table.string('owner', 42).notNullable().index().comment('Address of owner');
 
     table.integer('status').defaultTo(ENftIssuanceStatus.New).comment('Processing status of loot boxes opening');
 

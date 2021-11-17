@@ -13,19 +13,21 @@ export async function up(knex: Knex): Promise<void> {
       .references(`${config.table.blockchain}.id`)
       .comment('Foreign key to blockchain.id');
 
+    table.bigInteger('tokenId').unsigned().references(`${config.table.token}.id`).comment('Foreign key to token.id');
+
     table
       .integer('status')
       .notNullable()
       .defaultTo(ENftTransferStatus.NewNftTransfer)
       .comment('Status of the processing of nft transfer');
 
-    table.string('issuanceUuid', 36).index().comment('Issuance uuid to link payment transaction and boxes, cards');
+    table.string('issuanceUuid', 36).comment('Issuance uuid to link payment transaction and boxes, cards');
 
     table.string('eventId', 66).unique().index().comment('Unique event Id, for tracking');
 
     table.string('sender', 42).notNullable().comment('Sender');
 
-    table.string('receiver', 42).notNullable().comment('Receiver');
+    table.string('receiver', 42).notNullable().index().comment('Receiver');
 
     table.string('nftTokenId', 66).notNullable().comment('Id of NFT token');
 
@@ -43,6 +45,7 @@ export async function up(knex: Knex): Promise<void> {
       [
         'status',
         'blockchainId',
+        'tokenId',
         'issuanceUuid',
         'sender',
         'receiver',

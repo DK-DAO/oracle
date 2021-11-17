@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(config.table.blockchain, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
-    table.integer('chainId').unsigned().notNullable().comment('Chain id of current network');
+    table.integer('chainId').unsigned().index().notNullable().comment('Chain id of current network');
 
     table.string('nativeToken', 32).notNullable().comment('Native token symbol');
 

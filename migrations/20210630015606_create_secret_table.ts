@@ -14,7 +14,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('secret', 66).notNullable().comment('Secret value');
 
-    table.string('digest', 66).notNullable().comment('Digest of secret value');
+    table.string('digest', 66).notNullable().index().comment('Digest of secret value');
 
     table.integer('status').notNullable().defaultTo(0).comment('Status of secret, 0-new, 1-revealed, 255-error');
 

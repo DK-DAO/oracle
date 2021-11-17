@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(config.table.config, (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
-    table.string('key', 255).unique().notNullable().comment('Key of data');
+    table.string('key', 255).unique().notNullable().index().comment('Key of data');
 
     table.string('type', 255).notNullable().comment('Type of data, to perform auto convert');
 

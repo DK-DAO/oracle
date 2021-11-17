@@ -17,6 +17,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table
       .integer('status')
+      .index()
       .notNullable()
       .defaultTo(EPaymentStatus.NewPayment)
       .comment('Status of the processing of payment');
@@ -27,7 +28,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('sender', 42).notNullable().comment('Sender');
 
-    table.string('receiver', 42).notNullable().comment('Receiver');
+    table.string('receiver', 42).notNullable().index().comment('Receiver');
 
     table.string('value', 66).notNullable().comment('Value of transaction');
 

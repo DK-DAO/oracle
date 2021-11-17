@@ -9,6 +9,9 @@ import { ERC20 } from '../typechain';
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
+  await knex(config.table.payment).del();
+  await knex(config.table.watching).del();
+  await knex(config.table.sync).del();
   await knex(config.table.token).del();
   await knex(config.table.blockchain).del();
 
@@ -52,6 +55,8 @@ export async function seed(knex: Knex): Promise<void> {
     ],
     // Fantom Testnet
     [4002, ['0xf33B79F915fC4A870ED1b26356C9f6EB60638DB8']],
+    // Local test
+    [911, ['0x6Dd931C257Cd6295360a5122e6A44e184286b0fe']],
   ]);
 
   for (let i = 0; i < supportedBlockchain.length; i += 1) {
