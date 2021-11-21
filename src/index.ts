@@ -20,12 +20,16 @@ main.on('exit', (signal: string) => {
   logger.info('Received', signal, 'we are going to terminate child processes');
 });
 
+/*
+
 const provider = new ethers.providers.StaticJsonRpcProvider('http://localhost:8545');
+
 
 // Keep node mining
 setInterval(async () => {
   await provider.send('evm_mine', []);
 }, 1000);
+
 
 // We will start two instance of apollo server
 main
@@ -38,5 +42,13 @@ main
     name: 'minter',
     payload: `${__dirname}/minter`,
     chainId: '911',
+  })
+  .start();
+*/
+
+main
+  .add({
+    name: 'api',
+    payload: `${__dirname}/api`,
   })
   .start();

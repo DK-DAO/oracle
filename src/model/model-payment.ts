@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { ModelMysqlBasic } from '@dkdao/framework';
+import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao/framework';
 import config from '../helper/config';
 
 export enum EPaymentStatus {
@@ -77,6 +77,16 @@ export class ModelPayment extends ModelMysqlBasic<IPayment> {
       )
       .join(`${config.table.token} as t`, 'e.tokenId', 't.id')
       .join(`${config.table.blockchain} as b`, 'e.blockchainId', 'b.id');
+  }
+
+  public async getPaymentList(
+    pagination: IPagination = { offset: 0, limit: 20, order: [] },
+    conditions?: IModelCondition<IPayment>[],
+  ): Promise<IResponse<IPaymentDetail>> {
+    return this.getListByCondition<IPaymentDetail>(
+      this.attachConditions(this.getDetailQuery(), conditions || []),
+      pagination,
+    );
   }
 
   public basicQuery(): Knex.QueryBuilder {
