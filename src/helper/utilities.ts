@@ -80,7 +80,7 @@ export function timestamp() {
 
 export function buildDigest(): { s: Buffer; h: Buffer } {
   const buf = crypto.randomBytes(32);
-  // Write time stampe to last 8 bytes it's implementation of S || t
+  // Write timestamp to last 8 bytes it's implementation of S || t
   buf.writeBigInt64BE(BigInt(timestamp()), 24);
 
   return {

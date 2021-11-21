@@ -97,7 +97,7 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
         discount = await imDiscount.getDiscountByAddress(payment.sender);
         numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, discount);
 
-        logger.info(`Processing ${floatVal} for: ${payment.sender} discount: ${discount * 100}%`);
+        logger.info(`Issuing ${floatVal} for: ${payment.sender} discount: ${discount * 100}%`);
 
         if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
           throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);

@@ -1,11 +1,13 @@
 /* eslint-disable no-await-in-loop */
 import { Knex } from 'knex';
 import { ModelMysqlBasic, IPagination, IModelCondition, IResponse } from '@dkdao/framework';
+import config from '../helper/config';
 
 export interface INftResult {
   id: number;
   tokenId: number;
   issuanceUuid: string;
+  nftBoxId: string;
   owner: string;
   nftTokenId: string;
   applicationId: number;
@@ -29,7 +31,7 @@ export interface INftResultDetail extends INftResult {
 
 export class ModelNftResult extends ModelMysqlBasic<INftResult> {
   constructor() {
-    super('open_result');
+    super(config.table.nftResult);
   }
 
   public basicQuery(): Knex.QueryBuilder {
@@ -37,11 +39,12 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
   }
 
   public detailQuery() {
-    return this.getKnex()('open_result as o')
+    return this.getKnex()(`${config.table.nftResult} as o`)
       .select(
         'o.id as id',
         'tokenId',
         'issuanceUuid',
+        'nftBoxId',
         'owner',
         'nftTokenId',
         'applicationId',
@@ -52,13 +55,14 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
         'itemId',
         'itemSerial',
         'transactionHash',
+        'o.updatedDate as updatedDate',
         'o.createdDate as createdDate',
         't.blockchainId as blockchainId',
         't.name as tokenName',
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
-      .join('token as t', 'o.tokenId', 't.id');
+      .join(`${config.table.token} as t`, 'o.tokenId', 't.id');
   }
 
   public async getNftResultList(

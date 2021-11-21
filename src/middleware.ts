@@ -25,12 +25,11 @@ if (config.nodeEnv !== 'production') {
   // Cors for development with origin: *
   Mux.use(cors());
 } else {
-  /*
   Mux.use(function DebugMiddleWare(req: express.Request, _res: express.Response, next: Function) {
     const signature = req.header('x-signature');
     if (typeof signature !== 'undefined' && verifyProof(config.apiUser, config.apiSecret, signature)) {
       return next();
     }
     _res.send('{"success":false,"result":{"message":"Access denied"}}');
-  }); */
+  });
 }
