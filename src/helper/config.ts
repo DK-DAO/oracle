@@ -1,8 +1,13 @@
 import { Utilities } from '@dkdao/framework';
 import { parse } from 'dotenv';
 import fs from 'fs';
+import { URL } from 'url';
 import { getBlockchainInfoFromURL, IBlockchainInfo } from './url-parser';
 import { objToCamelCase } from './utilities';
+
+export interface IKeyValue {
+  [key: string]: string | number | Date;
+}
 
 export interface ITableName {
   blockchain: string;
@@ -37,15 +42,22 @@ export interface IApplicationConfig {
 export interface IExtendApplicationConfig extends IApplicationConfig {
   table: ITableName;
 }
-const config: IApplicationConfig = ((conf) => {
-  const converted: any = {};
-  const networkRpc: Partial<IBlockchainInfo>[] = [];
+
+// Read configurations from .env file
+function readFromEnvFile() {
+  return objToCamelCase(parse(fs.readFileSync(Utilities.File.filePathAtRoot('.env'))));
+}
+
+// Set default value is ''
+function defaultValues(input: IKeyValue): IKeyValue {
+  const kv: IKeyValue = {};
   const keys = [
     'nodeEnv',
     'mariadbConnectUrl',
     'walletMnemonic',
     'privOracleDkdao',
     'privOracleDuelistKing',
+    'serviceBind',
     'rpc0',
     'rpc1',
     'rpc2',
@@ -54,40 +66,58 @@ const config: IApplicationConfig = ((conf) => {
     'rpc5',
     'mariadbTablePrefix',
     'activePhase',
-    'serviceHost',
-    'servicePort',
   ];
-  const kvs = <[string, string][]>Object.entries(conf);
+  // Default value is empty
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    kv[key] = input[key] || '';
+  }
+  return kv;
+}
+
+function configParser(kv: IKeyValue): IApplicationConfig {
+  const parsing: any = {};
+  const networkRpc: Partial<IBlockchainInfo>[] = [];
+
+  const kvs = <[string, string][]>Object.entries(kv);
   for (let i = 0; i < kvs.length; i += 1) {
     const [k, v]: [string, string] = kvs[i];
     switch (k) {
       case 'activePhase':
       case 'servicePort':
-        converted[k] = parseInt(v, 10);
+        parsing[k] = parseInt(v, 10);
         break;
       case 'saleScheduleSale':
-        converted[k] = new Date(v.trim());
+        parsing[k] = new Date(v.trim());
+        break;
+      case 'serviceBind':
+        try {
+          const serviceUrl = new URL(parsing.serviceBind);
+          parsing.serviceHost = serviceUrl.hostname;
+          parsing.servicePort = parseInt(serviceUrl.port, 10);
+        } catch (e) {
+          parsing.serviceHost = '0.0.0.0';
+          parsing.servicePort = 1337;
+        }
         break;
       default:
-        converted[k] = v.trim();
+        parsing[k] = v.trim();
     }
   }
-  // Default value is empty
-  for (let i = 0; i < keys.length; i += 1) {
-    const key = keys[i];
-    converted[key] = converted[key] || '';
-  }
+
   for (let j = 0; j <= 5; j += 1) {
-    if (converted[`rpc${j}`].length > 0) {
-      const blockchain = getBlockchainInfoFromURL(converted[`rpc${j}`]);
+    if (parsing[`rpc${j}`].length > 0) {
+      const blockchain = getBlockchainInfoFromURL(parsing[`rpc${j}`]);
       if (typeof blockchain === 'object') {
         networkRpc.push(blockchain);
       }
     }
-    delete converted[`rpc${j}`];
+    delete parsing[`rpc${j}`];
   }
-  return { networkRpc, ...converted };
-})(objToCamelCase(parse(fs.readFileSync(Utilities.File.filePathAtRoot('.env')))));
+  return { networkRpc, ...parsing };
+}
+
+const config: IApplicationConfig = configParser(defaultValues(readFromEnvFile()));
 
 export default <IExtendApplicationConfig>{
   ...config,
