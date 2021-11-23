@@ -106,3 +106,4 @@ build
 src/data/
 .DS_Store
 .env*
+*.env
