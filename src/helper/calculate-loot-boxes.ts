@@ -51,7 +51,6 @@ export function calculateNumberOfLootBoxes(money: number, discount: number = 0):
   for (; noBoxes < maxBoxes; noBoxes += 1) {
     price = calculatePriceAfterDiscount(noBoxes, discount);
     const calculatedDiff = Math.abs(money - noBoxes * price);
-    // console.log(calculatedDiff <= diff, money - noBoxes * price, calculatedDiff, noBoxes);
     if (calculatedDiff <= diff) {
       calculatedBox = noBoxes;
       diff = calculatedDiff;

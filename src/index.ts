@@ -1,5 +1,8 @@
-import { ClusterApplication, IApplicationPayload } from '@dkdao/framework';
+import { ClusterApplication, IApplicationPayload, Connector } from '@dkdao/framework';
+import { ethers } from 'ethers';
+import config from './helper/config';
 import logger from './helper/logger';
+import ModelBlockchain from './model/model-blockchain';
 
 const main = new ClusterApplication();
 
@@ -19,35 +22,41 @@ main.on('exit', (signal: string) => {
   logger.info('Received', signal, 'we are going to terminate child processes');
 });
 
-/*
+Connector.connectByUrl(config.mariadbConnectUrl);
 
-const provider = new ethers.providers.StaticJsonRpcProvider('http://localhost:8545');
+(async () => {
+  const imBlockchain = new ModelBlockchain();
+  const blockchainActive = await imBlockchain.getActiveBlockChainList();
+  const blockchainPayment = await imBlockchain.getPaymentBlockchainList();
 
+  for (let i = 0; i < blockchainPayment.length; i += 1) {
+    main.add({
+      name: `Observer for ${blockchainPayment[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
+      payload: `${__dirname}/observer`,
+      chainId: blockchainPayment[i].chainId.toString(),
+    });
+  }
 
-// Keep node mining
-setInterval(async () => {
-  await provider.send('evm_mine', []);
-}, 1000);
+  for (let i = 0; i < blockchainActive.length; i += 1) {
+    // @todo Remove this if possible it just need for
+    if (blockchainActive[i].chainId === 911) {
+      const provider = new ethers.providers.StaticJsonRpcProvider('http://localhost:8545');
+      // Keep node mining
+      setInterval(async () => {
+        await provider.send('evm_mine', []);
+      }, 1000);
+    }
+    main.add({
+      name: `Minter for ${blockchainActive[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
+      payload: `${__dirname}/minter`,
+      chainId: blockchainActive[i].chainId.toString(),
+    });
+  }
 
-
-// We will start two instance of apollo server
-main
-  .add({
-    name: 'observer',
-    payload: `${__dirname}/observer`,
-    chainId: '911',
-  })
-  .add({
-    name: 'minter',
-    payload: `${__dirname}/minter`,
-    chainId: '911',
-  })
-  .start();
-*/
-
-main
-  .add({
-    name: 'api',
-    payload: `${__dirname}/api`,
-  })
-  .start();
+  main
+    .add({
+      name: 'api',
+      payload: `${__dirname}/api`,
+    })
+    .start();
+})();

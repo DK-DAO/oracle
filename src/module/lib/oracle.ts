@@ -60,7 +60,6 @@ export class Oracle {
   }
 
   private async setNonce(address: string, nonce: number) {
-    console.log('\t>>>>>>>', address, nonce);
     await this.nonceManagement.setNonce(address, nonce);
     // We put it here to make sure we won't forget
     this.nextExecutor += 1;
