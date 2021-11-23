@@ -9,6 +9,8 @@ RUN apk add python3 alpine-sdk \
 
 COPY . "${HOME}/app/"
 
+RUN npm i -g knex
+
 RUN cd ${HOME}/app \
     && yarn install \
     && npm run build \
