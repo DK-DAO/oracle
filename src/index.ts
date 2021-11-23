@@ -1,5 +1,4 @@
 import { ClusterApplication, IApplicationPayload } from '@dkdao/framework';
-import { ethers } from 'ethers';
 import logger from './helper/logger';
 
 const main = new ClusterApplication();

@@ -38,7 +38,7 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
   }
 
   public detailQuery() {
-    return this.getKnex()(`${config.table.nftOwnership} as n`)
+    return this.getKnex()(`${this.tableName} as n`)
       .select(
         'n.id as id',
         'tokenId',
@@ -52,7 +52,7 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
         't.symbol as tokenSymbol',
         't.address as tokenAddress',
       )
-      .join('token as t', 'n.tokenId', 't.id');
+      .join(`${config.table.token} as t`, 'n.tokenId', 't.id');
   }
 
   public async getNftList(
@@ -60,7 +60,20 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
     conditions?: IModelCondition<INftOwnership>[],
   ): Promise<IResponse<INftOwnershipDetail>> {
     return this.getListByCondition<INftOwnershipDetail>(
-      this.attachConditions(this.detailQuery(), conditions),
+      this.attachConditions(
+        this.getKnex()(`${this.tableName} as n`)
+          .select(
+            'owner',
+            'nftTokenId',
+            'transactionHash',
+            'b.name',
+            't.name as tokenName',
+            't.address as tokenAddress',
+          )
+          .join(`${config.table.token} as t`, 'n.tokenId', 't.id')
+          .join(`${config.table.blockchain} as b`, 'b.id', 't.blockchainId'),
+        conditions,
+      ),
       pagination,
     );
   }

@@ -1,6 +1,6 @@
 import { Mux, Validator, IRequestData, IResponse, Pagination } from '@dkdao/framework';
 import { utils } from 'ethers';
-import ModelPayment, { IPayment } from '../model/model-payment';
+import ModelPayment, { IPaymentDetail } from '../model/model-payment';
 
 Mux.get(
   '/api/v1/payment',
@@ -10,8 +10,8 @@ Mux.get(
     location: 'query',
     validator: (v) => utils.isAddress(v),
     message: 'Sender address',
-  }).merge(Pagination.getPaginationValidator(0, 500)),
-  async (req: IRequestData): Promise<IResponse<IPayment>> => {
+  }).merge(Pagination.getPaginationValidator(0, 50)),
+  async (req: IRequestData): Promise<IResponse<IPaymentDetail>> => {
     const {
       query: { sender, offset, limit, order },
     } = req;

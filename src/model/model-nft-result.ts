@@ -69,7 +69,30 @@ export class ModelNftResult extends ModelMysqlBasic<INftResult> {
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
     conditions?: IModelCondition<INftResult>[],
   ): Promise<IResponse<INftResultDetail>> {
-    return this.getListByCondition<INftResultDetail>(this.attachConditions(this.detailQuery(), conditions), pagination);
+    return this.getListByCondition<INftResultDetail>(
+      this.attachConditions(
+        this.getKnex()(`${this.tableName} as r`)
+          .select(
+            'issuanceUuid',
+            'nftBoxId',
+            'owner',
+            'nftTokenId',
+            'applicationId',
+            'itemEdition',
+            'itemGeneration',
+            'itemRareness',
+            'itemType',
+            'itemId',
+            'itemSerial',
+            'transactionHash',
+            'r.updatedDate as updatedDate',
+            'r.createdDate as createdDate',
+          )
+          .join(`${config.table.token} as t`, 'r.tokenId', 't.id'),
+        conditions,
+      ),
+      pagination,
+    );
   }
 }
 

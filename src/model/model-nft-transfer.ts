@@ -1,6 +1,8 @@
 import { Knex } from 'knex';
-import { ModelMysqlBasic } from '@dkdao/framework';
+import { ModelMysqlBasic, IModelCondition, IPagination, IResponse } from '@dkdao/framework';
 import config from '../helper/config';
+
+const zeroAddress = '0x0000000000000000000000000000000000000000';
 
 export enum ENftTransferStatus {
   NewNftTransfer = 1,
@@ -79,6 +81,39 @@ export class ModelNftTransfer extends ModelMysqlBasic<INftTransfer> {
 
   public basicQuery(): Knex.QueryBuilder {
     return this.getDefaultKnex().select('*');
+  }
+
+  public async getBoxTransferList(
+    pagination: IPagination = { offset: 0, limit: 20, order: [] },
+    conditions?: IModelCondition<INftTransfer>[],
+  ): Promise<IResponse<INftTransferDetail>> {
+    return this.getListByCondition<INftTransferDetail>(
+      this.attachConditions(
+        this.getKnex()(`${this.tableName} as e`)
+          .select(
+            'status',
+            'issuanceUuid',
+            'eventId',
+            'receiver',
+            'nftTokenId',
+            'blockNumber',
+            'blockHash',
+            'transactionHash',
+            'contractAddress',
+            'e.createdDate as createdDate',
+            'e.updatedDate as updatedDate',
+            'b.name as blockchainName',
+            't.name as tokenName',
+            't.symbol as tokenSymbol',
+          )
+          .join(`${config.table.token} as t`, 'e.tokenId', 't.id')
+          .join(`${config.table.blockchain} as b`, `e.blockchainId`, 'b.id')
+          .where('sender', zeroAddress)
+          .where('t.symbol', 'DKI'),
+        conditions,
+      ),
+      pagination,
+    );
   }
 }
 

@@ -84,7 +84,30 @@ export class ModelPayment extends ModelMysqlBasic<IPayment> {
     conditions?: IModelCondition<IPayment>[],
   ): Promise<IResponse<IPaymentDetail>> {
     return this.getListByCondition<IPaymentDetail>(
-      this.attachConditions(this.getDetailQuery(), conditions || []),
+      this.attachConditions(
+        this.getKnex()(`${this.tableName} as e`)
+          .select(
+            'status',
+            'eventId',
+            'issuanceUuid',
+            'sender',
+            'receiver',
+            'value',
+            'memo',
+            'blockNumber',
+            'blockHash',
+            'transactionHash',
+            'e.createdDate as createdDate',
+            'e.updatedDate as updatedDate',
+            'b.name as blockchainName',
+            't.decimal as tokenDecimal',
+            't.name as tokenName',
+            't.symbol as tokenSymbol',
+          )
+          .join(`${config.table.token} as t`, 'e.tokenId', 't.id')
+          .join(`${config.table.blockchain} as b`, 'e.blockchainId', 'b.id'),
+        conditions,
+      ),
       pagination,
     );
   }

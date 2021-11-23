@@ -33,9 +33,9 @@
     kuler "^2.0.0"
 
 "@dkdao/framework@^1.0.6":
-  version "1.0.21"
-  resolved "https://registry.yarnpkg.com/@dkdao/framework/-/framework-1.0.21.tgz#58881e3ab1075383f693b9432640e5d6065e10ee"
-  integrity sha512-txXEKFkGlZ6ab/VUtNDCjFi+muiJJR4hi8bkNEKmjQQIPFzw1NlWroFgIyuDhJT/gTBKf0Z2TYlKU/tcUPKF6A==
+  version "1.0.23"
+  resolved "https://registry.yarnpkg.com/@dkdao/framework/-/framework-1.0.23.tgz#2d5cd4e42ce93b223eec41d8bc30a24420a3eb7e"
+  integrity sha512-bqj87miv1S3Wdk/T/oMyB9SE/pxaysivIvl1lj1k8t+rpSofJCnk6glRyY2SB5TYFA5eFGiv1smxTRs+jnknxQ==
   dependencies:
     add "^2.0.6"
     chalk "^4.1.2"

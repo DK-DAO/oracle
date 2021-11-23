@@ -70,11 +70,27 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
     }
   }
 
-  public async getScheduling(
+  public async getNftIssuanceList(
     pagination: IPagination = { offset: 0, limit: 20, order: [] },
     conditions?: IModelCondition<INftIssuance>[],
   ): Promise<IResponse<INftIssuance>> {
-    return this.getListByCondition<INftIssuance>(this.attachConditions(this.basicQuery(), conditions), pagination);
+    return this.getListByCondition<INftIssuance>(
+      this.attachConditions(
+        this.getDefaultKnex().select(
+          'issuanceUuid',
+          'phase',
+          'numberOfBox',
+          'totalBoxes',
+          'transactionHash',
+          'owner',
+          'status',
+          'createdDate',
+          'updatedDate',
+        ),
+        conditions,
+      ),
+      pagination,
+    );
   }
 
   // Perform batch buy based on recorded event

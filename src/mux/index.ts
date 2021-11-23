@@ -1,6 +1,7 @@
 import './nft-ownership';
-import './box-schedule';
+import './box-issuance';
 import './box-price';
-import './box-result';
+import './card-result';
 import './box-discount';
+import './box-transfer';
 import './payment';
