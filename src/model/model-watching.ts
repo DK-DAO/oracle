@@ -25,13 +25,6 @@ export class ModelWatching extends ModelMysqlBasic<IWatching> {
   public basicQuery(): Knex.QueryBuilder {
     return this.getDefaultKnex().select('*');
   }
-
-  public getPaymentBlockchainList() {
-    return this.getKnex()(`${config.table.watching} as w`)
-      .select('b.id', 'b.name', 'b.chainId')
-      .join(`${config.table.blockchain} as b`, 'w.blockchainId', 'b.id')
-      .groupBy('w.blockchainId');
-  }
 }
 
 export default ModelWatching;
