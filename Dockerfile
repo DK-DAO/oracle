@@ -13,9 +13,7 @@ RUN npm i -g knex
 
 RUN cd ${HOME}/app \
     && yarn install \
-    && npm run build \
-    && knex migrate:latest \
-    && knex seed:run
+    && npm run build
 
 WORKDIR ${HOME}/app/
 
