@@ -10,6 +10,7 @@ import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum, getLowCaseAddress } from '../helper/utilities';
 import { EPaymentStatus, ModelPayment } from '../model/model-payment';
 import ModelNftTransfer, { ENftTransferStatus } from '../model/model-nft-transfer';
+import ModelNftOwnership from '../model/model-nft-ownership';
 import config from '../helper/config';
 
 // Log interface
@@ -375,6 +376,10 @@ export class ModuleObserver {
         })
         .add('syncing event from blockchain', async () => {
           await this.eventSync();
+        })
+        .add('oracle monitoring nft ownership', async () => {
+          const nftOwnership = new ModelNftOwnership();
+          await nftOwnership.syncOwnership();
         })
         .start();
     } else {

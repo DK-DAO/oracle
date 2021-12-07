@@ -7,7 +7,6 @@ import ModelToken, { EToken, IToken } from '../model/model-token';
 import Oracle from './lib/oracle';
 import ModelNftIssuance from '../model/model-nft-issuance';
 import ModelSecret from '../model/model-secret';
-import ModelNftOwnership from '../model/model-nft-ownership';
 
 // Reveal duration 30 mins
 const revealDuration = 3600000;
@@ -101,11 +100,6 @@ export class ModuleMinter {
         } else {
           logger.warning('Due to empty mnemonic we will skip oracle operation');
         }
-
-        this.queue.add('oracle monitoring nft ownership', async () => {
-          const nftOwnership = new ModelNftOwnership();
-          await nftOwnership.syncOwnership();
-        });
       }
 
       this.queue.start();
