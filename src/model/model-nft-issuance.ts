@@ -153,7 +153,7 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
         }
         // Update status to succeed
         await tx(config.table.payment)
-          .update({ status: EPaymentStatus.Success, code, discount })
+          .update({ status: EPaymentStatus.Success, code, discount, phase: config.activePhase })
           .where({ id: payment.id });
       })
       .catch(async (error: Error) => {

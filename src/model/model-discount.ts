@@ -23,7 +23,8 @@ export class ModelDiscount extends ModelMysqlBasic<IDiscount> {
   }
 
   public async getDiscountByAddress(address: string): Promise<IDiscount | undefined> {
-    const [result] = await this.basicQuery().where({ address });
+    // @todo: Move config value to some where else
+    const [result] = await this.basicQuery().where({ address, phase: config.activePhase });
     if (typeof result !== 'undefined' && typeof result.discount !== 'undefined') {
       return result;
     }

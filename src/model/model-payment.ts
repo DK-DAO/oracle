@@ -25,6 +25,7 @@ export interface IPayment {
   contractAddress: string;
   code: string;
   discount: number;
+  phase: number;
   createdDate: string;
   updatedDate: string;
 }
@@ -94,6 +95,7 @@ export class ModelPayment extends ModelMysqlBasic<IPayment> {
             'issuanceUuid',
             'sender',
             'receiver',
+            'phase',
             'code',
             'discount',
             'value',
