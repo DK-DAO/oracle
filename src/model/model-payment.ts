@@ -23,6 +23,8 @@ export interface IPayment {
   blockHash: string;
   transactionHash: string;
   contractAddress: string;
+  code: string;
+  discount: number;
   createdDate: string;
   updatedDate: string;
 }
@@ -92,6 +94,8 @@ export class ModelPayment extends ModelMysqlBasic<IPayment> {
             'issuanceUuid',
             'sender',
             'receiver',
+            'code',
+            'discount',
             'value',
             'memo',
             'blockNumber',

@@ -46,9 +46,7 @@ export class ModelSecret extends ModelMysqlBasic<ISecret> {
           await tx(this.tableName).insert(records[i]);
           // const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
         }
-        await Utilities.TillSuccess(async () => {
-          return contractCallback();
-        });
+        await Utilities.TillSuccess(async () => contractCallback());
       })
       .catch(async (error: Error) => {
         logger.error('Can not open loot boxes', error);

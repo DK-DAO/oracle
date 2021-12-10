@@ -10,11 +10,11 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('address', 256).notNullable().comment('Address that receive the discount');
 
-    table.float('discount').comment('Discount amount');
+    table.float('discount').comment('Discount percent');
 
     table.string('code', 32).notNullable().comment('Code of this discount');
 
-    table.string('memo', 255).notNullable().comment('Memo of this discount');
+    table.string('memo', 255).comment('Memo of this discount');
 
     addCreatedAndUpdated(knex, table);
 
