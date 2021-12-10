@@ -22,12 +22,12 @@ export class ModelDiscount extends ModelMysqlBasic<IDiscount> {
     return this.getDefaultKnex().select('*');
   }
 
-  public async getDiscountByAddress(address: string): Promise<number> {
+  public async getDiscountByAddress(address: string): Promise<IDiscount | undefined> {
     const [result] = await this.basicQuery().where({ address });
     if (typeof result !== 'undefined' && typeof result.discount !== 'undefined') {
-      return result.discount;
+      return result;
     }
-    return 0;
+    return undefined;
   }
 }
 

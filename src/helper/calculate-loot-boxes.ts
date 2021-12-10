@@ -1,14 +1,10 @@
+import BigNumber from 'bignumber.js';
+
 export type TStage = 'genesis' | 'sale';
 
-export const basedBoxPrice = 5;
+export const basedBoxPrice = new BigNumber(1.8);
 
-export const batchIssue = 500;
-
-export interface ICalculateResult {
-  numberOfLooBoxes: number;
-  distribution: number[];
-  price: number;
-}
+export const batchIssue = 100;
 
 function repeat(el: any, times: number): any[] {
   const r = [];
@@ -18,40 +14,35 @@ function repeat(el: any, times: number): any[] {
   return r;
 }
 
-export function prettyValue(v: number, p: number = 1000000) {
-  return Math.ceil(v * p) / p;
-}
-
-export function discountByBoxes(noBoxes: number) {
-  if (noBoxes < 5) {
-    return 0;
+export function discountByBoxes(noBoxes: BigNumber): BigNumber {
+  if (noBoxes.lt(5)) {
+    return new BigNumber(0);
   }
-  return Math.log(noBoxes) / Math.log(100) / basedBoxPrice;
+  if (noBoxes.gt(500)) {
+    return new BigNumber(0.3);
+  }
+  return noBoxes.times(3).div(2).sqrt().div(100);
 }
 
-export function applyDiscount(basePrice: number, percent: number) {
-  return basePrice * (1 - prettyValue(percent, 100));
+export function applyDiscount(basePrice: BigNumber, percent: BigNumber) {
+  return basePrice.times(new BigNumber(1).minus(percent));
 }
 
-export function calculatePriceAfterDiscount(noBoxes: number, discount: number = 0) {
+export function calculatePriceAfterDiscount(noBoxes: BigNumber, discount: BigNumber = new BigNumber(0)) {
   return applyDiscount(applyDiscount(basedBoxPrice, discount), discountByBoxes(noBoxes));
 }
 
-export function approximate(a: number, b: number, r: number = 0.5) {
-  return b - b * r < a && a < b + b * r;
-}
-
-export function calculateNumberOfLootBoxes(money: number, discount: number = 0): number {
+export function calculateNumberOfLootBoxes(money: BigNumber, discount: BigNumber = new BigNumber(0)): BigNumber {
   // Cheapest is 1$ for 1 box
-  const maxBoxes = Math.ceil(money);
-  let noBoxes = 1;
-  let price = 0;
-  let diff = Infinity;
+  const maxBoxes = new BigNumber(money.times(2).toFixed(0));
+  let noBoxes = new BigNumber(0);
+  let price = new BigNumber(0);
+  let diff = new BigNumber(Infinity);
   let calculatedBox = maxBoxes;
-  for (; noBoxes < maxBoxes; noBoxes += 1) {
+  for (; noBoxes.lte(maxBoxes); noBoxes = noBoxes.plus(1)) {
     price = calculatePriceAfterDiscount(noBoxes, discount);
-    const calculatedDiff = Math.abs(money - noBoxes * price);
-    if (calculatedDiff <= diff) {
+    const calculatedDiff = money.minus(noBoxes.times(price)).abs();
+    if (calculatedDiff.lte(diff)) {
       calculatedBox = noBoxes;
       diff = calculatedDiff;
     }

@@ -6,7 +6,7 @@ import { ModelMysqlBasic, IPagination, IModelCondition, IResponse, Transaction }
 import { EPaymentStatus, ModelPayment } from './model-payment';
 import logger from '../helper/logger';
 import { BigNum } from '../helper/utilities';
-import { calculateDistribution, calculateNumberOfLootBoxes } from '../helper/calculate-loot-boxes';
+import { calculateDistribution, calculateNumberOfLootBoxes, discountByBoxes } from '../helper/calculate-loot-boxes';
 import config from '../helper/config';
 import ModelDiscount from './model-discount';
 
@@ -105,27 +105,39 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
 
     await Transaction.getInstance()
       .process(async (tx: Knex.Transaction) => {
-        const floatVal = BigNum.fromHexString(payment.value).div(BigNum.from(10).pow(payment.tokenDecimal)).toNumber();
-        let numberOfLootBoxes = 0;
+        const floatVal = BigNum.fromHexString(payment.value).div(BigNum.from(10).pow(payment.tokenDecimal));
+
+        // Apply discount code from database
+        const discountRecord = await imDiscount.getDiscountByAddress(payment.sender);
         let discount = 0;
+        let code = '';
+        if (typeof discountRecord !== 'undefined') {
+          discount = discountRecord.discount || 0;
+          code = discountRecord.code || '';
+        }
 
-        // Issue boxes for donors
-        discount = await imDiscount.getDiscountByAddress(payment.sender);
-        numberOfLootBoxes = calculateNumberOfLootBoxes(floatVal, discount);
+        const calculatedBoxes = calculateNumberOfLootBoxes(floatVal, BigNum.from(discount));
+        const numberOfLootBoxes = calculatedBoxes.toNumber();
 
-        logger.info(`Issuing ${floatVal} for: ${payment.sender} discount: ${discount * 100}%`);
+        logger.info(
+          `Issuing ${numberOfLootBoxes} for: ${payment.sender} DbC: ${discount * 100}%, DbN: ${discountByBoxes(
+            calculatedBoxes,
+          )
+            .times(100)
+            .toFixed(0)} %`,
+        );
 
-        if (!Number.isFinite(floatVal) || floatVal < 0 || numberOfLootBoxes <= 0) {
-          throw new Error(`Unexpected result, value: ${floatVal}, No boxes ${numberOfLootBoxes}`);
+        if (!floatVal.isFinite() || floatVal.lte(0) || !Number.isFinite(numberOfLootBoxes) || numberOfLootBoxes <= 0) {
+          throw new Error(`Unexpected result, value: ${floatVal.toString()}, No boxes ${numberOfLootBoxes}`);
         }
         // Calculate distribution of loot boxes
-
         const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
         logger.info(
           `Total number of loot boxes: ${numberOfLootBoxes} (${lootBoxDistribution}) for: ${payment.sender} discount: ${
             discount * 100
           }%`,
         );
+
         const records = lootBoxDistribution.map((item) => {
           return <Partial<INftIssuance>>{
             phase: config.activePhase,
@@ -140,7 +152,9 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
           await tx(this.tableName).insert(records[i]);
         }
         // Update status to succeed
-        await tx(config.table.payment).update({ status: EPaymentStatus.Success }).where({ id: payment.id });
+        await tx(config.table.payment)
+          .update({ status: EPaymentStatus.Success, code, discount })
+          .where({ id: payment.id });
       })
       .catch(async (error: Error) => {
         logger.error('Can not perform batch buy', error);

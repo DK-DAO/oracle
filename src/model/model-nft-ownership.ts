@@ -235,8 +235,8 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
             .where({ id: nftTransfer.id });
         })
         .catch(async (error: Error) => {
-          await this.getKnex()(config.table.payment)
-            .update({ status: ENftIssuanceStatus.Error })
+          await this.getKnex()(config.table.nftTransfer)
+            .update({ status: ENftTransferStatus.Error })
             .where({ id: nftTransfer.id });
           logger.error('Can not sync nft ownership', error);
         })
