@@ -59,6 +59,23 @@ export class ModuleObserver {
 
   private topics: any = [];
 
+  private async getLogs(fromBlock: number, toBlock: number): Promise<Log[]> {
+    return Utilities.TillSuccess<Log[]>(
+      async () =>
+        this.provider.getLogs({
+          fromBlock,
+          toBlock,
+          topics: this.topics,
+        }),
+      2000,
+      5,
+    );
+  }
+
+  private async getBlockNumber(): Promise<number> {
+    return Utilities.TillSuccess<number>(async () => this.provider.getBlockNumber(), 2000, 5);
+  }
+
   // Get blockchain info from env
   private async getBlockchainInfo(): Promise<boolean> {
     const imBlockchain = new ModelBlockchain();
@@ -159,7 +176,7 @@ export class ModuleObserver {
     if (typeof this.synced.id === 'undefined') {
       const [tmpSyncState] = await imSync.get([{ field: 'blockchainId', value: this.blockchain.id }]);
       if (typeof tmpSyncState === 'undefined') {
-        const startPoint = (await this.provider.getBlockNumber()) - this.blockchain.safeConfirmation;
+        const startPoint = (await this.getBlockNumber()) - this.blockchain.safeConfirmation;
         const newRecord = await imSync.create({
           blockchainId: this.blockchain.id,
           startBlock: startPoint,
@@ -184,12 +201,12 @@ export class ModuleObserver {
     ) {
       // Only check safe blocks
       if (targetBlock - syncedBlock < this.blockchain.numberOfSyncBlock) {
-        const currentBlockNumber = (await this.provider.getBlockNumber()) - this.blockchain.safeConfirmation;
+        const currentBlockNumber = (await this.getBlockNumber()) - this.blockchain.safeConfirmation;
         // Re-target
         if (currentBlockNumber > targetBlock) {
           updateData.targetBlock = currentBlockNumber;
           this.synced.targetBlock = currentBlockNumber;
-          // Update after re target
+          // Update after re-target
           isChanged = true;
         }
       }
@@ -217,17 +234,7 @@ export class ModuleObserver {
     const imNftTransfer = new ModelNftTransfer();
     // Get logs for given address
     /** @todo: Warning we might need to split payment and issuance later */
-    const rawLogs = await Utilities.TillSuccess<Log[]>(
-      async () => {
-        return this.provider.getLogs({
-          fromBlock,
-          toBlock,
-          topics: this.topics,
-        });
-      },
-      2000,
-      5,
-    );
+    const rawLogs = await this.getLogs(fromBlock, toBlock);
 
     // We filter necessary logs from raw log
     let logs = rawLogs.filter((i) => this.supportedTokens.has(i.address.toLowerCase()));
