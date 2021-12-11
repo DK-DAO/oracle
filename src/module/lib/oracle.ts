@@ -166,7 +166,7 @@ export class Oracle {
             );
         } catch (e) {
           logger.error('Use the double gas price since', e);
-          result = await await this.contracts.dkOracleProxy
+          result = await this.contracts.dkOracleProxy
             .connect(currentExecutor)
             .safeCall(
               await craftProof(this.dkOracle, this.contracts.dkOracleProxy),

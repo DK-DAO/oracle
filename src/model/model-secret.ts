@@ -4,6 +4,7 @@ import { Utilities } from 'noqueue';
 import { ModelMysqlBasic, Transaction } from '@dkdao/framework';
 import logger from '../helper/logger';
 import config from '../helper/config';
+import { RetryTimeOut, RetryTimes } from '../helper/const';
 
 export enum ESecretStatus {
   New = 0,
@@ -46,7 +47,7 @@ export class ModelSecret extends ModelMysqlBasic<ISecret> {
           await tx(this.tableName).insert(records[i]);
           // const { id } = await tx(this.tableName).select('id').whereRaw('`id`=LAST_INSERT_ID()').first();
         }
-        await Utilities.TillSuccess(async () => contractCallback());
+        await Utilities.TillSuccess(async () => contractCallback(), RetryTimeOut, RetryTimes);
       })
       .catch(async (error: Error) => {
         logger.error('Can not open loot boxes', error);

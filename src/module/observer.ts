@@ -12,6 +12,7 @@ import { EPaymentStatus, ModelPayment } from '../model/model-payment';
 import ModelNftTransfer, { ENftTransferStatus } from '../model/model-nft-transfer';
 import ModelNftOwnership from '../model/model-nft-ownership';
 import config from '../helper/config';
+import { RetryTimeOut, RetryTimes } from '../helper/const';
 
 // Log interface
 interface Log {
@@ -67,13 +68,13 @@ export class ModuleObserver {
           toBlock,
           topics: this.topics,
         }),
-      2000,
-      5,
+      RetryTimeOut,
+      RetryTimes,
     );
   }
 
   private async getBlockNumber(): Promise<number> {
-    return Utilities.TillSuccess<number>(async () => this.provider.getBlockNumber(), 2000, 5);
+    return Utilities.TillSuccess<number>(async () => this.provider.getBlockNumber(), RetryTimeOut, RetryTimes);
   }
 
   // Get blockchain info from env

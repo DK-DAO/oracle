@@ -28,6 +28,8 @@
   "plugins": ["@typescript-eslint"],
   "rules": {
     "no-shadow": "off",
+    "require-await": "off",
+    "no-return-await": 2,
     "@typescript-eslint/no-shadow": ["error"],
     "import/extensions": [
       "error",

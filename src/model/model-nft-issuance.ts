@@ -9,6 +9,7 @@ import { BigNum } from '../helper/utilities';
 import { calculateDistribution, calculateNumberOfLootBoxes, discountByBoxes } from '../helper/calculate-loot-boxes';
 import config from '../helper/config';
 import ModelDiscount from './model-discount';
+import { RetryTimeOut, RetryTimes } from '../helper/const';
 
 export enum ENftIssuanceStatus {
   New = 0,
@@ -50,9 +51,11 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
       await Transaction.getInstance()
         .process(async (tx: Knex.Transaction) => {
           logger.info(`Trying to issue: ${opening.numberOfBox} loot boxes for ${opening.owner}, id: ${opening.id}`);
-          const txResult = await Utilities.TillSuccess<ethers.ContractTransaction>(async () => {
-            return contractCallback(opening.phase, opening.owner, opening.numberOfBox);
-          });
+          const txResult = await Utilities.TillSuccess<ethers.ContractTransaction>(
+            async () => contractCallback(opening.phase, opening.owner, opening.numberOfBox),
+            RetryTimeOut,
+            RetryTimes,
+          );
           // Update status and update transaction hash
           await tx(this.tableName)
             .update(<Partial<INftIssuance>>{ status: ENftIssuanceStatus.Opened, transactionHash: txResult.hash })

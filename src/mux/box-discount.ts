@@ -30,7 +30,7 @@ Mux.post(
       require: true,
       defaultValue: 0,
       location: 'body',
-      validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 0.4,
+      validator: (e): boolean => Number.isFinite(e) && e >= 0 && e <= 0.2,
       message: 'Percent of discount must be a float in range 0 -> 0.2',
     },
     {
