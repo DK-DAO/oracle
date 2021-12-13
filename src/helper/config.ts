@@ -1,9 +1,5 @@
-import { Utilities } from '@dkdao/framework';
-import { parse } from 'dotenv';
-import fs from 'fs';
-import { URL } from 'url';
+import { ConfigLoader, Singleton, Utilities, Validator } from '@dkdao/framework';
 import { getBlockchainInfoFromURL, IBlockchainInfo } from './url-parser';
-import { objToCamelCase } from './utilities';
 
 export interface IKeyValue {
   [key: string]: string | number | Date;
@@ -43,81 +39,135 @@ export interface IExtendApplicationConfig extends IApplicationConfig {
   table: ITableName;
 }
 
-// Read configurations from .env file
-function readFromEnvFile() {
-  return objToCamelCase(parse(fs.readFileSync(Utilities.File.filePathAtRoot('.env'))));
-}
-
-// Set default value is ''
-function defaultValues(input: IKeyValue): IKeyValue {
-  const kv: IKeyValue = {};
-  const keys = [
-    'nodeEnv',
-    'mariadbConnectUrl',
-    'walletMnemonic',
-    'privOracleDkdao',
-    'privOracleDuelistKing',
-    'serviceBind',
-    'rpc0',
-    'rpc1',
-    'rpc2',
-    'rpc3',
-    'rpc4',
-    'rpc5',
-    'mariadbTablePrefix',
-    'activePhase',
-  ];
-  // Default value is empty
-  for (let i = 0; i < keys.length; i += 1) {
-    const key = keys[i];
-    kv[key] = input[key] || '';
-  }
-  return kv;
-}
-
-function configParser(kv: IKeyValue): IApplicationConfig {
-  const parsing: any = {};
+function parseNetworkRpc(parsing: any): IApplicationConfig {
   const networkRpc: Partial<IBlockchainInfo>[] = [];
-
-  const kvs = <[string, string][]>Object.entries(kv);
-  for (let i = 0; i < kvs.length; i += 1) {
-    const [k, v]: [string, string] = kvs[i];
-    switch (k) {
-      case 'activePhase':
-      case 'servicePort':
-        parsing[k] = parseInt(v, 10);
-        break;
-      case 'saleScheduleSale':
-        parsing[k] = new Date(v.trim());
-        break;
-      case 'serviceBind':
-        try {
-          const serviceUrl = new URL(parsing.serviceBind);
-          parsing.serviceHost = serviceUrl.hostname;
-          parsing.servicePort = parseInt(serviceUrl.port, 10);
-        } catch (e) {
-          parsing.serviceHost = '0.0.0.0';
-          parsing.servicePort = 1337;
-        }
-        break;
-      default:
-        parsing[k] = v.trim();
-    }
-  }
-
   for (let j = 0; j <= 5; j += 1) {
-    if (parsing[`rpc${j}`].length > 0) {
+    if (typeof parsing[`rpc${j}`] === 'string' && parsing[`rpc${j}`].length > 0) {
       const blockchain = getBlockchainInfoFromURL(parsing[`rpc${j}`]);
       if (typeof blockchain === 'object') {
         networkRpc.push(blockchain);
       }
     }
-    delete parsing[`rpc${j}`];
   }
   return { networkRpc, ...parsing };
 }
 
-const config: IApplicationConfig = configParser(defaultValues(readFromEnvFile()));
+const configLoader = Singleton<ConfigLoader>(
+  'oracle-config',
+  ConfigLoader,
+  Utilities.File.filePathAtRoot('.env'),
+  new Validator(
+    {
+      name: 'nodeEnv',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+      enums: ['production', 'development', 'test', 'staging'],
+    },
+    {
+      name: 'mariadbConnectUrl',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+      validator: (e) => /^mysql:\/\//.test(e),
+      message: 'This configuration should look like: mysql://user:password@localhost:port/database',
+    },
+    {
+      name: 'walletMnemonic',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+      validator: (e) => /[a-z\s]+/gi.test(e),
+      message: 'Should not contain special character',
+    },
+    {
+      name: 'privOracleDkdao',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+      validator: (e) => /^0x[0-9a-f]+$/gi.test(e),
+      message: 'Should be a hex string',
+    },
+    {
+      name: 'privOracleDuelistKing',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+      validator: (e) => /^0x[0-9a-f]+$/gi.test(e),
+      message: 'Should be a hex string',
+    },
+    {
+      name: 'serviceBind',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'activePhase',
+      type: 'integer',
+      location: 'any',
+      require: true,
+      validator: (e) => Number.isFinite(e) && Number.isInteger(e) && e > 0,
+    },
+    {
+      name: 'mariadbTablePrefix',
+      type: 'string',
+      location: 'any',
+      require: true,
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc0',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc1',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc2',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc3',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc4',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'rpc5',
+      type: 'string',
+      location: 'any',
+      defaultValue: '',
+      postProcess: (e) => e.trim(),
+    },
+  ),
+);
+
+const config = parseNetworkRpc(configLoader.getConfig());
 
 export default <IExtendApplicationConfig>{
   ...config,

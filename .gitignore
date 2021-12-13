@@ -104,6 +104,9 @@ dist
 .tern-port
 build
 src/data/
-.DS_Store
+**/.DS_Store
 .env*
 *.env
+package-lock.json
+**/*test*
+**/*-example*
