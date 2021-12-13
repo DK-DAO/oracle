@@ -55,7 +55,7 @@ function parseNetworkRpc(parsing: any): IApplicationConfig {
 const configLoader = Singleton<ConfigLoader>(
   'oracle-config',
   ConfigLoader,
-  Utilities.File.filePathAtRoot('.env'),
+  `${Utilities.File.getRootFolder()}/.env`,
   new Validator(
     {
       name: 'nodeEnv',
