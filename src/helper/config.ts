@@ -39,8 +39,17 @@ export interface IExtendApplicationConfig extends IApplicationConfig {
   table: ITableName;
 }
 
-function parseNetworkRpc(parsing: any): IApplicationConfig {
+function transformConfig(parsed: any): IApplicationConfig {
+  const parsing = { ...parsed };
   const networkRpc: Partial<IBlockchainInfo>[] = [];
+  try {
+    const serviceUrl = new URL(parsing.serviceBind);
+    parsing.serviceHost = serviceUrl.hostname;
+    parsing.servicePort = parseInt(serviceUrl.port, 10);
+  } catch (e) {
+    parsing.serviceHost = '0.0.0.0';
+    parsing.servicePort = 1337;
+  }
   for (let j = 0; j <= 5; j += 1) {
     if (typeof parsing[`rpc${j}`] === 'string' && parsing[`rpc${j}`].length > 0) {
       const blockchain = getBlockchainInfoFromURL(parsing[`rpc${j}`]);
@@ -167,7 +176,7 @@ const configLoader = Singleton<ConfigLoader>(
   ),
 );
 
-const config = parseNetworkRpc(configLoader.getConfig());
+const config = transformConfig(configLoader.getConfig());
 
 export default <IExtendApplicationConfig>{
   ...config,
