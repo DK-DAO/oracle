@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { ethers } from 'ethers';
+import { Utilities } from 'noqueue';
 import { RNG, DuelistKingDistributor, OracleProxy } from '../../../typechain';
 import { IBlockchain } from '../../model/model-blockchain';
 import config from '../../helper/config';
@@ -14,6 +15,7 @@ import { BytesBuffer } from '../../helper/bytes-buffer';
 import ModelNftIssuance from '../../model/model-nft-issuance';
 import ModelConfig from '../../model/model-config';
 import ModelNonceManagement from '../../model/model-nonce-management';
+import { RetryTimeOut, RetryTimes } from '../../helper/const';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -65,6 +67,15 @@ export class Oracle {
     this.nextExecutor += 1;
   }
 
+  private async syncNonce(address: string): Promise<number> {
+    const blockchainNonce = await Utilities.TillSuccess<number>(
+      async () => this.provider.getTransactionCount(address),
+      RetryTimeOut,
+      RetryTimes,
+    );
+    return Math.max(await this.getNonce(address), blockchainNonce);
+  }
+
   private getExecutor() {
     if (this.nextExecutor >= this.executors.length) {
       this.nextExecutor = 0;
@@ -87,10 +98,8 @@ export class Oracle {
     const contractDKDAOOracleAddress = await imConfig.getConfig('contractDKDAOOracle');
     for (let i = 0; i < this.executors.length; i += 1) {
       const executorAddress = this.executors[i].address;
-      const cachedNonce = await this.getNonce(executorAddress);
-      const blockchainNonce = await this.provider.getTransactionCount(executorAddress);
       // Set max nonce to nonce management
-      await this.setNonce(executorAddress, Math.max(cachedNonce, blockchainNonce));
+      await this.setNonce(executorAddress, await this.syncNonce(executorAddress));
     }
 
     if (
@@ -138,7 +147,7 @@ export class Oracle {
             0,
             this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [owner, numberOfBox, phase]),
           );
-        const currentNonce = await this.getNonce(currentExecutor.address);
+        const currentNonce = await this.syncNonce(currentExecutor.address);
         logger.info(
           `Forwarding call from ${
             currentExecutor.address
@@ -191,7 +200,7 @@ export class Oracle {
   public async commit(numberOfDigests: number) {
     const digests = buildDigestArray(numberOfDigests);
     const currentExecutor = this.getExecutor();
-    const currentNonce = await this.getNonce(currentExecutor.address);
+    const currentNonce = await this.syncNonce(currentExecutor.address);
     const imSecret = new ModelSecret();
     const newRecords = digests.h.map((item: Buffer, index: number) => ({
       blockchainId: this.bcData.id,
@@ -221,7 +230,7 @@ export class Oracle {
   public async reveal() {
     const imSecret = new ModelSecret();
     const currentExecutor = this.getExecutor();
-    const currentNonce = await this.getNonce(currentExecutor.address);
+    const currentNonce = await this.syncNonce(currentExecutor.address);
     // Lookup digest from database
     const secretRecord = await imSecret.getDigest();
     if (secretRecord) {
