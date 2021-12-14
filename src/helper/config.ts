@@ -188,7 +188,7 @@ export default <IExtendApplicationConfig>{
     payment: `${config.mariadbTablePrefix}payment`,
     nftTransfer: `${config.mariadbTablePrefix}nft_transfer`,
     nftOwnership: `${config.mariadbTablePrefix}nft_ownership`,
-    nftIssuance: `${config.mariadbTablePrefix}ntf_issuance`,
+    nftIssuance: `${config.mariadbTablePrefix}nft_issuance`,
     nftResult: `${config.mariadbTablePrefix}nft_result`,
     secret: `${config.mariadbTablePrefix}secret`,
     sync: `${config.mariadbTablePrefix}sync`,
