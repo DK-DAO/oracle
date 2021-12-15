@@ -204,7 +204,6 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
                 });
               } else {
                 logger.error('Card nftTokenId', nftTransfer.nftTokenId, 'was existed');
-                throw new Error('The record was existed');
               }
             }
           }

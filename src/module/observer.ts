@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop, Utilities } from 'noqueue';
+import { Transaction } from '@dkdao/framework';
+import { Knex } from 'knex';
 import { v4 as uuidV4 } from 'uuid';
 import { ethers, utils } from 'ethers';
 import logger from '../helper/logger';
@@ -231,8 +233,6 @@ export class ModuleObserver {
 
   // Event sync will split works and pass to event worker
   private async eventWorker(id: number, fromBlock: number, toBlock: number) {
-    const imPayment = new ModelPayment();
-    const imNftTransfer = new ModelNftTransfer();
     // Get logs for given address
     /** @todo: Warning we might need to split payment and issuance later */
     const rawLogs = await this.getLogs(fromBlock, toBlock);
@@ -268,67 +268,82 @@ export class ModuleObserver {
       ).toFixed(6)} %)`,
     );
 
-    // Get log and push the events outside
-    for (let i = 0; i < logs.length; i += 1) {
-      const log = logs[i];
-      // Get token from support token list
-      const token = this.supportedTokens.get(log.address.toLowerCase());
-      // Watching token wasn't supporter we will skip
-      if (typeof token !== 'undefined' && this.supportedTokens.has((token.address || '').toLowerCase())) {
-        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } = parseEvent(log);
-        const memo = `${BigNum.from(value)
-          .div(10 ** (token?.decimal || 18))
-          .toString()} ${token?.symbol}`;
-        if (await imPayment.isNotExist('eventId', eventId)) {
-          if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
-            logger.info(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
-            await imPayment.create({
-              status: EPaymentStatus.NewPayment,
-              sender: from,
-              receiver: to,
-              value: BigNum.toHexString(BigNum.from(value)),
-              blockHash,
-              eventId,
-              blockNumber,
-              transactionHash,
-              contractAddress,
-              tokenId: token?.id,
-              blockchainId: this.blockchain.id,
-              issuanceUuid: uuidV4(),
-              memo,
-            });
-          } else if (token.type === EToken.ERC721) {
-            const nftTokenId = BigNum.toHexString(BigNum.from(value));
-            logger.info(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
-            await imNftTransfer.create({
-              status: ENftTransferStatus.NewNftTransfer,
-              tokenId: token.id,
-              sender: from,
-              receiver: to,
-              nftTokenId,
-              blockHash,
-              eventId,
-              blockNumber,
-              transactionHash,
-              contractAddress,
-              blockchainId: this.blockchain.id,
-            });
+    await Transaction.getInstance()
+      .process(async (tx: Knex.Transaction) => {
+        // Get log and push the events outside
+        for (let i = 0; i < logs.length; i += 1) {
+          const log = logs[i];
+          // Get token from support token list
+          const token = this.supportedTokens.get(log.address.toLowerCase());
+          // Watching token wasn't supporter we will skip
+          if (typeof token !== 'undefined' && this.supportedTokens.has((token.address || '').toLowerCase())) {
+            const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } =
+              parseEvent(log);
+            const memo = `${BigNum.from(value)
+              .div(10 ** (token?.decimal || 18))
+              .toString()} ${token?.symbol}`;
+            if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
+              // Check for existing payment
+              const payment = await tx(config.table.payment).select('id').where({ eventId });
+              if (payment.length === 0) {
+                logger.info(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
+                await tx(config.table.payment).insert({
+                  status: EPaymentStatus.NewPayment,
+                  sender: from,
+                  receiver: to,
+                  value: BigNum.toHexString(BigNum.from(value)),
+                  blockHash,
+                  eventId,
+                  blockNumber,
+                  transactionHash,
+                  contractAddress,
+                  tokenId: token?.id,
+                  blockchainId: this.blockchain.id,
+                  issuanceUuid: uuidV4(),
+                  memo,
+                });
+              }
+            } else if (token.type === EToken.ERC721) {
+              // Check for existing transfer
+              const nftTransfer = await tx(config.table.nftTransfer).select('id').where({ eventId });
+              if (nftTransfer.length === 0) {
+                const nftTokenId = BigNum.toHexString(BigNum.from(value));
+                logger.info(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
+                await tx(config.table.nftTransfer).insert({
+                  status: ENftTransferStatus.NewNftTransfer,
+                  tokenId: token.id,
+                  sender: from,
+                  receiver: to,
+                  nftTokenId,
+                  blockHash,
+                  eventId,
+                  blockNumber,
+                  transactionHash,
+                  contractAddress,
+                  blockchainId: this.blockchain.id,
+                });
+              }
+            } else {
+              logger.error(
+                'Ignored event:',
+                JSON.stringify({
+                  eventName: 'Transfer',
+                  from: utils.getAddress(from),
+                  to: utils.getAddress(to),
+                  value,
+                }),
+              );
+            }
+          } else {
+            logger.error('Token was not supported', token?.address || 'undefined');
           }
-        } else {
-          logger.error(
-            'Ignored event:',
-            JSON.stringify({
-              eventName: 'Transfer',
-              from: utils.getAddress(from),
-              to: utils.getAddress(to),
-              value,
-            }),
-          );
         }
-      } else {
-        logger.error('Token was not supported', token?.address || 'undefined');
-      }
-    }
+      })
+      .catch(async (err) => {
+        logger.error('Can not saving transaction:', err);
+      })
+      .exec();
+
     // Update synced block
     const imSync = new ModelSync();
     this.synced.syncedBlock = toBlock;
