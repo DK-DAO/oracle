@@ -49,6 +49,13 @@ Connector.connectByUrl(config.mariadbConnectUrl);
         await provider.send('evm_mine', []);
       }, 1000);
     }
+
+    main.add({
+      name: `Observer for ${blockchainActive[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
+      payload: `${__dirname}/observer`,
+      chainId: blockchainActive[i].chainId.toString(),
+    });
+
     main.add({
       name: `Minter for ${blockchainActive[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
       payload: `${__dirname}/minter`,
