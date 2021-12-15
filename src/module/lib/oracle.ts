@@ -149,8 +149,7 @@ export class Oracle {
           );
         const currentNonce = await this.syncNonce(currentExecutor.address);
         logger.info(
-          `Forwarding call from ${
-            currentExecutor.address
+          `Forwarding call from ${currentExecutor.address
           } -> Distributor::mintBoxes(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
         );
 
@@ -189,7 +188,7 @@ export class Oracle {
               },
             );
         }
-
+        logger.info('Transaction hash is:', result.hash);
         logger.info(`Cached next nonce for ${currentExecutor.address} is ${currentNonce + 1}`);
         await this.setNonce(currentExecutor.address, currentNonce + 1);
         return result;
