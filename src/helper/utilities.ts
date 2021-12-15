@@ -152,7 +152,7 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
   // Append data to topic if these data wasn't indexed
   const eventData = [...topics];
   for (let i = 2; i < data.length; i += 64) {
-    eventData.push(`0x${data.substr(i, 64)}`);
+    eventData.push(`0x${data.substring(i, 64)}`);
   }
   const [, from, to, value] = eventData;
 

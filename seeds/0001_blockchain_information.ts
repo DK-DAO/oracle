@@ -47,10 +47,11 @@ export async function seed(knex: Knex): Promise<void> {
       // Binance Smart Chain
       56,
       [
-        '0x55d398326f99059fF775485246999027B3197955',
-        '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3',
-        '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-        '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
+        '0x7Ceb519718A80Dd78a8545AD8e7f401dE4f2faA7',
+        // '0x55d398326f99059fF775485246999027B3197955',
+        // '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3',
+        // '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+        // '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
       ],
     ],
     // Fantom Testnet
@@ -74,6 +75,17 @@ export async function seed(knex: Knex): Promise<void> {
           blockchainId: blockchain.id,
         };
       });
+      // Add DePay Event plugin
+      if (blockchain.chainId === 56) {
+        tokens.push({
+          blockchainId: blockchain.id,
+          type: 0,
+          name: 'DePay Payment Event (BSC)',
+          symbol: 'DePaY BSC',
+          decimal: 0,
+          address: '0xF83f63CCf66dfd9ef285E58217352835c470C56C',
+        });
+      }
       await knex.batchInsert(config.table.token, tokens);
     }
   }
