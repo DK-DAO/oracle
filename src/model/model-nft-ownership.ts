@@ -134,16 +134,19 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
     const boxAndCardMap = ModelNftOwnership.mappingBoxAndCard(nftTransfers);
 
     logger.info(`Processing ${nftTransfers.length} card issuance events`);
-    await Utilities.OneForAll(nftTransfers, async (nftTransfer: INftTransferDetail) => {
-      await Transaction.getInstance()
-        .process(async (tx: Knex.Transaction) => {
+
+    let currentTransfer: INftTransferDetail;
+
+    await Transaction.getInstance()
+      .process(async (tx: Knex.Transaction) => {
+        await Utilities.OneForAll(nftTransfers, async (nftTransfer: INftTransferDetail) => {
           const record = <Partial<INftOwnership>>{
             tokenId: nftTransfer.tokenId,
             nftTokenId: nftTransfer.nftTokenId,
             transactionHash: nftTransfer.transactionHash,
             owner: nftTransfer.receiver,
           };
-
+          currentTransfer = nftTransfer;
           const card = Card.from(nftTransfer.nftTokenId);
 
           if (nftTransfer.sender === '0x0000000000000000000000000000000000000000') {
@@ -232,15 +235,15 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
               status: ENftTransferStatus.Success,
             })
             .where({ id: nftTransfer.id });
-        })
-        .catch(async (error: Error) => {
-          await this.getKnex()(config.table.nftTransfer)
-            .update({ status: ENftTransferStatus.Error })
-            .where({ id: nftTransfer.id });
-          logger.error('Can not sync nft ownership', error);
-        })
-        .exec();
-    });
+        });
+      })
+      .catch(async (error: Error) => {
+        await this.getKnex()(config.table.nftTransfer)
+          .update({ status: ENftTransferStatus.Error })
+          .where({ id: currentTransfer.id });
+        logger.error('Can not sync nft ownership', error);
+      })
+      .exec();
   }
 }
 

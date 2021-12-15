@@ -10,8 +10,8 @@ import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum, getLowCaseAddress } from '../helper/utilities';
-import { EPaymentStatus, ModelPayment } from '../model/model-payment';
-import ModelNftTransfer, { ENftTransferStatus } from '../model/model-nft-transfer';
+import { EPaymentStatus } from '../model/model-payment';
+import { ENftTransferStatus } from '../model/model-nft-transfer';
 import ModelNftOwnership from '../model/model-nft-ownership';
 import config from '../helper/config';
 import { RetryTimeOut, RetryTimes } from '../helper/const';
@@ -43,7 +43,7 @@ export class ModuleObserver {
   private synced: ISync = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 1000 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 10000 });
 
   // RPC provider
   private provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};

@@ -19,7 +19,7 @@ export class ModuleMinter {
   private blockchain: IBlockchain = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 1000 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 10000 });
 
   // List of watching token
   private watchingToken: IToken[] = [];
