@@ -40,6 +40,7 @@ export class ModelBlockchain extends ModelMysqlBasic<IBlockchain> {
     return this.getKnex()(`${config.table.watching} as w`)
       .select('b.id', 'b.name', 'b.chainId')
       .join(`${config.table.blockchain} as b`, 'w.blockchainId', 'b.id')
+      .where('t.type', EToken.ERC20)
       .groupBy('w.blockchainId');
   }
 
