@@ -32,10 +32,10 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@dkdao/framework@^1.0.6":
-  version "1.0.29"
-  resolved "https://registry.yarnpkg.com/@dkdao/framework/-/framework-1.0.29.tgz#43e2e3754017511ebb6c28e4c0cf936893aff8a9"
-  integrity sha512-/C0iT4/o5cLgujrzfhkK/3bd9HWhrqMVks3GQkMSjE20YjGo+uOAkghr47QS6fzra7e4vjo7BYOCrbz1UPXoBQ==
+"@dkdao/framework@1.0.33":
+  version "1.0.33"
+  resolved "https://registry.npmjs.org/@dkdao/framework/-/framework-1.0.33.tgz#e2c8445ed7f38217eb4c9acf8e24b49ef0b52ebc"
+  integrity sha512-ku8/YmOnwRBAWeM07kM3bA2sHy1QVBvIzgIPJ4Q+eP7dd7M10VcvvtUIwNLmV0Z+zMIlZK0sElBPZijCK9GmJg==
   dependencies:
     chalk "^4.1.2"
     dotenv "^10.0.0"
