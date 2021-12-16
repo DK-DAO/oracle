@@ -114,7 +114,7 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
           issueMap.set(cards[k].nftTokenId, boxes[Math.floor(k / 5)].nftTokenId);
         }
       } else {
-        throw new Error('Data mismatch between boxes and cards');
+        throw new Error(`Data mismatch between boxes and cards: ${transactionHash}`);
       }
     }
     return issueMap;
