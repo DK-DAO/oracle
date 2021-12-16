@@ -41,7 +41,7 @@ export class ModuleObserver {
   private synced: ISync = <any>{};
 
   // Instance of queue loop
-  private queue: QueueLoop = new QueueLoop({ paddingTime: 10000 });
+  private queue: QueueLoop = new QueueLoop({ paddingTime: 5000 });
 
   // RPC provider
   private provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
@@ -308,7 +308,7 @@ export class ModuleObserver {
           }
         } else if (token.type === EToken.ERC721) {
           // Check for existing transfer
-          if (await imNftTransfer.isNotExist('eventId', eventId) && nftTransferEventIds.includes(eventId)) {
+          if (await imNftTransfer.isNotExist('eventId', eventId) && !nftTransferEventIds.includes(eventId)) {
             const nftTokenId = BigNum.toHexString(BigNum.from(value));
             logger.debug(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
             nftTransferList.push({

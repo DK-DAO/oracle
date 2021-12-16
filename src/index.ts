@@ -30,7 +30,6 @@ Connector.connectByUrl(config.mariadbConnectUrl);
   const blockchainPayment = await imBlockchain.getPaymentBlockchainList();
 
   logger.info('Active blockchain:', blockchainActive.length, 'Active payment blockchain', blockchainPayment.length);
-  logger.debug(blockchainActive, blockchainPayment);
 
   for (let i = 0; i < blockchainPayment.length; i += 1) {
     main.add({
