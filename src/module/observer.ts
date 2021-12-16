@@ -1,7 +1,5 @@
 /* eslint-disable no-await-in-loop */
 import { QueueLoop, Utilities } from 'noqueue';
-import { Transaction } from '@dkdao/framework';
-import { Knex } from 'knex';
 import { v4 as uuidV4 } from 'uuid';
 import { ethers, utils } from 'ethers';
 import logger from '../helper/logger';
@@ -10,8 +8,8 @@ import ModelBlockchain, { IBlockchain } from '../model/model-blockchain';
 import ModelToken, { EToken, IToken } from '../model/model-token';
 import { IWatching, ModelWatching } from '../model/model-watching';
 import { parseEvent, BigNum, getLowCaseAddress } from '../helper/utilities';
-import { EPaymentStatus } from '../model/model-payment';
-import { ENftTransferStatus } from '../model/model-nft-transfer';
+import ModelPayment, { EPaymentStatus } from '../model/model-payment';
+import ModelNftTransfer, { ENftTransferStatus } from '../model/model-nft-transfer';
 import ModelNftOwnership from '../model/model-nft-ownership';
 import config from '../helper/config';
 import { RetryTimeOut, RetryTimes } from '../helper/const';
@@ -233,6 +231,8 @@ export class ModuleObserver {
 
   // Event sync will split works and pass to event worker
   private async eventWorker(id: number, fromBlock: number, toBlock: number) {
+    const imPayment = new ModelPayment();
+    const imNftTransfer = new ModelNftTransfer();
     // Get logs for given address
     /** @todo: Warning we might need to split payment and issuance later */
     const rawLogs = await this.getLogs(fromBlock, toBlock);
@@ -268,81 +268,90 @@ export class ModuleObserver {
       ).toFixed(6)} %)`,
     );
 
-    await Transaction.getInstance()
-      .process(async (tx: Knex.Transaction) => {
-        // Get log and push the events outside
-        for (let i = 0; i < logs.length; i += 1) {
-          const log = logs[i];
-          // Get token from support token list
-          const token = this.supportedTokens.get(log.address.toLowerCase());
-          // Watching token wasn't supporter we will skip
-          if (typeof token !== 'undefined' && this.supportedTokens.has((token.address || '').toLowerCase())) {
-            const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } =
-              parseEvent(log);
-            const memo = `${BigNum.from(value)
-              .div(10 ** (token?.decimal || 18))
-              .toString()} ${token?.symbol}`;
-            if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
-              // Check for existing payment
-              const payment = await tx(config.table.payment).select('id').where({ eventId });
-              if (payment.length === 0) {
-                logger.info(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
-                await tx(config.table.payment).insert({
-                  status: EPaymentStatus.NewPayment,
-                  sender: from,
-                  receiver: to,
-                  value: BigNum.toHexString(BigNum.from(value)),
-                  blockHash,
-                  eventId,
-                  blockNumber,
-                  transactionHash,
-                  contractAddress,
-                  tokenId: token?.id,
-                  blockchainId: this.blockchain.id,
-                  issuanceUuid: uuidV4(),
-                  memo,
-                });
-              }
-            } else if (token.type === EToken.ERC721) {
-              // Check for existing transfer
-              const nftTransfer = await tx(config.table.nftTransfer).select('id').where({ eventId });
-              if (nftTransfer.length === 0) {
-                const nftTokenId = BigNum.toHexString(BigNum.from(value));
-                logger.info(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
-                await tx(config.table.nftTransfer).insert({
-                  status: ENftTransferStatus.NewNftTransfer,
-                  tokenId: token.id,
-                  sender: from,
-                  receiver: to,
-                  nftTokenId,
-                  blockHash,
-                  eventId,
-                  blockNumber,
-                  transactionHash,
-                  contractAddress,
-                  blockchainId: this.blockchain.id,
-                });
-              }
-            } else {
-              logger.error(
-                'Ignored event:',
-                JSON.stringify({
-                  eventName: 'Transfer',
-                  from: utils.getAddress(from),
-                  to: utils.getAddress(to),
-                  value,
-                }),
-              );
-            }
-          } else {
-            logger.error('Token was not supported', token?.address || 'undefined');
+    const paymentList = [];
+    const paymentEventIds: string[] = []
+    const nftTransferList = [];
+    const nftTransferEventIds: string[] = [];
+
+    // Get log and push the events outside
+    for (let i = 0; i < logs.length; i += 1) {
+      const log = logs[i];
+      // Get token from support token list
+      const token = this.supportedTokens.get(log.address.toLowerCase());
+      // Watching token wasn't supporter we will skip
+      if (typeof token !== 'undefined' && this.supportedTokens.has((token.address || '').toLowerCase())) {
+        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } =
+          parseEvent(log);
+        const memo = `${BigNum.from(value)
+          .div(10 ** (token?.decimal || 18))
+          .toString()} ${token?.symbol}`;
+        if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
+          // Check for existing payment
+          if (await imPayment.isNotExist('eventId', eventId) && !paymentEventIds.includes(eventId)) {
+            logger.debug(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
+            paymentList.push({
+              status: EPaymentStatus.NewPayment,
+              sender: from,
+              receiver: to,
+              value: BigNum.toHexString(BigNum.from(value)),
+              blockHash,
+              eventId,
+              blockNumber,
+              transactionHash,
+              contractAddress,
+              tokenId: token?.id,
+              blockchainId: this.blockchain.id,
+              issuanceUuid: uuidV4(),
+              memo,
+            });
+            paymentEventIds.push(eventId);
           }
+        } else if (token.type === EToken.ERC721) {
+          // Check for existing transfer
+          if (await imNftTransfer.isNotExist('eventId', eventId) && nftTransferEventIds.includes(eventId)) {
+            const nftTokenId = BigNum.toHexString(BigNum.from(value));
+            logger.debug(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
+            nftTransferList.push({
+              status: ENftTransferStatus.NewNftTransfer,
+              tokenId: token.id,
+              sender: from,
+              receiver: to,
+              nftTokenId,
+              blockHash,
+              eventId,
+              blockNumber,
+              transactionHash,
+              contractAddress,
+              blockchainId: this.blockchain.id,
+            });
+            nftTransferEventIds.push(eventId);
+          }
+        } else {
+          logger.error('Ignored tx hash:', transactionHash,
+            JSON.stringify({
+              eventName: 'Transfer',
+              from: utils.getAddress(from),
+              to: utils.getAddress(to),
+              value,
+            }),
+          );
         }
-      })
-      .catch(async (err) => {
-        logger.error('Can not saving transaction:', err);
-      })
-      .exec();
+      } else {
+        logger.error('Token was not supported', token?.address || 'undefined');
+      }
+    }
+
+    // Insert payment event
+    if (paymentList.length > 0) {
+      await imPayment.getKnex().batchInsert(imPayment.tableName, paymentList);
+    }
+
+    // Insert nft transfer event
+    if (nftTransferList.length > 0) {
+      await imNftTransfer.getKnex().batchInsert(imNftTransfer.tableName, nftTransferList);
+    }
+
+    logger.info('Processed:', paymentList.length, 'payment events,', nftTransferList.length, 'NFT transfer events');
 
     // Update synced block
     const imSync = new ModelSync();
