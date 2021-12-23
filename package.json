@@ -1,5 +1,5 @@
 {
-  "name": "dkdao-oracle",
+  "name": "oracle",
   "version": "0.3.1",
   "description": "DKDAO Oracle",
   "author": "chiro8x@gmail.com",
@@ -45,7 +45,7 @@
     "typescript": "^4.3.3"
   },
   "dependencies": {
-    "@dkdao/framework": "1.0.33",
+    "@dkdao/framework": "^1.0.34",
     "bignumber.js": "^9.0.1",
     "chalk": "^4.1.0",
     "cors": "^2.8.5",
