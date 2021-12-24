@@ -33,9 +33,9 @@
     kuler "^2.0.0"
 
 "@dkdao/framework@^1.0.34":
-  version "1.0.35"
-  resolved "https://registry.npmjs.org/@dkdao/framework/-/framework-1.0.35.tgz#385e9919496be56502e3459d738e819ce4577142"
-  integrity sha512-5uSMaD+8Ev7tsGF1yFvCMqlSj8wViwwod1SD+VF5SwekDVoSvCPDyntAfP8FCFKCz95oFYyWCxZA74e7WeVDfg==
+  version "1.0.36"
+  resolved "https://registry.npmjs.org/@dkdao/framework/-/framework-1.0.36.tgz#b1b7b729eea4056691633c196ec7712ba58601c9"
+  integrity sha512-RVHtr+btRLvKDdf5lfZppfUfSEbtQUbSs+8D4oej4SSc4adD1KgnuGvsj6dwDeJRxxLyAVUiDPluOAva1menjA==
   dependencies:
     chalk "^4.1.2"
     dotenv "^10.0.0"
