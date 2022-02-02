@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import config from './helper/config';
 import logger from './helper/logger';
 import ModelBlockchain from './model/model-blockchain';
+import { EToken } from './model/model-token';
 
 const main = new ClusterApplication();
 
@@ -24,24 +25,44 @@ main.on('exit', (signal: string) => {
 
 Connector.connectByUrl(config.mariadbConnectUrl);
 
+const lock = new Map<string, boolean>();
+
+function startObserver(chainId: number) {
+  if (!lock.get(`observer/${chainId}`)) {
+    main.add({
+      name: `observer for ${chainId}`.toLowerCase().replace(/[\s]/gi, '-'),
+      payload: `${__dirname}/observer`,
+      chainId: chainId.toString(),
+    });
+    lock.set(`observer/${chainId}`, true);
+  }
+}
+
+function startMinter(chainId: number) {
+  if (!lock.get(`minter/${chainId}`)) {
+    main.add({
+      name: `minter for ${chainId}`.toLowerCase().replace(/[\s]/gi, '-'),
+      payload: `${__dirname}/minter`,
+      chainId: chainId.toString(),
+    });
+    lock.set(`minter/${chainId}`, true);
+  }
+}
+
 (async () => {
   const imBlockchain = new ModelBlockchain();
-  const blockchainActive = await imBlockchain.getActiveBlockChainList();
+  const tokenAndBlockchainList = await imBlockchain.getTokenAndBlockchainList();
   const blockchainPayment = await imBlockchain.getPaymentBlockchainList();
 
-  logger.info('Active blockchain:', blockchainActive.length, 'Active payment blockchain', blockchainPayment.length);
-
   for (let i = 0; i < blockchainPayment.length; i += 1) {
-    main.add({
-      name: `Observer for ${blockchainPayment[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
-      payload: `${__dirname}/observer`,
-      chainId: blockchainPayment[i].chainId.toString(),
-    });
+    startObserver(blockchainPayment[i].chainId);
   }
 
-  for (let i = 0; i < blockchainActive.length; i += 1) {
+  for (let i = 0; i < tokenAndBlockchainList.length; i += 1) {
+    const tokenAndBlockchain = tokenAndBlockchainList[i];
+
     // @todo Remove this if possible it just need for
-    if (blockchainActive[i].chainId === 911) {
+    if (tokenAndBlockchain.chainId === 911) {
       const provider = new ethers.providers.StaticJsonRpcProvider('http://localhost:8545');
       // Keep node mining
       setInterval(async () => {
@@ -49,17 +70,18 @@ Connector.connectByUrl(config.mariadbConnectUrl);
       }, 1000);
     }
 
-    main.add({
-      name: `Observer for ${blockchainActive[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
-      payload: `${__dirname}/observer`,
-      chainId: blockchainActive[i].chainId.toString(),
-    });
+    // We're always observer
+    if (tokenAndBlockchain.type === EToken.ERC721) {
+      startObserver(tokenAndBlockchain.chainId);
+    }
+  }
 
-    main.add({
-      name: `Minter for ${blockchainActive[i].name}`.toLowerCase().replace(/[\s]/gi, '-'),
-      payload: `${__dirname}/minter`,
-      chainId: blockchainActive[i].chainId.toString(),
-    });
+  // All RPC contain chainId will has its own minter
+  for (let i = 0; i < config.networkRpc.length; i += 1) {
+    const network = config.networkRpc[i];
+    if (network.registry.length > 0) {
+      startMinter(network.chainId);
+    }
   }
 
   main

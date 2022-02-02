@@ -29,21 +29,25 @@ export async function seed(knex: Knex): Promise<void> {
 
     await knex.batchInsert(config.table.config, [
       {
+        blockchainId: blockchain.id,
         key: 'contractDistributor',
         type: 'string',
         value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Distributor'))),
       },
       {
+        blockchainId: blockchain.id,
         key: 'contractDuelistKingOracleProxy',
         type: 'string',
         value: Buffer.from(await registry.getAddress(stringToBytes32('Duelist King'), stringToBytes32('Oracle'))),
       },
       {
+        blockchainId: blockchain.id,
         key: 'contractRNG',
         type: 'string',
         value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('RNG'))),
       },
       {
+        blockchainId: blockchain.id,
         key: 'contractDKDAOOracle',
         type: 'string',
         value: Buffer.from(await registry.getAddress(stringToBytes32('Infrastructure'), stringToBytes32('Oracle'))),

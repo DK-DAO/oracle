@@ -17,6 +17,17 @@ export interface IBlockchain {
   updatedDate: string;
 }
 
+export interface IActiveTokenAndBlockchain {
+  id: number;
+  blockchainId: number;
+  blockchainName: string;
+  chainId: number;
+  type: EToken;
+  name: string;
+  decimal: number;
+  address: string;
+}
+
 export interface IActiveBlockchain {
   id: number;
   name: string;
@@ -34,6 +45,22 @@ export class ModelBlockchain extends ModelMysqlBasic<IBlockchain> {
 
   public async getAllPossibleBlockchain(): Promise<IBlockchain[]> {
     return this.basicQuery().whereNot({ url: '' });
+  }
+
+  public async getTokenAndBlockchainList(): Promise<IActiveTokenAndBlockchain[]> {
+    return this.getKnex()(`${config.table.token} as t`)
+      .select(
+        't.id',
+        't.blockchainId',
+        'b.name as blockchainName',
+        'b.chainId as chainId',
+        't.type',
+        't.name',
+        't.decimal',
+        't.address',
+      )
+      .join(`${config.table.blockchain} as b`, 't.blockchainId', 'b.id')
+      .whereNot({ 'b.url': '' });
   }
 
   public async getPaymentBlockchainList(): Promise<IActiveBlockchain[]> {
