@@ -24,10 +24,6 @@ RPC_0="https://rpc.testnet.fantom.network/?name=Fantom+Testnet&chainId=4002&nati
 PRIV_ORACLE_DKDAO="0x..."
 
 PRIV_ORACLE_DUELIST_KING="0x..."
-
-REDIS_CONNECT_URL=redis://username:password@localhost:6379/
-
-REDIS_CACHE_PATH=oracle
 ```
 
 You will need these information:
