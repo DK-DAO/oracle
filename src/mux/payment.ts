@@ -1,6 +1,5 @@
 import { Mux, Validator, IRequestData, IResponse, Pagination } from '@dkdao/framework';
 import { utils } from 'ethers';
-import { CachingInstance } from '../libs/cache';
 import ModelPayment, { IPaymentDetail } from '../model/model-payment';
 
 Mux.get(
@@ -16,28 +15,16 @@ Mux.get(
     const {
       query: { sender, offset, limit, order },
     } = req;
-    const [cacheKey, cacheResult] = await CachingInstance.getKeyAndCache({
-      url: '/api/v1/payment',
-      params: { sender, offset, limit, order }
-    })
-    if (cacheResult) return cacheResult;
-
     const imPayment = new ModelPayment();
 
     if (typeof sender === 'string' && utils.isAddress(sender)) {
-      return CachingInstance.saveCacheAndReturn(
-        cacheKey,
-        await imPayment.getPaymentList({ offset, limit, order }, [
-          {
-            field: 'sender',
-            value: sender,
-          },
-        ])
-      )
+      return imPayment.getPaymentList({ offset, limit, order }, [
+        {
+          field: 'sender',
+          value: sender,
+        },
+      ]);
     }
-
-    return CachingInstance.saveCacheAndReturn(
-      cacheKey,
-      await imPayment.getPaymentList({ offset, limit, order }));
+    return imPayment.getPaymentList({ offset, limit, order });
   },
 );

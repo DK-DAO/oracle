@@ -33,8 +33,6 @@ export interface IApplicationConfig {
   activePhase: number;
   serviceHost: string;
   servicePort: number;
-  redisConnectUrl: number;
-  redisCachePath: number;
 }
 
 export interface IExtendApplicationConfig extends IApplicationConfig {
@@ -173,22 +171,6 @@ const configLoader = Singleton<ConfigLoader>(
       type: 'string',
       location: 'any',
       defaultValue: '',
-      postProcess: (e) => e.trim(),
-    },
-    {
-      name: 'redisConnectUrl',
-      type: 'string',
-      location: 'any',
-      require: true,
-      postProcess: (e) => e.trim(),
-      validator: (e) => /^redis:\/\//.test(e),
-      message: 'This configuration should look like: redis://username:password@localhost:6379/',
-    },
-    {
-      name: 'redisCachePath',
-      type: 'string',
-      location: 'any',
-      defaultValue: 'oracle_cache',
       postProcess: (e) => e.trim(),
     },
   ),
