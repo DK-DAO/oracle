@@ -25,7 +25,7 @@ export interface ISecret {
 
 export class ModelSecret extends ModelMysqlBasic<ISecret> {
   constructor() {
-    super(config.table.secret);
+    super(config.table.secret, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

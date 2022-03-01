@@ -29,7 +29,7 @@ export interface INftOwnershipDetail extends INftOwnership {
 
 export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
   constructor() {
-    super(config.table.nftOwnership);
+    super(config.table.nftOwnership, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

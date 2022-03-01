@@ -19,7 +19,7 @@ export interface IWatching {
 
 export class ModelWatching extends ModelMysqlBasic<IWatching> {
   constructor() {
-    super(config.table.watching);
+    super(config.table.watching, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

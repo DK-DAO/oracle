@@ -1,6 +1,7 @@
 import { ClusterApplication, IApplicationPayload, Connector } from '@dkdao/framework';
 import { ethers } from 'ethers';
 import config from './helper/config';
+import { APIDbInstanceName } from './helper/const';
 import logger from './helper/logger';
 import ModelBlockchain from './model/model-blockchain';
 import { EToken } from './model/model-token';
@@ -84,10 +85,19 @@ function startMinter(chainId: number) {
     }
   }
 
+  let configAPIServer: IApplicationPayload = {
+    name: 'api',
+    payload: `${__dirname}/api`,
+  }
+
+  if (config.enableDbReplica) {
+    configAPIServer = {
+      ...configAPIServer,
+      dbInstance: APIDbInstanceName
+    }
+  }
+
   main
-    .add({
-      name: 'api',
-      payload: `${__dirname}/api`,
-    })
+    .add(configAPIServer)
     .start();
 })();

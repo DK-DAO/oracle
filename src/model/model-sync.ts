@@ -14,7 +14,7 @@ export interface ISync {
 
 export class ModelSync extends ModelMysqlBasic<ISync> {
   constructor() {
-    super(config.table.sync);
+    super(config.table.sync, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

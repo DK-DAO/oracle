@@ -21,7 +21,7 @@ export interface IToken {
 
 export class ModelToken extends ModelMysqlBasic<IToken> {
   constructor() {
-    super(config.table.token);
+    super(config.table.token, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

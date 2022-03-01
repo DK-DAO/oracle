@@ -36,7 +36,7 @@ export interface IActiveBlockchain {
 
 export class ModelBlockchain extends ModelMysqlBasic<IBlockchain> {
   constructor() {
-    super(config.table.blockchain);
+    super(config.table.blockchain, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

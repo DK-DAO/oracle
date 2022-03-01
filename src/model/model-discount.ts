@@ -15,7 +15,7 @@ export interface IDiscount {
 
 export class ModelDiscount extends ModelMysqlBasic<IDiscount> {
   constructor() {
-    super(config.table.discount);
+    super(config.table.discount, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

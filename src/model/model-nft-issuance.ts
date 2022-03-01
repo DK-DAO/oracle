@@ -34,7 +34,7 @@ export interface INftIssuance {
 
 export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
   constructor() {
-    super(config.table.nftIssuance);
+    super(config.table.nftIssuance, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {
