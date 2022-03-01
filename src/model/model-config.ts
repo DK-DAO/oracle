@@ -16,7 +16,7 @@ export type TKeyOfConfig = 'activeChainId' | 'dkDaoRng' | 'dkDistributor';
 
 export class ModelConfig extends ModelMysqlBasic<IConfig> {
   constructor() {
-    super(config.table.config);
+    super(config.table.config, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {

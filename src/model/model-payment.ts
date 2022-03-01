@@ -41,7 +41,7 @@ export interface IPaymentDetail extends IPayment {
 
 export class ModelPayment extends ModelMysqlBasic<IPayment> {
   constructor() {
-    super(config.table.payment);
+    super(config.table.payment, process.env.dbInstance || undefined);
   }
 
   public getPaymentDetail(status: EPaymentStatus): Promise<IPaymentDetail | undefined> {

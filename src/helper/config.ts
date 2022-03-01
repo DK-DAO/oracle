@@ -24,7 +24,9 @@ export interface ITableName {
 
 export interface IApplicationConfig {
   nodeEnv: string;
+  enableDbReplica: boolean;
   mariadbConnectUrl: string;
+  mariadbConnectUrlReplica: string;
   walletMnemonic: string;
   privOracleDkdao: string;
   privOracleDuelistKing: string;
@@ -84,6 +86,15 @@ const configLoader = Singleton<ConfigLoader>(
       message: 'This configuration should look like: mysql://user:password@localhost:port/database',
     },
     {
+      name: 'mariadbConnectUrlReplica',
+      type: 'string',
+      location: 'any',
+      require: false,
+      postProcess: (e) => e.trim(),
+      validator: (e) => /^mysql:\/\//.test(e),
+      message: 'This configuration should look like: mysql://user:password@localhost:port/database',
+    },
+    {
       name: 'walletMnemonic',
       type: 'string',
       location: 'any',
@@ -115,6 +126,14 @@ const configLoader = Singleton<ConfigLoader>(
       type: 'string',
       location: 'any',
       require: true,
+      postProcess: (e) => e.trim(),
+    },
+    {
+      name: 'enableDbReplica',
+      type: 'string',
+      location: 'any',
+      require: false,
+      defaultValue: false,
       postProcess: (e) => e.trim(),
     },
     {

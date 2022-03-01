@@ -39,7 +39,7 @@ export interface INftTransferDetail extends INftTransfer {
 
 export class ModelNftTransfer extends ModelMysqlBasic<INftTransfer> {
   constructor() {
-    super(config.table.nftTransfer);
+    super(config.table.nftTransfer, process.env.dbInstance || undefined);
   }
 
   public async getTransferDetail(status: ENftTransferStatus): Promise<INftTransferDetail | undefined> {

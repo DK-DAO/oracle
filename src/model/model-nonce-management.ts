@@ -15,7 +15,7 @@ export class ModelNonceManagement extends ModelMysqlBasic<INonceManagement> {
   private blockchain: IBlockchain;
 
   constructor(blockchain: IBlockchain) {
-    super(config.table.nonceManagement);
+    super(config.table.nonceManagement, process.env.dbInstance || undefined);
     this.blockchain = blockchain;
   }
 

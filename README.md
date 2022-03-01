@@ -9,7 +9,11 @@ Please create `.env` in the root folder of Oracle.
 ```env
 NODE_ENV="development"
 
+ENABLE_DB_REPLICA=false
+
 MARIADB_CONNECT_URL="mysql://<username>:<password>@<host or IP>:<port>/<database name>"
+
+MARIADB_CONNECT_URL_REPLICA="mysql://<username>:<password>@<host or IP>:<port>/<database name>"
 
 MARIADB_TABLE_PREFIX="duelist_"
 

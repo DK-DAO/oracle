@@ -31,7 +31,7 @@ export interface INftResultDetail extends INftResult {
 
 export class ModelNftResult extends ModelMysqlBasic<INftResult> {
   constructor() {
-    super(config.table.nftResult);
+    super(config.table.nftResult, process.env.dbInstance || undefined);
   }
 
   public basicQuery(): Knex.QueryBuilder {
