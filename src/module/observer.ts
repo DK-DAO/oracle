@@ -374,7 +374,11 @@ export class ModuleObserver {
       const fromBlock = syncedBlock + 1;
       const toBlock =
         targetBlock - syncedBlock > numberOfProcessBlock ? syncedBlock + numberOfProcessBlock : targetBlock;
-      await this.eventWorker(id, fromBlock, toBlock);
+      if (toBlock > fromBlock) {
+        await this.eventWorker(id, fromBlock, toBlock);
+      } else {
+        logger.info('Skip syncing blocks due to no diff');
+      }
       /*
       // Try to sync each 100 blocks at once
       const toBlock = targetBlock - syncedBlock > numberOfSyncBlock ? syncedBlock + numberOfSyncBlock : targetBlock;
