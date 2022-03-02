@@ -9,7 +9,7 @@ import ModelNftIssuance from '../model/model-nft-issuance';
 import ModelSecret from '../model/model-secret';
 
 // Reveal duration 30 mins
-const revealDuration = 3600000;
+const revealDuration = 43200000;
 
 // Const number of digests
 const numberOfDigests = 20;
