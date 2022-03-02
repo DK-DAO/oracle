@@ -269,7 +269,7 @@ export class ModuleObserver {
     );
 
     const paymentList = [];
-    const paymentEventIds: string[] = []
+    const paymentEventIds: string[] = [];
     const nftTransferList = [];
     const nftTransferEventIds: string[] = [];
 
@@ -280,14 +280,13 @@ export class ModuleObserver {
       const token = this.supportedTokens.get(log.address.toLowerCase());
       // Watching token wasn't supporter we will skip
       if (typeof token !== 'undefined' && this.supportedTokens.has((token.address || '').toLowerCase())) {
-        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } =
-          parseEvent(log);
+        const { from, value, to, blockHash, blockNumber, transactionHash, contractAddress, eventId } = parseEvent(log);
         const memo = `${BigNum.from(value)
           .div(10 ** (token?.decimal || 18))
           .toString()} ${token?.symbol}`;
         if (token.type !== EToken.ERC721 && this.watchingWalletAddresses.has(to)) {
           // Check for existing payment
-          if (await imPayment.isNotExist('eventId', eventId) && !paymentEventIds.includes(eventId)) {
+          if ((await imPayment.isNotExist('eventId', eventId)) && !paymentEventIds.includes(eventId)) {
             logger.debug(`New event, ERC20 transfer ${from} -> ${to} ${memo}`);
             paymentList.push({
               status: EPaymentStatus.NewPayment,
@@ -308,7 +307,7 @@ export class ModuleObserver {
           }
         } else if (token.type === EToken.ERC721) {
           // Check for existing transfer
-          if (await imNftTransfer.isNotExist('eventId', eventId) && !nftTransferEventIds.includes(eventId)) {
+          if ((await imNftTransfer.isNotExist('eventId', eventId)) && !nftTransferEventIds.includes(eventId)) {
             const nftTokenId = BigNum.toHexString(BigNum.from(value));
             logger.debug(`New event, ERC721 transfer ${from} -> ${to} ${nftTokenId}`);
             nftTransferList.push({
@@ -326,8 +325,10 @@ export class ModuleObserver {
             });
             nftTransferEventIds.push(eventId);
           }
-        } else {
-          logger.error('Ignored tx hash:', transactionHash,
+        } /* else {
+          logger.error(
+            'Ignored tx hash:',
+            transactionHash,
             JSON.stringify({
               eventName: 'Transfer',
               from: utils.getAddress(from),
@@ -335,7 +336,7 @@ export class ModuleObserver {
               value,
             }),
           );
-        }
+        } */
       } else {
         logger.error('Token was not supported', token?.address || 'undefined');
       }
@@ -362,7 +363,7 @@ export class ModuleObserver {
   // Syncing events from blockchain
   private async eventSync() {
     const { id, startBlock, syncedBlock, targetBlock } = this.synced;
-    const { numberOfSyncBlock, numberOfProcessBlock } = this.blockchain;
+    const { numberOfProcessBlock } = this.blockchain;
     // Check for synced data is good
     if (
       typeof id !== 'undefined' &&
@@ -370,7 +371,11 @@ export class ModuleObserver {
       typeof syncedBlock !== 'undefined' &&
       typeof targetBlock !== 'undefined'
     ) {
-      let fromBlock = syncedBlock;
+      const fromBlock = syncedBlock + 1;
+      const toBlock =
+        targetBlock - syncedBlock > numberOfProcessBlock ? syncedBlock + numberOfProcessBlock : targetBlock;
+      await this.eventWorker(id, fromBlock, toBlock);
+      /*
       // Try to sync each 100 blocks at once
       const toBlock = targetBlock - syncedBlock > numberOfSyncBlock ? syncedBlock + numberOfSyncBlock : targetBlock;
       if (fromBlock + 1 >= toBlock) {
@@ -389,6 +394,7 @@ export class ModuleObserver {
           logger.error(`${this.blockchain.name}> Event sync error:`, error);
         }
       }
+      */
     }
   }
 
