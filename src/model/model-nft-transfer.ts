@@ -44,9 +44,12 @@ export class ModelNftTransfer extends ModelMysqlBasic<INftTransfer> {
 
   public async getTransferDetail(status: ENftTransferStatus): Promise<INftTransferDetail | undefined> {
     // @todo: Hot fix condition race
-    return this.getDetailQuery().where({ status })
+    return this.getDetailQuery()
+      .where({ status })
       .where('e.createdDate', '<=', this.getKnex().raw('SUBDATE(NOW(), INTERVAL 1 MINUTE)'))
-      .orderBy('id', 'asc').limit(1).first();
+      .orderBy('id', 'asc')
+      .limit(1)
+      .first();
   }
 
   public async getAllTransferDetail(status: ENftTransferStatus): Promise<INftTransferDetail[] | undefined> {

@@ -7,3 +7,4 @@ export type { RNG } from './RNG';
 export type { NFT } from './NFT';
 export type { Registry } from './Registry';
 export type { OracleProxy } from './OracleProxy';
+export type { DuelistKingStaking } from './DuelistKingStaking';

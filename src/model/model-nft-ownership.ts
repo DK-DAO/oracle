@@ -134,12 +134,10 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
     logger.info(`Processing ${nftTransfers.length} card issuance events`);
 
     const currentTransactionHash = nftTransfers[0].transactionHash;
-    const [currentIssuance] = await imNftIssuance.get([
-      { field: 'transactionHash', value: currentTransactionHash }
-    ]);
+    const [currentIssuance] = await imNftIssuance.get([{ field: 'transactionHash', value: currentTransactionHash }]);
 
     try {
-      isBoxOpening = (typeof currentIssuance === 'undefined');
+      isBoxOpening = typeof currentIssuance === 'undefined';
       // Matching burnt boxes and cards
       const boxAndCardMap = ModelNftOwnership.mappingBoxAndCard(nftTransfers);
       await Transaction.getInstance()
@@ -208,14 +206,17 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
           }
         })
         .catch(async (error: Error) => {
-          await imNftTransfer.getDefaultKnex().update({ status: ENftTransferStatus.Error })
+          await imNftTransfer
+            .getDefaultKnex()
+            .update({ status: ENftTransferStatus.Error })
             .where({ transactionHash: currentTransactionHash });
           logger.error('Can not sync nft ownership', error);
         })
         .exec();
     } catch (error) {
       logger.error('Can not sync box issuance data:', error);
-      await imNftTransfer.getDefaultKnex()
+      await imNftTransfer
+        .getDefaultKnex()
         .update({ status: ENftTransferStatus.Error })
         .where({ transactionHash: currentTransactionHash });
     }

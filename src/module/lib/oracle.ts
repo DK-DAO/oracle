@@ -15,7 +15,7 @@ import { BytesBuffer } from '../../helper/bytes-buffer';
 import ModelNftIssuance from '../../model/model-nft-issuance';
 import ModelConfig from '../../model/model-config';
 import ModelNonceManagement from '../../model/model-nonce-management';
-import { RetryTimeOut, RetryTimes } from '../../helper/const';
+import { allowedConfirmation, RetryTimeOut, RetryTimes } from '../../helper/const';
 
 const zero32Bytes = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
@@ -42,19 +42,18 @@ export class Oracle {
 
   private nextExecutor: number = 0;
 
-  private nonceManagement: ModelNonceManagement;
+  private nonceManagement: ModelNonceManagement = <ModelNonceManagement>{};
 
   public provider: ethers.providers.StaticJsonRpcProvider = <ethers.providers.StaticJsonRpcProvider>{};
 
   public dkOracleAddress: string = '';
 
-  constructor(blockchainData: IBlockchain) {
+  constructor() {
     for (let i = 0; i < 4; i += 1) {
       this.executors.push(ethers.Wallet.fromMnemonic(config.walletMnemonic, `m/44'/60'/0'/0/${i}`));
     }
     this.infraOracle = new ethers.Wallet(config.privOracleDkdao);
     this.dkOracle = new ethers.Wallet(config.privOracleDuelistKing);
-    this.nonceManagement = new ModelNonceManagement(blockchainData);
   }
 
   private async getNonce(address: string): Promise<number> {
@@ -87,6 +86,7 @@ export class Oracle {
     const imConfig = new ModelConfig();
     this.bcData = bcData;
     this.provider = new ethers.providers.StaticJsonRpcProvider(bcData.url);
+    this.nonceManagement = new ModelNonceManagement(bcData, this.provider);
     this.executors = this.executors.map((e) => e.connect(this.provider));
     // Connect wallet to provider
     this.infraOracle = this.infraOracle.connect(this.provider);
@@ -129,7 +129,7 @@ export class Oracle {
   }
 
   public static async getInstance(bcData: IBlockchain): Promise<Oracle> {
-    const instance = new Oracle(bcData);
+    const instance = new Oracle();
     await instance.connect(bcData);
     return instance;
   }
@@ -147,9 +147,10 @@ export class Oracle {
             0,
             this.contracts.distributor.interface.encodeFunctionData('mintBoxes', [owner, numberOfBox, phase]),
           );
-        const currentNonce = await this.syncNonce(currentExecutor.address);
+        const currentNonce = await this.getNonce(currentExecutor.address);
         logger.info(
-          `Forwarding call from ${currentExecutor.address
+          `Forwarding call from ${
+            currentExecutor.address
           } -> Distributor::mintBoxes(), estimated gas: ${estimatedGas.toString()} Gas, nonce: ${currentNonce}`,
         );
 
@@ -172,6 +173,11 @@ export class Oracle {
                 gasLimit: estimatedGas,
               },
             );
+          const receipt = await result.wait(allowedConfirmation);
+          logger.info(
+            `Transaction confirmed successful: ${(receipt.status || 0) === 1} transactionHash: ${receipt.blockHash}`,
+          );
+          logger.info(`Minted owner ${owner} boxes: ${numberOfBox} phase: ${phase}`);
         } catch (e) {
           logger.error('Use the double gas price since', e);
           result = await this.contracts.dkOracleProxy
@@ -199,7 +205,7 @@ export class Oracle {
   public async commit(numberOfDigests: number) {
     const digests = buildDigestArray(numberOfDigests);
     const currentExecutor = this.getExecutor();
-    const currentNonce = await this.syncNonce(currentExecutor.address);
+    const currentNonce = await this.getNonce(currentExecutor.address);
     const imSecret = new ModelSecret();
     const newRecords = digests.h.map((item: Buffer, index: number) => ({
       blockchainId: this.bcData.id,
@@ -229,7 +235,7 @@ export class Oracle {
   public async reveal() {
     const imSecret = new ModelSecret();
     const currentExecutor = this.getExecutor();
-    const currentNonce = await this.syncNonce(currentExecutor.address);
+    const currentNonce = await this.getNonce(currentExecutor.address);
     // Lookup digest from database
     const secretRecord = await imSecret.getDigest();
     if (secretRecord) {

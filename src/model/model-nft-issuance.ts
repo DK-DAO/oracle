@@ -136,8 +136,9 @@ export class ModelNftIssuance extends ModelMysqlBasic<INftIssuance> {
         // Calculate distribution of loot boxes
         const lootBoxDistribution = calculateDistribution(numberOfLootBoxes);
         logger.info(
-          `Total number of loot boxes: ${numberOfLootBoxes} (${lootBoxDistribution
-          }) for: ${payment.sender} discount: ${discount * 100}%`,
+          `Total number of loot boxes: ${numberOfLootBoxes} (${lootBoxDistribution}) for: ${payment.sender} discount: ${
+            discount * 100
+          }%`,
         );
 
         const records = lootBoxDistribution.map((item) => {
