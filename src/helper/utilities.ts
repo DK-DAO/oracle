@@ -226,7 +226,7 @@ export function bigNumberToBytes32(b: ethers.BigNumber): Buffer {
 }
 
 export async function craftProof(oracleSigner: Signer, oracle: OracleProxy): Promise<Buffer> {
-  const message = bigNumberToBytes32(await oracle.getValidTimeNonce(60000, Utilities.String.randomUint128()));
+  const message = bigNumberToBytes32(await oracle.getValidTimeNonce(600000, Utilities.String.randomUint128()));
   // Make sure that it matched
   const signedProof = await oracleSigner.signMessage(utils.arrayify(message));
   return Utilities.BytesBuffer.newInstance().writeBytes(signedProof).writeBytes(message).invoke();
