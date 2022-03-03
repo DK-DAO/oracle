@@ -4,6 +4,6 @@ export const RetryTimes = 10;
 
 export const allowedSecondDiff = 300;
 
-export const allowedConfirmation = 2;
+export const allowedConfirmation = 5;
 
 export default { RetryTimeOut, RetryTimes };

@@ -175,7 +175,9 @@ export class Oracle {
             );
           const receipt = await result.wait(allowedConfirmation);
           logger.info(
-            `Transaction confirmed successful: ${(receipt.status || 0) === 1} transactionHash: ${receipt.blockHash}`,
+            `Transaction confirmed successful: ${(receipt.status || 0) === 1} transactionHash: ${
+              receipt.transactionHash
+            }`,
           );
           logger.info(`Minted owner ${owner} boxes: ${numberOfBox} phase: ${phase}`);
         } catch (e) {

@@ -304,6 +304,8 @@ export class ModuleObserver {
               memo,
             });
             paymentEventIds.push(eventId);
+          } else {
+            logger.error('Duplicated payment eventId:', eventId, 'txHash:', transactionHash, 'receiver:', to);
           }
         } else if (token.type === EToken.ERC721) {
           // Check for existing transfer
@@ -324,6 +326,8 @@ export class ModuleObserver {
               blockchainId: this.blockchain.id,
             });
             nftTransferEventIds.push(eventId);
+          } else {
+            logger.error('Duplicated nft eventId:', eventId, 'txHash:', transactionHash, 'receiver:', to);
           }
         } /* else {
           logger.error(
