@@ -110,6 +110,7 @@ export class ModuleObserver {
         await knex(config.table.secret).del();
         await knex(config.table.nonceManagement).del();
         await knex(config.table.nftTransfer).del();
+        await knex(config.table.nftOwnership).del();
         await knex(config.table.nftResult).del();
       }
 

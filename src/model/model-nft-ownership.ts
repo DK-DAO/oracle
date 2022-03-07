@@ -182,7 +182,13 @@ export class ModelNftOwnership extends ModelMysqlBasic<INftOwnership> {
             // If record didn't exist insert one otherwise update existing record
             const [ownership] = await tx(this.tableName).select('*').where({ nftTokenId: nftTransfer.nftTokenId });
             if (typeof ownership === 'undefined') {
-              await tx(this.tableName).insert(record);
+              // Hot fix, change insert to insert ignore to prevent data mismatch
+              await tx.raw(
+                tx(this.tableName)
+                  .insert(record)
+                  .toString()
+                  .replace(/^insert into/i, 'insert ignore into'),
+              );
             } else {
               await tx(this.tableName)
                 .update({ owner: nftTransfer.receiver, transactionHash: nftTransfer.transactionHash })
