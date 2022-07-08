@@ -57,7 +57,7 @@
     "knex": "^0.95.8",
     "logform": "^2.2.0",
     "modern-syslog": "^1.2.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "mysql": "^2.18.1",
     "no-case": "^3.0.4",
     "noqueue": "^3.0.11",
