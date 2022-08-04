@@ -1,11 +1,10 @@
-FROM node:14.18.1-alpine3.14
+FROM node:16.16.0
 
 ARG USER=node
 
 ENV HOME=/home/${USER}
 
-RUN apk add python3 alpine-sdk \
-    && mkdir ${HOME}/app
+RUN mkdir ${HOME}/app
 
 COPY . "${HOME}/app/"
 
